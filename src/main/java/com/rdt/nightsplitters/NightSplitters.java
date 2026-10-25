@@ -48,8 +48,11 @@ public final class NightSplitters implements ModInitializer {
     @Override public void onInitialize() {
         readConfig();
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-            if (entity instanceof CaveSpider spider && spider.entityTags().contains(MARK))
+            if (entity instanceof CaveSpider spider && spider.entityTags().contains(MARK)) {
                 loaded.put(spider.getUUID(), spider);
+                ((com.rdt.nightsplitters.mixin.MobGoalsAccessor)spider)
+                    .nightSplitters$getGoalSelector().addGoal(1, new CreativePursuitGoal(spider));
+            }
         });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> loaded.remove(entity.getUUID()));
         ServerLifecycleEvents.SERVER_STARTING.register(server -> { loaded.clear(); nextWave = 0; waveActive = false; waitingForCooldown = false; rotation = 0; readConfig(); });
@@ -245,3 +248,4 @@ public final class NightSplitters implements ModInitializer {
         catch (Exception error) { LOG.error("Could not save Night Splitters config",error); }
     }
 }
+

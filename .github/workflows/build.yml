@@ -31,5 +31,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Night-Splitters-Test-Build
-          path: build/libs/*.jar
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
           if-no-files-found: error
+
