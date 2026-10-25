@@ -118,23 +118,45 @@ public final class DamageRegression implements ModInitializer {
             "Reject targets outside horizontal pounce range");
         check(SwarmPounce.calculateVelocity(origin, origin.add(0, 1, 0), 0.08) == null,
             "Reject ordinary ground-height targets");
-        for (int height = 2; height <= 25; height++) {
-            Vec3 launch = SwarmPounce.calculateVelocity(Vec3.ZERO, new Vec3(8, height, 0), 0.08);
-            double y = 0, peak = 0, vy = launch.y, x = 0, vx = launch.x;
+        // Exercise Minecraft's actual movement/collision/fall path, not just the launch formula.
+        int floorY = (int)origin.y - 1;
+        for (int x = -2; x <= 30; x++) {
+            for (int z = -2; z <= 2; z++) {
+                level.setBlockAndUpdate(new net.minecraft.core.BlockPos(x, floorY, z),
+                    net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+            }
+        }
+        for (int height : new int[] {2, 10, 25}) {
+            CaveSpider jumper = EntityTypes.CAVE_SPIDER.create(level, EntitySpawnReason.EVENT);
+            jumper.addTag("ns_swarm");
+            jumper.snapTo(origin.x, origin.y, origin.z);
+            jumper.setOnGround(true);
+            Player flyer = player(level, GameType.CREATIVE);
+            flyer.snapTo(origin.x + 8, origin.y + height, origin.z);
+            flyer.setOnGround(false);
+            SwarmPounce launch = new SwarmPounce();
+            check(launch.tryLaunch(jumper, flyer), "Physical pounce launches at " + height);
+            float before = jumper.getHealth();
+            double peak = 0;
             boolean crossed = false;
-            for (int tick = 0; tick < 200 && vy > 0; tick++) {
-                y += vy;
-                x += vx;
-                peak = Math.max(peak, y);
-                if (!crossed && y >= height - 0.01) {
-                    check(Math.abs(x - 8) < 0.001, "Pounce reaches sampled X at target height");
+            for (int tick = 0; tick < 200 && !jumper.onGround(); tick++) {
+                jumper.travel(Vec3.ZERO);
+                double rise = jumper.getY() - origin.y;
+                peak = Math.max(peak, rise);
+                if (!crossed && rise >= height - 0.1) {
+                    check(Math.abs(jumper.getX() - flyer.getX()) < 1.0,
+                        "Actual pounce crosses target position at target height");
                     crossed = true;
                 }
-                vy = (vy - 0.08) * 0.98;
-                vx *= 0.91;
             }
-            check(crossed && peak >= height - 0.01 && peak <= 25.001,
-                "Pounce reaches target height without exceeding 25-block apex");
+            check(crossed && peak >= height - 0.1 && peak <= 25.1,
+                "Actual Minecraft pounce reaches height without exceeding 25 blocks: " + peak);
+            check(jumper.onGround(), "Physical pounce lands");
+            check(jumper.getHealth() == before, "Physical landing preserves spider health");
+            check(!launch.isInFlight(jumper), "Physical landing restores ground pursuit");
+            check(!jumper.isIgnoringFallDamageFromCurrentImpulse(),
+                "Physical landing clears pounce protection");
+            System.out.println("POUNCE_PHYSICS_PASS height=" + height + " peak=" + peak);
         }
     }
 
