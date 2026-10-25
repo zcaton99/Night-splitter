@@ -1,69 +1,49 @@
-# Night Splitters
+# Night Splitters — 0.2.0-alpha.1
 
-Fabric mod for Minecraft 26.3. Current build: **0.1.5**.
+Private next-update build on `development/0.2.0`. The submitted Modrinth 0.1.5 build and `main` branch are unchanged.
 
-## Install the test build
+Requires Minecraft 26.3, Java 25, Fabric Loader 0.19.5+, and Fabric API 0.161.0+26.3. Install just one Night Splitters JAR at a time. For this alpha, use a separate test world or a copy of your server world.
 
-Requires Java 25, Fabric Loader 0.19.5 or newer, and Fabric API 0.161.0+26.3.
+## New settings
 
-1. Close Minecraft.
-2. Download the **Night-Splitters-Test-Build** artifact from the latest successful [GitHub Actions run](https://github.com/zcaton99/Night-splitter/actions).
-3. Extract the ZIP. Replace the previous Night Splitters JAR in the instance's `mods` folder with `night-splitters-0.1.5.jar`; keep only one Night Splitters version.
-4. Start Minecraft with the matching Fabric profile.
+All new modes are OFF by default. Existing configuration files keep the previous behavior. Configuration is saved in `config/night-splitters.json`.
 
-This is a test build, pending another in-game round before public release.
+| Command | Behavior |
+| --- | --- |
+| `/nightsplitters wave multiplier 1` | Normal 2–3-parent waves. |
+| `/nightsplitters wave multiplier 4` | 8–12 parents. Valid range 1–16; global/local slot budgets scale too, with an absolute 1,536-slot ceiling. |
+| `/nightsplitters darkness on` / `off` | About 10% of spawned swarm spiders can add 4 seconds of Darkness to successful melee hits. |
+| `/nightsplitters darknessonly on` / `off` | Every swarm spider hit applies Darkness instead of direct damage or poison, regardless of the 10% selection. Turning it off restores normal spider damage; the separate Darkness toggle still controls the 10% effect. |
+| `/nightsplitters babyhorde on` / `off` | 15% chance for a spider wave to be exactly six small offspring instead of parents. These never split. The multiplier does not enlarge baby-only hordes. |
+| `/nightsplitters creeper on` / `off` | Enable rare intermission creepers: one 5% roll after each completed spider wave. |
+| `/nightsplitters creeperchance 0.05` | Set encounter probability from 0 to 1. `1` means every completed wave gets an attempt, subject to valid spawn conditions. |
+| `/nightsplitters creeperblockdamage on` / `off` | Parent explosion terrain damage. Default ON, still subject to vanilla mob-griefing rules. |
+| `/nightsplitters babycreeperblockdamage on` / `off` | Baby explosion terrain damage. Default OFF. |
+| `/nightsplitters testcreeper` | Replace the current loaded wave with a creeper encounter for testing. Requires a player, open loaded outdoor terrain, nighttime, non-Peaceful difficulty, enabled mob spawning, and both swarms and creepers enabled. |
+| `/nightsplitters clear` | Remove tracked loaded spiders/creepers and cancel pending births. |
+| `/nightsplitters disable` | Disable all encounters, remove tracked loaded swarm entities, and cancel pending births. |
+| `/nightsplitters status` | Show modes, multiplier, budgets, active creepers, and pending broods. |
 
-## Airborne pounce in 0.1.5
+Commands require operator permissions. The global `enable`, `disable`, `clear`, and `reload` controls remain available.
 
-Tagged swarm parents and offspring can launch at airborne Creative targets 2–25 blocks above them and within 24 horizontal blocks. Pounces need ground contact, clear line of sight, and takeoff headroom. Each launch has a random 5–8 second cooldown. The trajectory aims at the target's launch-time position, with no midair homing. Ground pursuit and melee range stay unchanged.
+## Creeper encounter
 
-Vanilla impulse protection discounts the height gained by the pounce when landing. It does not grant general damage immunity: falling below the launch height can still deal damage from the extra drop. The protection ends with the impulse.
+The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. There is only one rare-creeper roll per completed spider wave, preventing endless creeper intermissions.
 
-For this test round, try hovering at 5, 15, and 25 blocks above open ground. Move sideways after launch to dodge. Confirm cooldowns, safe landings, small-offspring pounces, and that ordinary spiders never gain this ability. Targets higher than 25 blocks cannot trigger a pounce.
+Both parent and babies hunt nearby non-Spectator players, including Creative players, but use vanilla explosion damage/immunity. The existing Creative half-damage exception applies only to swarm **spider melee**. Darkness-only mode also applies only to spiders; creepers still explode normally.
 
-## Damage behavior retained from 0.1.4-test
+Creeper-off, global disable/clear, Peaceful difficulty, configured dawn cleanup, and lifetime expiry clean up the encounter. Offspring spawning never force-loads chunks: if terrain is unloaded, births wait up to 10 extra seconds, then cancel. Pending 2-second births are cancelled on server restart rather than saved.
 
-- Tagged swarm spiders pursue Creative players using the pursuit behavior confirmed in 0.1.3-test.
-- Their direct melee hits now bypass the separate Creative ability immunity check and apply half incoming damage.
-- The player's actual abilities and game mode are never changed.
-- Ordinary spider attacks and environmental damage retain Creative immunity. Spectators and explicitly invulnerable entities remain protected.
-- Survival and Adventure damage, wave spawning, splitting, budgets, cleanup, and cooldown logic are unchanged.
+## Suggested testing sessions
 
-The damage change keeps vanilla armor, absorption, damage cooldowns, and difficulty processing.
+1. **Baseline:** leave all new modes off. Confirm the existing 0.1.5 waves, split children, Creative damage, pounces, and dawn cleanup.
+2. **Darkness:** enable `darkness`; then test `darknessonly` separately in Survival and Creative. Darkness-only should not remove health or apply poison. Turn both off to restore baseline.
+3. **Baby hordes:** enable `babyhorde`. For a quick deterministic check, set `babyHordeChance` to `1.0` in the config and reload. Count six babies and verify none split. Restore the default `0.15` afterward.
+4. **Multiplier:** start at `2`, then `4`; confirm wave size, one-wave-at-a-time behavior, and server performance. Reset to `1` between sessions.
+5. **Creeper:** enable `creeper`, turn parent block damage off if you want the test terrain preserved, then use `testcreeper`. Let it explode and time the babies. Test killing the parent before explosion, killing both babies, and using clear/disable during the 2-second delay. Finally test rare intermissions naturally.
 
-## Existing wave mechanics
+Do not overwrite the public 0.1.5 JAR or upload this alpha to Modrinth until the gradual playtesting is complete.
 
-At night in the Overworld, eligible outdoor players can trigger one global wave of 2–3 parent cave spiders. Parents split once into two smaller offspring on death. A new wave waits until all tracked spiders and offspring are gone, then uses the configured 5–30 second cooldown. Existing slot caps, lifetimes, spawn checks, and dawn cleanup still apply. Peaceful difficulty and disabled mob-spawning game rules prevent new waves.
+## Automated checks
 
-Configuration: `config/night-splitters.json`.
-
-Operator commands: `/nightsplitters status`, `enable`, `disable`, `reload`, and `clear` (each subcommand follows `/nightsplitters`).
-
-## Next in-game test round
-
-Use a test world with cheats, Normal difficulty, nighttime, and open ground:
-
-- **Creative:** swarm spiders chase and land hits. Creative normally hides the heart HUD; use `/data get entity @s Health` immediately before and after a hit to check actual health. Normal unarmored 4-point melee damage becomes 2 health points (one heart).
-- **Creative immunity:** an untagged ordinary cave spider and fall damage still cannot hurt you.
-- **Survival:** normal melee damage and pursuit still work.
-- **Spectator:** swarms ignore you and do no damage.
-- **Splitting:** each parent produces exactly two smaller children, which also pursue Creative players.
-- **Wave completion:** no new wave starts while a parent or child is alive; after all are gone, wait 5–30 seconds.
-- **Cleanup:** confirm dawn cleanup and the `clear` and `disable` commands.
-
-Before sharing publicly, complete this checklist in game, including a dedicated-server or multiplayer test if that is how the mod will be used.
-
-## Build and regression checks
-
-GitHub Actions builds with Temurin Java 25, then boots a Fabric dedicated server with a separate test mod. It verifies tagged Creative melee damage at half strength, unchanged Creative abilities, ordinary-spider and fall immunity, full Survival damage, Spectator immunity, and explicit entity invulnerability. It also checks pounce eligibility, launch direction, cooldown bounds, no midair retargeting, safe landings, unchanged ordinary fall damage, child pounces, and trajectory heights from 2 through 25 blocks. The test mod is not included in the distributed JAR.
-
-Run locally with Java 25:
-
-```sh
-bash gradlew build
-mkdir -p build/regression-run
-echo 'eula=true' > build/regression-run/eula.txt
-bash gradlew runRegression
-```
-
-The regression run must print `NIGHT_SPLITTERS_DAMAGE_REGRESSION_PASSED`. The EULA line records acceptance of Minecraft's EULA for the local test server.
+GitHub Actions uses Java 25 and a real Fabric dedicated server. The suite retains the Creative-damage and actual pounce-physics checks, and adds command/config validation, Darkness-only damage/poison suppression, delayed real creeper explosions and births, one-generation-only splitting, terrain protection, and cancellation by disable. The test mod is excluded from the distributed JAR.

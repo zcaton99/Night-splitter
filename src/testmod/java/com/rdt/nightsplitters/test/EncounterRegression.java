@@ -34,6 +34,9 @@ public final class EncounterRegression {
         cfg.enabled = true; cfg.creeperEnabled = true; cfg.creeperBlockDamage = false;
         cfg.babyCreeperBlockDamage = false; cfg.cleanupAtDawn = false;
         encounters.clear();
+        // Keep this fixture loaded: production intentionally waits instead of force-loading.
+        for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++)
+            level.setChunkForced(x, z, true);
         y = level.getMaxY() - 40;
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
@@ -66,7 +69,7 @@ public final class EncounterRegression {
         }
         check(elapsed == 40, "Brood appears at exactly 40 server ticks");
         check(encounters.pendingCount() == 0 && encounters.activeCount() == 2,
-            "Exactly two children spawned after delay");
+            "Exactly two children spawned after delay; active=" + encounters.activeCount() + ", pending=" + encounters.pendingCount());
         var children = level.getEntitiesOfClass(Creeper.class,
             new AABB(-5, y - 5, -5, 5, y + 5, 5),
             c -> c.entityTags().contains(CreeperEncounters.CHILD));

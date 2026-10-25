@@ -145,7 +145,7 @@ public final class NightSplitters implements ModInitializer {
                 .then(Commands.literal("disable").executes(ctx -> {
                     config.enabled = false; saveConfig(); int count = clear(); waveActive = false; waitingForCooldown = false;
                     ctx.getSource().sendSuccess(() -> Component.literal("Swarm disabled. Removed " + count +
-                        " loaded swarm spiders; unloaded swarm spiders are removed when loaded while disabled."), true);
+                        " loaded swarm entities; unloaded swarm entities are removed when loaded while disabled."), true);
                     return count;
                 }))
                 .then(Commands.literal("enable").executes(ctx -> {
@@ -160,7 +160,7 @@ public final class NightSplitters implements ModInitializer {
                 }))
                 .then(Commands.literal("clear").executes(ctx -> {
                     int count = clear(); waveActive = false; waitingForCooldown = false;
-                    ctx.getSource().sendSuccess(() -> Component.literal("Removed " + count + " loaded swarm spiders."), true);
+                    ctx.getSource().sendSuccess(() -> Component.literal("Removed " + count + " loaded swarm entities."), true);
                     return count;
                 }))));
         LOG.info("Night Splitters initialized for Minecraft 26.3 (dedicated and integrated server)");
