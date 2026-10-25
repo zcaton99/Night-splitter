@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "night_splitters",
+  "version": "${version}",
+  "name": "Night Splitters",
+  "description": "Fast nighttime cave spider swarms that split once into two smaller spiders.",
+  "authors": [
+    "Zach Caton"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "mixins": ["night_splitters.mixins.json"],
+  "entrypoints": {
+    "main": [
+      "com.rdt.nightsplitters.NightSplitters"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": ">=0.161.0"
+  }
+}
