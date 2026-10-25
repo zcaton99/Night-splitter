@@ -1,4 +1,4 @@
-# Night Splitters — 0.2.0-alpha.2
+# Night Splitters — 0.2.0-alpha.3
 
 Private next-update build on `development/0.2.0`. The submitted Modrinth 0.1.5 build and `main` branch are unchanged.
 
@@ -16,8 +16,7 @@ All new modes are OFF by default. Existing configuration files keep the previous
 | `/nightsplitters darknesschance 0.20` | Set the chance for newly spawned spiders (0–1). Existing configs keep their saved value; run this command to double the previous 10% setting, then clear the wave. |
 | `/nightsplitters darknessonly on` / `off` | Every swarm spider hit applies Darkness instead of direct damage or poison, regardless of the 20% selection. Turning it off restores normal spider damage; the separate Darkness toggle still controls the 20% effect. |
 | `/nightsplitters babyhorde on` / `off` | 15% chance for a spider wave to be exactly six small offspring instead of parents. These never split. The multiplier does not enlarge baby-only hordes. |
-| `/nightsplitters creeper on` / `off` | Enable rare intermission creepers: one 5% roll after each completed spider wave. |
-| `/nightsplitters creeperchance 0.05` | Set encounter probability from 0 to 1. `1` means every completed wave gets an attempt, subject to valid spawn conditions. |
+| `/nightsplitters creeper on` / `off` | Enable rare intermission creepers: one encounter after a randomly chosen 3–5 completed spider waves. |
 | `/nightsplitters creeperblockdamage on` / `off` | Parent explosion terrain damage. Default ON, still subject to vanilla mob-griefing rules. |
 | `/nightsplitters babycreeperblockdamage on` / `off` | Baby explosion terrain damage. Default OFF. |
 | `/nightsplitters testcreeper` | Replace the current loaded wave with a creeper encounter for testing. Requires a player, open loaded outdoor terrain, nighttime, non-Peaceful difficulty, enabled mob spawning, and both swarms and creepers enabled. |
@@ -29,7 +28,7 @@ Commands require operator permissions. The global `enable`, `disable`, `clear`, 
 
 ## Creeper encounter
 
-The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. There is only one rare-creeper roll per completed spider wave, preventing endless creeper intermissions.
+The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. Each interval randomly selects 3, 4, or 5 completed spider waves (including baby hordes). Creeper completion never counts as a spider wave. If no valid spawn is found, the encounter stays due for the next completed wave. Clear, restart, dawn cleanup, toggling creepers, and testcreeper reset the interval. The old creeperChance config field is ignored.
 
 Both parent and babies hunt nearby non-Spectator players, including Creative players, but use vanilla explosion damage/immunity. The existing Creative half-damage exception applies only to swarm **spider melee**. Darkness-only mode also applies only to spiders; creepers still explode normally.
 

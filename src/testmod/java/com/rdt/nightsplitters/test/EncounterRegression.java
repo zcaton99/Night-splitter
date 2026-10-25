@@ -113,8 +113,17 @@ public final class EncounterRegression {
         }
         check(!cfg.darknessEnabled && !cfg.darknessOnly && !cfg.babyHordeEnabled && !cfg.creeperEnabled,
             "Feature toggles persist in live settings");
-        command(server, "nightsplitters creeperchance 0.05");
-        check(cfg.creeperChance == 0.05 && cfg.darknessChance == 0.20, "Rare creeper chance and one-in-five Darkness default");
+        check(cfg.darknessChance == 0.20, "One-in-five Darkness default");
+        for (int roll = 0; roll < 3; roll++) {
+            final int choice = roll;
+            CreeperSchedule schedule = new CreeperSchedule();
+            for (int wave = 1; wave <= 3 + roll; wave++)
+                check(schedule.completeSpiderWave(() -> choice) == (wave == 3 + roll),
+                    "Creeper due after exactly 3, 4, or 5 completed spider waves");
+            check(schedule.completeSpiderWave(() -> choice), "Failed spawn remains due");
+            schedule.reset();
+            check(!schedule.completeSpiderWave(() -> choice), "New interval prevents back-to-back creepers");
+        }
         command(server, "nightsplitters darknesschance 0.35");
         check(cfg.darknessChance == 0.35, "Darkness chance command updates live settings");
         command(server, "nightsplitters darknesschance 0.20");

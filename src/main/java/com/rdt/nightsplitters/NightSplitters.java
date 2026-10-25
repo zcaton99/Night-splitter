@@ -50,6 +50,7 @@ public final class NightSplitters implements ModInitializer {
     private boolean waitingForCooldown;
     private int rotation;
     private boolean intermissionUsed;
+    private final CreeperSchedule creeperSchedule = new CreeperSchedule();
     private static final CreeperEncounters ENCOUNTERS = new CreeperEncounters();
     public static CreeperEncounters encounters() { return ENCOUNTERS; }
 
@@ -68,8 +69,8 @@ public final class NightSplitters implements ModInitializer {
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
             loaded.remove(entity.getUUID()); ENCOUNTERS.unload(entity);
         });
-        ServerLifecycleEvents.SERVER_STARTING.register(server -> { loaded.clear(); ENCOUNTERS.clear(); intermissionUsed = false; nextWave = 0; waveActive = false; waitingForCooldown = false; rotation = 0; readConfig(); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { loaded.clear(); ENCOUNTERS.clear(); intermissionUsed = false; nextWave = 0; waveActive = false; waitingForCooldown = false; rotation = 0; });
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> { loaded.clear(); ENCOUNTERS.clear(); intermissionUsed = false; creeperSchedule.reset(); nextWave = 0; waveActive = false; waitingForCooldown = false; rotation = 0; readConfig(); });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { loaded.clear(); ENCOUNTERS.clear(); intermissionUsed = false; creeperSchedule.reset(); nextWave = 0; waveActive = false; waitingForCooldown = false; rotation = 0; });
         ServerTickEvents.END_SERVER_TICK.register(this::tick);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damage) -> {
             if (!(entity instanceof CaveSpider parent) || !parent.entityTags().contains(PARENT)
@@ -110,13 +111,7 @@ public final class NightSplitters implements ModInitializer {
                     })))
                 .then(toggle("darknessonly", value -> config.darknessOnly = value))
                 .then(toggle("babyhorde", value -> config.babyHordeEnabled = value))
-                .then(toggle("creeper", value -> config.creeperEnabled = value))
-                .then(Commands.literal("creeperchance")
-                    .then(Commands.argument("chance", DoubleArgumentType.doubleArg(0, 1)).executes(ctx -> {
-                        config.creeperChance = DoubleArgumentType.getDouble(ctx, "chance"); saveConfig();
-                        ctx.getSource().sendSuccess(() -> Component.literal("Intermission creeper chance: " + config.creeperChance), true);
-                        return 1;
-                    })))
+                .then(toggle("creeper", value -> { if (config.creeperEnabled != value) creeperSchedule.reset(); config.creeperEnabled = value; }))
                 .then(toggle("creeperblockdamage", value -> config.creeperBlockDamage = value))
                 .then(toggle("babycreeperblockdamage", value -> config.babyCreeperBlockDamage = value))
                 .then(Commands.literal("testcreeper").executes(ctx -> {
@@ -134,7 +129,7 @@ public final class NightSplitters implements ModInitializer {
                         ctx.getSource().sendFailure(Component.literal("No valid loaded outdoor spawn found. Try open ground."));
                         return 0;
                     }
-                    intermissionUsed = true; waveActive = true;
+                    creeperSchedule.reset(); intermissionUsed = true; waveActive = true;
                     ctx.getSource().sendSuccess(() -> Component.literal("Test creeper encounter started; the previous loaded wave was cleared."), true);
                     return 1;
                 }))
@@ -146,6 +141,7 @@ public final class NightSplitters implements ModInitializer {
                         + "; darknessChance=" + config.darknessChance
                         + "; darknessOnly=" + config.darknessOnly + "; babyHorde=" + config.babyHordeEnabled
                         + "; creeper=" + config.creeperEnabled
+                        + "; spider waves until creeper=" + creeperSchedule.remaining()
                         + "; encounter creepers=" + ENCOUNTERS.activeCount() + "; pending broods=" + ENCOUNTERS.pendingCount()), false);
                     return 1;
                 }))
@@ -220,7 +216,7 @@ public final class NightSplitters implements ModInitializer {
             || !level.getGameRules().get(GameRules.SPAWN_MOBS)
             || !level.getGameRules().get(GameRules.SPAWN_MONSTERS)) {
             // Do not carry a cooldown into the next night.
-            if (loaded.isEmpty() && !ENCOUNTERS.active()) { waveActive = false; waitingForCooldown = false; nextWave = 0; }
+            if (loaded.isEmpty() && !ENCOUNTERS.active()) { waveActive = false; waitingForCooldown = false; nextWave = 0; creeperSchedule.reset(); }
             return;
         }
         // All tagged, tracked offspring remain part of the wave. No overlapping waves.
@@ -228,12 +224,12 @@ public final class NightSplitters implements ModInitializer {
         if (waveActive) {
             waveActive = false;
             if (!intermissionUsed && config.creeperEnabled) {
-                intermissionUsed = true; // Exactly one chance per completed spider wave.
-                if (level.getRandom().nextDouble() < config.creeperChance
+                intermissionUsed = true; // Count spider waves only, never creeper completion.
+                if (creeperSchedule.completeSpiderWave(() -> level.getRandom().nextInt(3))
                         && config.globalBudget() >= 2 && config.localBudget() >= 2) {
                     for (ServerPlayer player : level.players()) {
                         if (eligible(player) && level.canSeeSky(player.blockPosition())
-                                && ENCOUNTERS.spawnNear(level, player)) { waveActive = true; return; }
+                                && ENCOUNTERS.spawnNear(level, player)) { creeperSchedule.reset(); waveActive = true; return; }
                     }
                 }
             }
@@ -333,7 +329,7 @@ public final class NightSplitters implements ModInitializer {
     }
     private int clear() {
         var copy = List.copyOf(loaded.values());
-        copy.forEach(Entity::discard); loaded.clear(); intermissionUsed = false;
+        copy.forEach(Entity::discard); loaded.clear(); intermissionUsed = false; creeperSchedule.reset();
         return copy.size() + ENCOUNTERS.clear();
     }
     private boolean readConfig() {
