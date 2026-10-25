@@ -68,3 +68,26 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+sourceSets {
+    testmod {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+loom {
+    mods {
+        night_splitters { sourceSet sourceSets.main }
+        night_splitters_tests { sourceSet sourceSets.testmod }
+    }
+    runs {
+        regression {
+            server()
+            name "Night Splitters damage regression"
+            source sourceSets.testmod
+            runDir "build/regression-run"
+            programArg "nogui"
+        }
+    }
+}

@@ -2,39 +2,35 @@ package com.rdt.nightsplitters.mixin;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.spider.CaveSpider;
+import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-/** Restrict the Creative immunity exception to attacks from Night Splitters spiders. */
+/** Allow only tagged swarm melee hits through Creative's separate ability check. */
 @Mixin(Player.class)
 public abstract class CreativeDamageMixin {
-    /** Halve incoming damage only when a tagged Night Splitters spider attacks a Creative player. */
-    @ModifyVariable(method = "hurtServer", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private float nightSplitters$halveCreativeDamage(float amount, ServerLevel level, DamageSource source) {
+    private boolean nightSplitters$isCreativeSwarmHit(DamageSource source) {
         Player self = (Player)(Object)this;
-        Entity attacker = source.getEntity();
-        if (self.isCreative() && !self.isSpectator()
-                && attacker instanceof CaveSpider spider
-                && spider.entityTags().contains("ns_swarm")) {
-            return amount * 0.5F;
-        }
-        return amount;
+        return self.isCreative() && !self.isSpectator()
+            && source.getEntity() instanceof CaveSpider spider
+            && source.getDirectEntity() == spider
+            && spider.entityTags().contains("ns_swarm");
     }
 
-    @Inject(method = "isInvulnerableTo", at = @At("HEAD"), cancellable = true)
-    private void nightSplitters$creativeSpiderDamage(ServerLevel level, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
-        Player self = (Player)(Object)this;
-        Entity attacker = source.getEntity();
-        if (self.isCreative() && !self.isSpectator()
-                && attacker instanceof CaveSpider spider
-                && spider.entityTags().contains("ns_swarm")) {
-            cir.setReturnValue(false);
-        }
+    @ModifyVariable(method = "hurtServer", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private float nightSplitters$halveCreativeDamage(float amount, ServerLevel level, DamageSource source) {
+        return nightSplitters$isCreativeSwarmHit(source) ? amount * 0.5F : amount;
+    }
+
+    @Redirect(method = "hurtServer", at = @At(value = "FIELD",
+        target = "Lnet/minecraft/world/entity/player/Abilities;invulnerable:Z"))
+    private boolean nightSplitters$allowCreativeSwarmHit(Abilities abilities,
+            ServerLevel level, DamageSource source, float amount) {
+        // Change this one read, never the player's actual abilities or game mode.
+        return abilities.invulnerable && !nightSplitters$isCreativeSwarmHit(source);
     }
 }

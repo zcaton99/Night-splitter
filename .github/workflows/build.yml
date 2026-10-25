@@ -27,14 +27,22 @@ jobs:
       - name: Build mod
         run: bash gradlew build --stacktrace
 
-      - name: Inspect Creative damage path
-        run: python3 scripts/inspect_damage.py
+      - name: Run server damage regression
+        timeout-minutes: 5
+        run: |
+          mkdir -p build/regression-run
+          echo 'eula=true' > build/regression-run/eula.txt
+          printf 'online-mode=false\nview-distance=2\nsimulation-distance=2\n' > build/regression-run/server.properties
+          set -o pipefail
+          bash gradlew runRegression --stacktrace 2>&1 | tee build/damage-regression.log
+          grep -q NIGHT_SPLITTERS_DAMAGE_REGRESSION_PASSED build/damage-regression.log
 
-      - name: Upload damage diagnostics
+      - name: Upload regression log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: damage-diagnostics
-          path: build/damage-diagnostics
+          name: damage-regression-log
+          path: build/damage-regression.log
 
       - name: Upload test JAR
         uses: actions/upload-artifact@v4
