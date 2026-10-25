@@ -247,6 +247,7 @@ public final class NightSplitters implements ModInitializer {
             config.parentsPerWave - config.minWaveSize + 1);
         int waveSize = config.waveSize(baseSize, babyWave);
         int slotCost = babyWave ? 1 : 2;
+        Set<UUID> beforeWave = babyWave ? new HashSet<>(loaded.keySet()) : Set.of();
         int spawned = 0;
         for (ServerPlayer player : players) {
             if (!level.canSeeSky(player.blockPosition())) continue;
@@ -256,6 +257,15 @@ public final class NightSplitters implements ModInitializer {
                 spawned++;
             }
             if (spawned == waveSize) break;
+        }
+        if (babyWave && spawned < waveSize) {
+            // Six is a complete horde: roll back partial spawns instead of starting a smaller wave.
+            for (CaveSpider spider : List.copyOf(loaded.values())) {
+                if (!beforeWave.contains(spider.getUUID())) {
+                    spider.discard(); loaded.remove(spider.getUUID());
+                }
+            }
+            return;
         }
         if (spawned > 0) { waveActive = true; intermissionUsed = false; }
     }
