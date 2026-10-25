@@ -13,6 +13,7 @@ public final class CreativePursuitGoal extends Goal {
     private ServerPlayer target;
     private int repath;
     private int attackCooldown;
+    private final SwarmPounce pounce = new SwarmPounce();
 
     public CreativePursuitGoal(CaveSpider spider) {
         this.spider = spider;
@@ -43,7 +44,10 @@ public final class CreativePursuitGoal extends Goal {
     @Override public void tick() {
         spider.setTarget(target);
         spider.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        if (--repath <= 0) {
+        boolean airborne = pounce.isInFlight(spider);
+        if (!airborne && pounce.tryLaunch(spider, target)) airborne = true;
+        // Do not steer in flight: players can dodge the sampled launch position.
+        if (!airborne && --repath <= 0) {
             repath = 10;
             // Coordinate navigation avoids vanilla's Creative entity-target filters.
             spider.getNavigation().moveTo(target.getX(), target.getY(), target.getZ(), 1.0);

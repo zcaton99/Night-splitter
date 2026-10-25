@@ -1,6 +1,6 @@
 # Night Splitters
 
-Fabric mod for Minecraft 26.3. Current build: **0.1.4-test**.
+Fabric mod for Minecraft 26.3. Current build: **0.1.5-test**.
 
 ## Install the test build
 
@@ -8,12 +8,20 @@ Requires Java 25, Fabric Loader 0.19.5 or newer, and Fabric API 0.161.0+26.3.
 
 1. Close Minecraft.
 2. Download the **Night-Splitters-Test-Build** artifact from the latest successful [GitHub Actions run](https://github.com/zcaton99/Night-splitter/actions).
-3. Extract the ZIP. Replace the previous Night Splitters JAR in the instance's `mods` folder with `night-splitters-0.1.4-test.jar`; keep only one Night Splitters version.
+3. Extract the ZIP. Replace the previous Night Splitters JAR in the instance's `mods` folder with `night-splitters-0.1.5-test.jar`; keep only one Night Splitters version.
 4. Start Minecraft with the matching Fabric profile.
 
 This is a test build, pending another in-game round before public release.
 
-## Changes in 0.1.4-test
+## Airborne pounce in 0.1.5-test
+
+Tagged swarm parents and offspring can launch at airborne Creative targets 2–25 blocks above them and within 24 horizontal blocks. Pounces need ground contact, clear line of sight, and takeoff headroom. Each launch has a random 5–8 second cooldown. The trajectory aims at the target's launch-time position, with no midair homing. Ground pursuit and melee range stay unchanged.
+
+Vanilla impulse protection discounts the height gained by the pounce when landing. It does not grant general damage immunity: falling below the launch height can still deal damage from the extra drop. The protection ends with the impulse.
+
+For this test round, try hovering at 5, 15, and 25 blocks above open ground. Move sideways after launch to dodge. Confirm cooldowns, safe landings, small-offspring pounces, and that ordinary spiders never gain this ability. Targets higher than 25 blocks cannot trigger a pounce.
+
+## Damage behavior retained from 0.1.4-test
 
 - Tagged swarm spiders pursue Creative players using the pursuit behavior confirmed in 0.1.3-test.
 - Their direct melee hits now bypass the separate Creative ability immunity check and apply half incoming damage.
@@ -47,7 +55,7 @@ Before sharing publicly, complete this checklist in game, including a dedicated-
 
 ## Build and regression checks
 
-GitHub Actions builds with Temurin Java 25, then boots a Fabric dedicated server with a separate test mod. It verifies tagged Creative melee damage at half strength, unchanged Creative abilities, ordinary-spider and fall immunity, full Survival damage, Spectator immunity, and explicit entity invulnerability. The test mod is not included in the distributed JAR.
+GitHub Actions builds with Temurin Java 25, then boots a Fabric dedicated server with a separate test mod. It verifies tagged Creative melee damage at half strength, unchanged Creative abilities, ordinary-spider and fall immunity, full Survival damage, Spectator immunity, and explicit entity invulnerability. It also checks pounce eligibility, launch direction, cooldown bounds, no midair retargeting, safe landings, unchanged ordinary fall damage, child pounces, and trajectory heights from 2 through 25 blocks. The test mod is not included in the distributed JAR.
 
 Run locally with Java 25:
 
