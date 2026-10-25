@@ -57,7 +57,7 @@ public final class DamageRegression implements ModInitializer {
             checkPounce(level);
             System.out.println("NIGHT_SPLITTERS_POUNCE_REGRESSION_PASSED");
             System.out.println("NIGHT_SPLITTERS_DAMAGE_REGRESSION_PASSED");
-            server.halt(false);
+            new EncounterRegression().begin(server);
         });
     }
 

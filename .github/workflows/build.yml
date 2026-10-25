@@ -1,8 +1,8 @@
-name: Build Night Splitters
+name: Build Night Splitters Development
 
 on:
   push:
-    branches: [main, 'development/**']
+    branches: ['development/**']
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - name: Build mod
         run: bash gradlew build --stacktrace
 
-      - name: Run server damage regression
+      - name: Run server regression suite
         timeout-minutes: 5
         run: |
           mkdir -p build/regression-run
@@ -36,6 +36,7 @@ jobs:
           set -o pipefail
           bash gradlew runRegression --stacktrace 2>&1 | tee build/damage-regression.log
           grep -q NIGHT_SPLITTERS_DAMAGE_REGRESSION_PASSED build/damage-regression.log
+          grep -q NIGHT_SPLITTERS_NEXT_UPDATE_REGRESSION_PASSED build/damage-regression.log
 
       - name: Upload regression log
         if: always()
@@ -44,19 +45,10 @@ jobs:
           name: damage-regression-log
           path: build/damage-regression.log
 
-      - name: Inspect new encounter API
-        run: python3 scripts/inspect_encounter.py
-
-      - name: Upload API inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: encounter-api
-          path: build/api-inspect
-
       - name: Upload test JAR
         uses: actions/upload-artifact@v4
         with:
-          name: Night-Splitters-Test-Build
+          name: Night-Splitters-0.2.0-Alpha
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar
