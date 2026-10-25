@@ -1,4 +1,4 @@
-# Night Splitters — 0.2.0-alpha.1
+# Night Splitters — 0.2.0-alpha.2
 
 Private next-update build on `development/0.2.0`. The submitted Modrinth 0.1.5 build and `main` branch are unchanged.
 
@@ -12,8 +12,9 @@ All new modes are OFF by default. Existing configuration files keep the previous
 | --- | --- |
 | `/nightsplitters wave multiplier 1` | Normal 2–3-parent waves. |
 | `/nightsplitters wave multiplier 4` | 8–12 parents. Valid range 1–16; global/local slot budgets scale too, with an absolute 1,536-slot ceiling. |
-| `/nightsplitters darkness on` / `off` | About 10% of spawned swarm spiders can add 4 seconds of Darkness to successful melee hits. |
-| `/nightsplitters darknessonly on` / `off` | Every swarm spider hit applies Darkness instead of direct damage or poison, regardless of the 10% selection. Turning it off restores normal spider damage; the separate Darkness toggle still controls the 10% effect. |
+| `/nightsplitters darkness on` / `off` | About 20% of spawned swarm spiders can add 4 seconds of Darkness to successful melee hits. |
+| `/nightsplitters darknesschance 0.20` | Set the chance for newly spawned spiders (0–1). Existing configs keep their saved value; run this command to double the previous 10% setting, then clear the wave. |
+| `/nightsplitters darknessonly on` / `off` | Every swarm spider hit applies Darkness instead of direct damage or poison, regardless of the 20% selection. Turning it off restores normal spider damage; the separate Darkness toggle still controls the 20% effect. |
 | `/nightsplitters babyhorde on` / `off` | 15% chance for a spider wave to be exactly six small offspring instead of parents. These never split. The multiplier does not enlarge baby-only hordes. |
 | `/nightsplitters creeper on` / `off` | Enable rare intermission creepers: one 5% roll after each completed spider wave. |
 | `/nightsplitters creeperchance 0.05` | Set encounter probability from 0 to 1. `1` means every completed wave gets an attempt, subject to valid spawn conditions. |

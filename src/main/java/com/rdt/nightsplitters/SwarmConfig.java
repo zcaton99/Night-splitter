@@ -4,7 +4,7 @@ public final class SwarmConfig {
     public boolean enabled = true;
     public int waveMultiplier = 1;
     public boolean darknessEnabled = false;
-    public double darknessChance = 0.10;
+    public double darknessChance = 0.20;
     public int darknessSeconds = 4;
     public boolean darknessOnly = false;
     public boolean babyHordeEnabled = false;

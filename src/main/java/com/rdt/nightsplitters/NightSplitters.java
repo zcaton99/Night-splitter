@@ -102,6 +102,12 @@ public final class NightSplitters implements ModInitializer {
                             return config.waveMultiplier;
                         }))))
                 .then(toggle("darkness", value -> config.darknessEnabled = value))
+                .then(Commands.literal("darknesschance")
+                    .then(Commands.argument("chance", DoubleArgumentType.doubleArg(0, 1)).executes(ctx -> {
+                        config.darknessChance = DoubleArgumentType.getDouble(ctx, "chance"); saveConfig();
+                        ctx.getSource().sendSuccess(() -> Component.literal("Darkness spider chance: " + config.darknessChance + "; applies to newly spawned spiders."), true);
+                        return 1;
+                    })))
                 .then(toggle("darknessonly", value -> config.darknessOnly = value))
                 .then(toggle("babyhorde", value -> config.babyHordeEnabled = value))
                 .then(toggle("creeper", value -> config.creeperEnabled = value))
@@ -137,6 +143,7 @@ public final class NightSplitters implements ModInitializer {
                         (config.enabled ? "enabled" : "disabled") + "; loaded spiders=" + loaded.size()
                         + "; reserved slots=" + slots(null) + "/" + config.globalBudget()
                         + "; multiplier=" + config.waveMultiplier + "; darkness=" + config.darknessEnabled
+                        + "; darknessChance=" + config.darknessChance
                         + "; darknessOnly=" + config.darknessOnly + "; babyHorde=" + config.babyHordeEnabled
                         + "; creeper=" + config.creeperEnabled
                         + "; encounter creepers=" + ENCOUNTERS.activeCount() + "; pending broods=" + ENCOUNTERS.pendingCount()), false);
