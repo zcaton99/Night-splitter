@@ -2,7 +2,7 @@ name: Build Night Splitters
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'development/**']
   workflow_dispatch:
 
 jobs:
@@ -43,6 +43,15 @@ jobs:
         with:
           name: damage-regression-log
           path: build/damage-regression.log
+
+      - name: Inspect new encounter API
+        run: python3 scripts/inspect_encounter.py
+
+      - name: Upload API inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: encounter-api
+          path: build/api-inspect
 
       - name: Upload test JAR
         uses: actions/upload-artifact@v4
