@@ -114,7 +114,10 @@ public final class EncounterRegression {
         check(!cfg.darknessEnabled && !cfg.darknessOnly && !cfg.babyHordeEnabled && !cfg.creeperEnabled,
             "Feature toggles persist in live settings");
         command(server, "nightsplitters creeperchance 0.05");
-        check(cfg.creeperChance == 0.05 && cfg.darknessChance == 0.10, "Rare chance and one-in-ten defaults");
+        check(cfg.creeperChance == 0.05 && cfg.darknessChance == 0.20, "Rare creeper chance and one-in-five Darkness default");
+        command(server, "nightsplitters darknesschance 0.35");
+        check(cfg.darknessChance == 0.35, "Darkness chance command updates live settings");
+        command(server, "nightsplitters darknesschance 0.20");
         command(server, "nightsplitters wave multiplier 1");
         cfg.validate();
     }
@@ -134,7 +137,7 @@ public final class EncounterRegression {
         ordinarySwarm.addTag("ns_swarm");
         Player unaffected = player(GameType.SURVIVAL);
         ordinarySwarm.doHurtTarget(level, unaffected);
-        check(!unaffected.hasEffect(MobEffects.DARKNESS), "Other 90 percent do not apply Darkness");
+        check(!unaffected.hasEffect(MobEffects.DARKNESS), "Unselected spiders do not apply Darkness");
 
         cfg.darknessOnly = true;
         for (GameType mode : new GameType[] {GameType.CREATIVE, GameType.SURVIVAL}) {
