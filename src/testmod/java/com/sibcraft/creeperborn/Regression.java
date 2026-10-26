@@ -108,9 +108,14 @@ public final class Regression implements ModInitializer {
 
         Zombie z = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         z.snapTo(.5, y, 6.5); z.setNoAi(true); level.addFreshEntity(z);
-        Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); Creeperborn.ABILITIES.cast(p);
-        for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
-        check(z.getHealth() < 20, "Earth Bolt hits hostile in line of sight");
+        Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); String boulderCast = Creeperborn.ABILITIES.cast(p);
+        StringBuilder path = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            Creeperborn.ABILITIES.rocks.tick(); path.append(Creeperborn.ABILITIES.rocks.activeBoulders()).append(',');
+        }
+        check(z.getHealth() < 20, "Earth Bolt hits hostile: cast=" + boulderCast + ", active path=" + path
+            + ", visible=" + p.hasLineOfSight(z) + ", queried=" + level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(17)).contains(z)
+            + ", displays=" + level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class, p.getBoundingBox().inflate(17)).stream().map(d -> d.position().toString()).toList());
         Zombie blocked = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         blocked.snapTo(.5, y, 9.5); blocked.setNoAi(true); level.addFreshEntity(blocked);
         z.discard();
