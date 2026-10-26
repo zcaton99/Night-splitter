@@ -204,7 +204,7 @@ public final class Rubber {
                 p.addEffect(new MobEffectInstance(MobEffects.JUMP_BOOST,25,3,false,false));
                 if(now%40==0)p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
                 if(now%20==0)Abilities.particles((ServerLevel)p.level(),Element.AIR,p.position().add(0,1,0),6);
-             } else if(s.guarding && now%40==0){
+             } else if(s.guarding && now%80==0){
                 p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
                 if(p.getFoodData().getFoodLevel()<=6)cancelInput(p);
             }
@@ -262,11 +262,17 @@ public final class Rubber {
             if(source.is(DamageTypeTags.IS_FALL))return 0;
             return heat||sharp(source) ? amount*.5f : 0;
         }
-        if(heat || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.SWORDS)
-                || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.AXES))amount*=1.5f;
         State s=state(p);
-        if(s.guarding && source.getEntity() instanceof LivingEntity attacker) {
-            amount*=.35f;credit(p);Vec3 push=attacker.position().subtract(p.position()).normalize();attacker.setDeltaMovement(push.x*.8,.25,push.z*.8);
+        boolean arrow=source.is(net.minecraft.world.damagesource.DamageTypes.ARROW);
+        if(heat || arrow&&!s.guarding || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.SWORDS)
+                || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.AXES))amount*=1.5f;
+        if(s.guarding && (arrow||source.getEntity() instanceof LivingEntity)) {
+            amount*=.20f;credit(p);
+            // Bounce melee attackers; a distant archer is not physically touching the guard.
+            if(source.getDirectEntity() instanceof LivingEntity attacker){
+                Vec3 push=attacker.position().subtract(p.position()).normalize();
+                attacker.setDeltaMovement(push.x*.8,.25,push.z*.8);
+            }
         }
         return amount;
     }

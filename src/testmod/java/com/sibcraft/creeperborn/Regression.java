@@ -589,8 +589,21 @@ public final class Regression implements ModInitializer {
         }
         if(rubberTicks==24) {
             float modified=Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10);
-            check(Math.abs(modified-3.5)<.01,"Held C activates sustained Bounce Guard after threshold");
+            check(Math.abs(modified-2)<.01,"Held C activates sustained Bounce Guard after threshold");
             check(!Rubber.gear(rubberLive),"Held C does not activate transformation");
+            var level=(ServerLevel)rubberLive.level();
+            var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);
+            var shot=rubberLive.damageSources().arrow(arrow,rubberTarget);
+            var ownerless=rubberLive.damageSources().arrow(arrow,null);
+            check(Math.abs(Rubber.damage(rubberLive,shot,10)-2)<.001,"Guard blocks eighty percent of ordinary arrow damage without Rubber penalty");
+            check(Math.abs(Rubber.damage(rubberLive,ownerless,10)-2)<.001,"Guard protects against ownerless dispenser arrows");
+            rubberLive.damageCooldownTime=0;float arrowBefore=rubberLive.getHealth();
+            rubberLive.hurtServer(level,ownerless,4);
+            check(Math.abs((arrowBefore-rubberLive.getHealth())-.8)<.01,"Native arrow damage applies Bounce Guard reduction");
+            arrow.setRemainingFireTicks(100);
+            check(Math.abs(Rubber.damage(rubberLive,shot,10)-3)<.001,"Flaming arrows retain heat weakness while guard still reduces damage");
+            arrow.clearFire();
+
             check(Math.abs(rubberLive.getBbWidth()-.9)<.01&&Math.abs(rubberLive.getBbHeight()-2.7)<.01,
                 "Bounce Guard scales actual player width and height by 1.5");
             Rubber.tickPlayer(rubberLive);
@@ -602,6 +615,8 @@ public final class Regression implements ModInitializer {
 
             Rubber.cancelInput(rubberLive);
             check(Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10)==10,"Cancel immediately clears guard");
+            check(Math.abs(Rubber.damage(rubberLive,shot,10)-15)<.001,"Releasing guard restores ordinary Rubber arrow vulnerability");
+            arrow.discard();
             check(Math.abs(rubberLive.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.SCALE)-2)<.001,
                 "Guard cancel preserves unrelated base scale");
             rubberLive.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SCALE).setBaseValue(1);
