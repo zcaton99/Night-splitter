@@ -187,7 +187,7 @@ public final class DoorSpace {
             long now=s.level.getGameTime();
             if(!s.owner.isAlive()||s.owner.isRemoved()||s.owner.level()!=s.level){finish(s,false);continue;}
             if(s.exit!=null){
-                for(UUID id:Set.copyOf(s.travelers)){Traveler t=travelers.get(id);if(t!=null&&touches(t.player,s.exit))leave(t,s.exit,s.level);}
+                for(UUID id:Set.copyOf(s.travelers)){Traveler t=travelers.get(id);if(t!=null&&touches(t.player,s.exit))leave(t,s.exit,s.level,true);}
                 if(s.travelers.isEmpty()||now>=s.exitDeadline)finish(s,true);
                 continue;
             }

@@ -199,6 +199,7 @@ public final class Regression implements ModInitializer {
         owner.snapTo(-10.5,y+20,26.5);owner.setYRot(123);owner.setXRot(-22);
         check(DoorSpace.exit(owner).startsWith("Exit opened")&&!DoorSpace.active(owner)&&owner.gameMode()==GameType.SURVIVAL,"Valid exit restores Survival");
         check(owner.getYRot()==123&&owner.getXRot()==-22,"Door exit preserves owner current yaw and pitch");
+        owner.setYRot(0);owner.setXRot(0);
         check(DoorFruit.ready(owner,1)==level.getGameTime()+600,"Rescue cooldown starts when passage ends");
         check(owner.entityTags().stream().noneMatch(t->t.startsWith("cb_door_return_")),"Exit removes recovery marker");
         check(DoorFruit.cast(owner,1).contains("recovering"),"Immediate rescue reuse is blocked");
