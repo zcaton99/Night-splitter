@@ -81,7 +81,16 @@ public final class Abilities {
             }
             case FIRE -> {
                 if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
-                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0); effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); }
+                else {
+                    int protection=(int)Math.round(80 * power * harmony);
+                    effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0);
+                    effect(p, MobEffects.RESISTANCE, protection, 0);
+                    float extra=p.getMaxHealth()/2, previous=p.getAbsorptionAmount();
+                    if(previous<extra){
+                        effect(p,MobEffects.ABSORPTION,protection,Math.max(0,(int)Math.ceil(extra/4)-1));
+                        p.setAbsorptionAmount(Math.max(previous,extra));
+                    }
+                }
             }
             case AIR -> {
                 if (move == 1) {
@@ -110,7 +119,7 @@ public final class Abilities {
     }
     private static void bolt(ServerLevel level, Player p, Element e, double power) {
         Vec3 origin = p.getEyePosition(), direction = p.getLookAngle();
-        double maximum=Mastery.harmony(p)?24:16;
+        double maximum=Mastery.harmony(p)?50:16;
         Vec3 end = origin.add(direction.scale(maximum));
         var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
         double range = block.getType() == HitResult.Type.MISS ? maximum : origin.distanceTo(block.getLocation());

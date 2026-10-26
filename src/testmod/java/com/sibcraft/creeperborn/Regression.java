@@ -34,7 +34,7 @@ public final class Regression implements ModInitializer {
     @Override public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register(s -> {
             server = s; Creeperborn.config().naturalCreepers = false;
-            for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++) s.overworld().setChunkForced(x, z, true);
+            for (int x = -1; x <= 0; x++) for (int z = -1; z <= 2; z++) s.overworld().setChunkForced(x, z, true);
         });
         ServerTickEvents.END_SERVER_TICK.register(s -> {
             if (server == null || ++ticks < 30) return;
@@ -45,7 +45,7 @@ public final class Regression implements ModInitializer {
                 return;
             }
             boolean ready = true;
-            for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++)
+            for (int x = -1; x <= 0; x++) for (int z = -1; z <= 2; z++)
                 ready &= s.overworld().areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(x,z));
             if (!ready && ticks < 600) return;
             try { run(s.overworld()); startRubberLive(s.overworld()); }
@@ -261,6 +261,7 @@ public final class Regression implements ModInitializer {
         checkFruitWater(level);
         checkMoveRouting(level);
         checkReachAndNourishment(level);
+        checkFiftyBlocksAndShield(level);
         Player lavaMaster=player(level);
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
@@ -294,6 +295,38 @@ public final class Regression implements ModInitializer {
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkFiftyBlocksAndShield(ServerLevel level){
+        for(int distance:new int[]{40,52})for(boolean mastered:new boolean[]{false,true}){
+            Player p=player(level);p.snapTo(-12,y+5,-14);p.addItem(new ItemStack(Items.WATER_BUCKET));
+            Mastery.grant(p,Element.WATER,3);if(mastered)for(Element e:Element.values())Mastery.grant(p,e,3);
+            Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);
+            Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);
+            target.snapTo(-12,y+5,-14+distance);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+            Creeperborn.ABILITIES.cast(p);
+            check((target.getHealth()<target.getMaxHealth())==(mastered&&distance<50),"Elemental bolt extends to fifty blocks and stops beyond");
+            target.discard();
+            Zombie rockTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);
+            rockTarget.snapTo(-12,y+5,-14+distance);rockTarget.setNoAi(true);rockTarget.setNoGravity(true);level.addFreshEntity(rockTarget);
+            Creeperborn.ABILITIES.rocks.throwBoulder(p,1);
+            for(int tick=0;tick<44;tick++)Creeperborn.ABILITIES.rocks.tick();
+            check((rockTarget.getHealth()<rockTarget.getMaxHealth())==(mastered&&distance<50),"Earth projectile extends to fifty blocks and stops beyond");
+            rockTarget.discard();Creeperborn.ABILITIES.clear();
+        }
+        Player shield=player(level);Mastery.grant(shield,Element.FIRE,3);Progress.select(shield,Element.FIRE);
+        Creeperborn.ABILITIES.move(shield,2);Creeperborn.ABILITIES.cast(shield);
+        check(shield.getAbsorptionAmount()==shield.getMaxHealth()/2,"Heat Shield gives half maximum health in temporary hearts");
+        check(shield.getEffect(MobEffects.ABSORPTION).getDuration()==shield.getEffect(MobEffects.RESISTANCE).getDuration(),
+            "Extra hearts share Heat Shield physical-protection duration");
+        float health=shield.getHealth(),absorbed=shield.getAbsorptionAmount();shield.hurtServer(level,shield.damageSources().generic(),4);
+        check(shield.getHealth()==health&&shield.getAbsorptionAmount()<absorbed,"Heat Shield extra hearts absorb native damage");
+        shield.removeEffect(MobEffects.ABSORPTION);check(shield.getAbsorptionAmount()==0,"Removing temporary absorption removes its extra hearts");
+        Player stronger=player(level);Mastery.grant(stronger,Element.FIRE,3);Progress.select(stronger,Element.FIRE);
+        stronger.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.ABSORPTION,600,3));stronger.setAbsorptionAmount(16);
+        Creeperborn.ABILITIES.move(stronger,2);Creeperborn.ABILITIES.cast(stronger);
+        check(stronger.getAbsorptionAmount()==16&&stronger.getEffect(MobEffects.ABSORPTION).getDuration()==600,
+            "Heat Shield preserves stronger existing absorption");
+        Creeperborn.ABILITIES.clear();
     }
     private void checkReachAndNourishment(ServerLevel level){
         for(boolean mastered:new boolean[]{false,true}){

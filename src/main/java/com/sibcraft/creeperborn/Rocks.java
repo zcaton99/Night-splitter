@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class Rocks {
     private static final class Boulder {
-        Display.BlockDisplay visual; Player caster; Vec3 position, velocity; float damage; int life = 25;
+        Display.BlockDisplay visual; Player caster; Vec3 position, velocity; float damage; int life = 25; double remaining=30;
         Boulder(Display.BlockDisplay visual, Player caster, Vec3 position, Vec3 velocity, float damage) {
             this.visual = visual; this.caster = caster; this.position = position; this.velocity = velocity; this.damage = damage;
         }
@@ -52,7 +52,7 @@ public final class Rocks {
         ServerLevel level = (ServerLevel)p.level(); Vec3 direction = p.getLookAngle();
         Vec3 origin = p.getEyePosition().add(direction.scale(1.2));
         Boulder boulder=new Boulder(visual(level, origin, (float)(1 + .5 * power)), p, origin, direction.scale(1.2), (float)(8 * power));
-        boulder.life=Mastery.harmony(p)?38:25; boulders.add(boulder);
+        if(Mastery.harmony(p)){boulder.life=42;boulder.remaining=48.8;} boulders.add(boulder);
     }
     public void guard(Player p, int duration) {
         Guard previous = guards.remove(p.getUUID()); if (previous != null) previous.visuals().forEach(v -> v.discard());
@@ -95,9 +95,10 @@ public final class Rocks {
         Iterator<Boulder> iterator = boulders.iterator();
         while (iterator.hasNext()) {
             Boulder b = iterator.next(); ServerLevel level = (ServerLevel)b.visual.level();
-            Vec3 next = b.position.add(b.velocity);
+            Vec3 step=b.velocity.scale(Math.min(1,b.remaining/b.velocity.length()));
+            Vec3 next = b.position.add(step);
             int x = (int)Math.floor(next.x), z = (int)Math.floor(next.z);
-            if (--b.life < 0 || !b.caster.isAlive() || b.caster.level() != level
+            if (--b.life < 0 || b.remaining<=.0001 || !b.caster.isAlive() || b.caster.level() != level
                     || !level.hasChunksAt(x - 1, z - 1, x + 1, z + 1)) { b.visual.discard(); iterator.remove(); continue; }
             var wall = level.clip(new ClipContext(b.position, next, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, b.caster));
             Vec3 end = wall.getType() == HitResult.Type.MISS ? next : wall.getLocation();
@@ -114,7 +115,7 @@ public final class Rocks {
             if (victim != null || wall.getType() != HitResult.Type.MISS || volumeBlocked) {
                 if (victim != null) Abilities.strike(level, b.caster, victim, Element.EARTH, b.damage, .4);
                 Abilities.particles(level, Element.EARTH, end, 16); b.visual.discard(); iterator.remove();
-            } else { b.position = next; b.visual.snapTo(next.x, next.y, next.z); }
+            } else { b.remaining-=step.length(); b.position = next; b.visual.snapTo(next.x, next.y, next.z); }
         }
     }
 }

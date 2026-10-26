@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.9
+# Creeperborn — 0.1.0-alpha.10
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -174,6 +174,12 @@ Stretch Grab only pulls the caster toward a nonplayer living mob or solid block.
 All-four elemental masters gain **24-block Water/Fire/Air Z bolts**, up from 16. The Earth boulder keeps its existing speed and lasts 38 ticks instead of 25, traveling roughly 46 blocks instead of 30 in clear loaded space. Wall blocking and hostile-only targeting remain. Other ability ranges are unchanged.
 
 Mending Flow restores the hunger bar to **20/20**, alongside its existing environmentally scaled health healing and extinguishing. It does not grant extra saturation or change the 12-second cooldown. Restoring actual hunger counts as a meaningful Water use. This can replenish Gear 5 fuel, while its ten-minute hard limit still applies. Quake remains unchanged pending a replacement design.
+
+## Mastered reach and Heat Shield — alpha.10
+
+All four mastered elements now give **50-block Z attack reach**. Water/Fire/Air bolts raycast to 50 blocks; the Earth boulder flies at its existing speed with a bounded 50-block reach from the caster. Unmastered ranges remain 16-block bolts and roughly 30-block boulders. Solid blocks stop attacks; projectiles do not force-load chunks.
+
+Heat Shield also supplies temporary absorption equal to **half maximum health**: normally **10 extra health / five golden hearts**. Its absorption duration matches the existing physical-protection duration (4 seconds at full environmental power, 4.6 with Harmony). Environment still scales duration, while the heart amount remains half maximum health. Fire Resistance, Resistance I, and the 10-second cooldown remain. Recasting does not add heart totals together; stronger existing absorption is not reduced. Vanilla absorption-effect merging applies when other absorption effects are already active.
 
 ## Later milestones
 
