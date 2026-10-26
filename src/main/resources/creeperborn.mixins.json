@@ -9,7 +9,8 @@
     "FruitWaterPlayerMixin",
     "FruitWaterBreathingMixin",
     "SlabShacklesMixin",
-    "SlabShacklesMoveMixin"
+    "SlabShacklesMoveMixin",
+    "PunchDisplayAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

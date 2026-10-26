@@ -44,8 +44,9 @@ public final class Punches {
         if(d==null)throw new IllegalStateException("Punch display unavailable");
         d.addTag("cb_temporary_rock");
         d.setCustomName(Component.literal("cb_punch|"+p.owner.getUUID()+"|"+(p.left?"L":"R")+"|"+(fist?"F":"A")));
-        d.setCustomNameVisible(false);d.setBlockState(Blocks.WHITE_TERRACOTTA.defaultBlockState());
-        d.setTransformationInterpolationDuration(1);d.setPosRotInterpolationDuration(1);d.setViewRange(1);d.setWidth(48);d.setHeight(48);
+        d.setCustomNameVisible(false);d.setBlockState(Blocks.STONE.defaultBlockState());
+        var settings=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;
+        settings.creeperborn$duration(1);settings.creeperborn$positionDuration(1);settings.creeperborn$view(1);settings.creeperborn$width(48);settings.creeperborn$height(48);
         Vec3 from=origin(p);d.snapTo(from.x,from.y,from.z);p.level.addFreshEntity(d);return d;
     }
     private static Vec3 origin(Punch p){
@@ -55,7 +56,7 @@ public final class Punches {
     private static void transform(Display.BlockDisplay d,Vec3 at,Vec3 direction,float width,float length){
         d.snapTo(at.x,at.y,at.z);
         Quaternionf rotation=new Quaternionf().rotationTo(0,1,0,(float)direction.x,(float)direction.y,(float)direction.z);
-        d.setTransformationInterpolationDelay(0);
+        ((com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d).creeperborn$delay(0);
         d.setTransformation(new Transformation(new Vector3f(),rotation,new Vector3f(width,length,width),new Quaternionf()));
     }
     private static void advance(Punch p){
