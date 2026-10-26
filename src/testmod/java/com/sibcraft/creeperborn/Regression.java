@@ -314,7 +314,11 @@ public final class Regression implements ModInitializer {
             rockTarget.discard();Creeperborn.ABILITIES.clear();
         }
         Player shield=player(level);Mastery.grant(shield,Element.FIRE,3);Progress.select(shield,Element.FIRE);
+        shield.setHealth(8);
         Creeperborn.ABILITIES.move(shield,2);Creeperborn.ABILITIES.cast(shield);
+        check(shield.getHealth()==18&&shield.getMaxHealth()==20,"Heat Shield heals five red hearts without changing maximum health");
+        check(shield.getEffect(MobEffects.RESISTANCE).getDuration()==(int)Math.round(160*EnvironmentPower.strength(shield,Element.FIRE)),
+            "Heat Shield uses doubled eight-second base protection");
         check(shield.getAbsorptionAmount()==shield.getMaxHealth()/2,"Heat Shield gives half maximum health in temporary hearts");
         check(shield.getEffect(MobEffects.ABSORPTION).getDuration()==shield.getEffect(MobEffects.RESISTANCE).getDuration(),
             "Extra hearts share Heat Shield physical-protection duration");
@@ -388,6 +392,7 @@ public final class Regression implements ModInitializer {
         check(fruit.getHealth()<before&&Rubber.gear(fruit),"Native drowning damages an active Gear 5 player");
         WaterRules.apply(fruit);
         check(!Rubber.gear(fruit),"Submersion ends Gear 5");
+        check(!fruit.getAbilities().mayfly,"Water suppression revokes Gear flight");
         fruit.setDeltaMovement(0,.8,0);double previousY=fruit.getY();
         fruit.travel(new net.minecraft.world.phys.Vec3(0,1,0));
         check(fruit.getY()<previousY&&fruit.getDeltaMovement().y<0,"Native travel overrides upward swim input with sinking");
@@ -459,9 +464,21 @@ public final class Regression implements ModInitializer {
             rubberLive.damageCooldownTime=0;
             rubberLive.hurtServer((ServerLevel)rubberLive.level(),rubberLive.damageSources().lava(),4);
             check(rubberLive.getHealth()<before,"Native lava damage bypasses Gear 5");
-            rubberLive.getFoodData().setFoodLevel(7);
+            rubberLive.getFoodData().setFoodLevel(20);
         }
+        if(rubberTicks==26){
+            check(rubberLive.getAbilities().mayfly,"Active Gear 5 permits double-tap flight");
+            rubberLive.getAbilities().flying=true;
+        }
+        if(rubberTicks==31||rubberTicks==37){
+            rubberTarget.snapTo(-8,y,-3);rubberTarget.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            float before=rubberTarget.getHealth();
+            check(Rubber.cast(rubberLive,0,0).equals("Stretch Punch!"),"Gear punch recovers after six ticks");
+            check(rubberTarget.getHealth()<before,"Rapid Gear punches bypass hostile hurt cooldown");
+        }
+        if(rubberTicks==38)rubberLive.getFoodData().setFoodLevel(7);
         if(rubberTicks==80) {
+            check(!rubberLive.getAbilities().mayfly&&!rubberLive.getAbilities().flying,"Hunger ending Gear removes active flight");
             check(!Rubber.gear(rubberLive)&&rubberLive.getFoodData().getFoodLevel()==6,"Food drain ends Gear at three icons");
             rubberLive.getFoodData().setFoodLevel(20);
             check(Rubber.cast(rubberLive,2,0).contains("recovering"),"Food cannot bypass post-Gear cooldown");
@@ -498,6 +515,7 @@ public final class Regression implements ModInitializer {
         p.getFoodData().setFoodLevel(20);
         check(Rubber.cast(p,2,8).isEmpty()&&!Rubber.gear(p),"Holding C never triggers Gear 5 on release");
         check(Rubber.cast(p,2,0).contains("Gear 5!")&&Rubber.gear(p),"Tier 3 can activate Gear 5");
+        check(p.getAbilities().mayfly&&!p.getAbilities().invulnerable&&!p.getAbilities().instabuild,"Gear grants flight without Creative privileges");
         check(Rubber.MAX_GEAR_TICKS==12000&&Rubber.GEAR_COOLDOWN==2400,"Ten-minute cap and two-minute recovery");
         check(Rubber.damage(p,p.damageSources().fall(),10)==0,"Gear 5 prevents fall damage");
         check(Rubber.damage(p,p.damageSources().generic(),10)==0,"Gear 5 prevents ordinary damage");
@@ -513,6 +531,7 @@ public final class Regression implements ModInitializer {
         check(Rubber.damage(p,attacker.damageSources().playerAttack(attacker),10)==5,"Fire bending direct strike bypasses Gear 5");
         Rubber.fireBending(false);
         Rubber.forget(p);check(!Rubber.gear(p)&&Rubber.cast(p,2,0).contains("recovering"),"Logout ends Gear and preserves recovery");
+        check(!p.getAbilities().mayfly&&!p.getAbilities().flying,"Logout removes Gear-granted flight");
         check(Rubber.damage(p,p.damageSources().lava(),10)==15,"Normal Rubber remains vulnerable to heat");
         Progress.consume(p,Relics.heart(Element.EARTH));check(!Rubber.selected(p)&&Rubber.unlocked(p),"Element selection preserves fruit unlock");
         check(CombatNetwork.selection(p)==Element.EARTH.ordinal(),"Server selection reports element switch after fruit");
@@ -597,7 +616,7 @@ public final class Regression implements ModInitializer {
             for (Element e : Element.values()) Mastery.grant(fireShield,e,3);
             if (!boosted) Mastery.grant(fireShield,Element.AIR,2);
             Progress.select(fireShield,Element.FIRE); Creeperborn.ABILITIES.move(fireShield,2); Creeperborn.ABILITIES.cast(fireShield);
-            int expectedResistance = (int)Math.round(80 * EnvironmentPower.strength(fireShield,Element.FIRE) * Mastery.multiplier(fireShield));
+            int expectedResistance = (int)Math.round(160 * EnvironmentPower.strength(fireShield,Element.FIRE) * Mastery.multiplier(fireShield));
             check(fireShield.getEffect(MobEffects.RESISTANCE).getDuration() == expectedResistance,
                 "Heat Shield physical protection receives the same Harmony duration bonus");
         }

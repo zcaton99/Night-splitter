@@ -24,7 +24,7 @@ public final class Rubber {
     private static final class State {
         long gearUntil, gearReady, punchReady, dodgeReady, grabReady, credit = -10000, recent = -10000;
         long press = -1, guardUntil; int held = -1, direction; ServerLevel level;
-        boolean guarding, grabAttempted; LivingEntity grabTarget; Vec3 anchor;
+        boolean guarding, grabAttempted, grantedFlight; LivingEntity grabTarget; Vec3 anchor;
     }
     private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
     private static long now(Player p) { return p.level().getGameTime(); }
@@ -85,10 +85,11 @@ public final class Rubber {
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {
-            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?20:30);
+            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?6:10);
             LivingEntity target=target(p, gear(p)?20:charged?14:8);
             if(target!=null) {
                 float damage=(float)((charged ? 8 : 5) * (gear(p) ? 1.75 : 1));
+                if(gear(p))target.damageCooldownTime=0;
                 if(target.hurtServer(level,p.damageSources().playerAttack(p),damage)) credit(p);
                 Vec3 push=target.position().subtract(p.position()).normalize().scale(charged ? 1 : .4);
                 target.setDeltaMovement(target.getDeltaMovement().add(push.x,.15,push.z));
@@ -107,7 +108,8 @@ public final class Rubber {
         if(now<s.gearReady)return "Gear 5 recovering: " + ((s.gearReady-now+19)/20) + "s.";
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to enter Gear 5.";
         s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
-        return "Gear 5! Food fuels it, up to 10 minutes.";
+        if(!p.getAbilities().mayfly){s.grantedFlight=true;p.addTag("cb_rubber_gear_flight");p.getAbilities().mayfly=true;p.onUpdateAbilities();}
+        return "Gear 5! Double-tap Space to fly. Food fuels it, up to 10 minutes.";
     }
     private static void grapple(Player p,State s) {
         if(!s.grabAttempted) {
@@ -200,7 +202,21 @@ public final class Rubber {
                 }
             }
     }
+    public static void recoverFlight(Player p){
+        if(p.entityTags().contains("cb_rubber_gear_flight")&&!gear(p)){
+            p.removeTag("cb_rubber_gear_flight");
+            if(!p.isCreative()&&!p.isSpectator()){
+                p.getAbilities().mayfly=false;p.getAbilities().flying=false;p.onUpdateAbilities();
+            }
+        }
+    }
     private static void end(Player p,State s) {
+        if(s.grantedFlight){
+            s.grantedFlight=false;p.removeTag("cb_rubber_gear_flight");
+            if(!p.isCreative()&&!p.isSpectator()){
+                p.getAbilities().mayfly=false;p.getAbilities().flying=false;p.onUpdateAbilities();
+            }
+        }
         if(s.gearUntil>0){s.gearUntil=0;s.gearReady=now(p)+GEAR_COOLDOWN;
             for(String tag:Set.copyOf(p.entityTags()))if(tag.startsWith("cb_rubber_recovery_"))p.removeTag(tag);
             p.addTag("cb_rubber_recovery_"+s.gearReady);Creeperborn.say(p,"Gear 5 ended — recovering for 2 minutes.");}

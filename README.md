@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.10
+# Creeperborn — 0.1.0-alpha.11
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -180,6 +180,16 @@ Mending Flow restores the hunger bar to **20/20**, alongside its existing enviro
 All four mastered elements now give **50-block Z attack reach**. Water/Fire/Air bolts raycast to 50 blocks; the Earth boulder flies at its existing speed with a bounded 50-block reach from the caster. Unmastered ranges remain 16-block bolts and roughly 30-block boulders. Solid blocks stop attacks; projectiles do not force-load chunks.
 
 Heat Shield also supplies temporary absorption equal to **half maximum health**: normally **10 extra health / five golden hearts**. Its absorption duration matches the existing physical-protection duration (4 seconds at full environmental power, 4.6 with Harmony). Environment still scales duration, while the heart amount remains half maximum health. Fire Resistance, Resistance I, and the 10-second cooldown remain. Recasting does not add heart totals together; stronger existing absorption is not reduced. Vanilla absorption-effect merging applies when other absorption effects are already active.
+
+## Longer shield, rapid punches and Gear 5 flight — alpha.11
+
+Heat Shield heals **10 health / five red hearts**, capped by normal maximum health; Harmony increases that healing by 15%. It retains the half-maximum-health golden absorption hearts. Physical protection and absorption now last **8 seconds** at full environmental power (**9.2 seconds** with Harmony), matching Fire Resistance. Environment still scales duration and the 10-second cooldown remains. Red hearts are healing, not an increase to maximum health.
+
+Rubber Z punch cooldown is **0.5 seconds normally** and **0.3 seconds in Gear 5**. Gear 5 punches bypass the hostile target's normal hurt cooldown so successive permitted punches can actually deal damage. Range remains 8/14 blocks normally and 20 in Gear 5.
+
+Active Gear 5 grants vanilla-style flight permission: **double-tap Space** to start/stop flying, Space to rise, Sneak to descend. It grants no Creative inventory, building privilege or invulnerability. Hunger fuel, ten-minute cap, and recovery remain. Gear-granted flight is removed on transformation end, water suppression, death, disconnect or dimension change. Existing flight permission is preserved; Creative/Spectator flight is not revoked. A saved marker cleans up Gear flight on rejoin after an interrupted session. Flight speed remains vanilla.
+
+Test flight in Survival and verify it ends when hunger reaches three icons. Test logout/rejoin and a dimension change, as well as Creative flight remaining available. The native client double-tap gesture needs in-game testing; automated checks cover permission grant and cleanup.
 
 ## Later milestones
 

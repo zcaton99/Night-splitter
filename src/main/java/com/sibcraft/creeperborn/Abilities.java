@@ -82,7 +82,9 @@ public final class Abilities {
             case FIRE -> {
                 if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
                 else {
-                    int protection=(int)Math.round(80 * power * harmony);
+                    int protection=(int)Math.round(160 * power * harmony);
+                    float before=p.getHealth();p.heal((float)(10*harmony));
+                    if(p.getHealth()>before)Mastery.credit(p,e);
                     effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0);
                     effect(p, MobEffects.RESISTANCE, protection, 0);
                     float extra=p.getMaxHealth()/2, previous=p.getAbsorptionAmount();
