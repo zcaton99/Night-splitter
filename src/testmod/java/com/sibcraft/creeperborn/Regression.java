@@ -262,6 +262,7 @@ public final class Regression implements ModInitializer {
         checkMoveRouting(level);
         checkReachAndNourishment(level);
         checkFiftyBlocksAndShield(level);
+        checkFlightCleanup(level);
         Player lavaMaster=player(level);
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
@@ -295,6 +296,17 @@ public final class Regression implements ModInitializer {
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkFlightCleanup(ServerLevel level){
+        Player p=player(level);check(Rubber.consume(p,Relics.fruit()),"Flight cleanup test acquires Rubber");Rubber.grant(p,3);
+        p.getAbilities().mayfly=true;p.getAbilities().flying=true;
+        Rubber.cast(p,2,0);Rubber.forget(p);
+        check(p.getAbilities().mayfly&&p.getAbilities().flying,"Preexisting flight permission survives Gear ending");
+        FruitClaims.releaseOnDeath(p);
+        Player interrupted=player(level);interrupted.getAbilities().mayfly=true;interrupted.getAbilities().flying=true;
+        interrupted.addTag("cb_rubber_gear_flight");Rubber.recoverFlight(interrupted);
+        check(!interrupted.getAbilities().mayfly&&!interrupted.getAbilities().flying&&!interrupted.entityTags().contains("cb_rubber_gear_flight"),
+            "Rejoin cleans up saved Gear flight marker after interrupted session");
     }
     private void checkFiftyBlocksAndShield(ServerLevel level){
         for(int distance:new int[]{40,52})for(boolean mastered:new boolean[]{false,true}){
