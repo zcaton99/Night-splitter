@@ -38,6 +38,7 @@ public final class Creeperborn implements ModInitializer {
     private static Config config = new Config();
     public static Config config() { return config; }
     @Override public void onInitialize() {
+        CombatNetwork.init();
         Path path = FabricLoader.getInstance().getConfigDir().resolve("creeperborn.json");
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
@@ -48,7 +49,7 @@ public final class Creeperborn implements ModInitializer {
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { CREEPERS.track(entity); GUARDIANS.track(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); Mastery.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ABILITIES.tick();
             if (server.getTickCount() % 20 == 0) Mastery.tick(server);

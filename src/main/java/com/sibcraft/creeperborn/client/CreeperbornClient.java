@@ -2,6 +2,8 @@ package com.sibcraft.creeperborn.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.sibcraft.creeperborn.Element;
+import com.sibcraft.creeperborn.CastPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -39,14 +41,14 @@ public final class CreeperbornClient implements ClientModInitializer {
                 if (combat) { selected = Element.values()[i]; client.player.sendOverlayMessage(Component.literal(selected.title + " — R/G/H: " + String.join(" / ", selected.moves))); }
             }
             for (int i = 0; i < moves.length; i++) while (moves[i].consumeClick()) {
-                if (combat && client.getConnection().getCommands().getRoot().getChild("creeperborn") != null) {
-                    client.getConnection().sendCommand("creeperborn use " + selected.key() + " " + (i + 1));
+                if (combat && ClientPlayNetworking.canSend(CastPayload.TYPE)) {
+                    ClientPlayNetworking.send(new CastPayload(selected.ordinal(), i));
                     if (selected == Element.AIR && i == 1) lastAirStep = ticks;
                 }
             }
             if (combat && selected == Element.AIR && moves[1].isDown() && ticks - lastAirStep >= 4
-                    && client.getConnection().getCommands().getRoot().getChild("creeperborn") != null) {
-                client.getConnection().sendCommand("creeperborn use air 2"); lastAirStep = ticks;
+                    && ClientPlayNetworking.canSend(CastPayload.TYPE)) {
+                ClientPlayNetworking.send(new CastPayload(Element.AIR.ordinal(), 1)); lastAirStep = ticks;
             }
         });
     }
