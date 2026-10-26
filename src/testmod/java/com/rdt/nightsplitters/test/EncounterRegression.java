@@ -74,11 +74,15 @@ public final class EncounterRegression {
             new AABB(-5, y - 5, -5, 5, y + 5, 5),
             c -> c.entityTags().contains(CreeperEncounters.CHILD));
         check(children.size() == 2, "Both offspring present in the real world");
+        check(children.get(0).distanceToSqr(children.get(1)) >= 24.9, "Babies spawn five blocks apart");
         for (Creeper child : children) {
             check(child.getAttributeValue(Attributes.SCALE) == 0.5, "Offspring scaled to baby size");
             check(!child.entityTags().contains(CreeperEncounters.PARENT), "Child never inherits parent flag");
-            ((CreeperAccess)child).nightSplitters$explode();
         }
+        ((CreeperAccess)children.get(0)).nightSplitters$explode();
+        check(children.get(1).isAlive() && children.get(1).getHealth() == 10,
+            "Sibling survives first baby explosion at spawn");
+        ((CreeperAccess)children.get(1)).nightSplitters$explode();
         check(encounters.pendingCount() == 0, "Exploding babies cannot create grandchildren");
         check(level.getBlockState(new BlockPos(0, (int)y - 1, 0)).is(Blocks.STONE),
             "Baby block-damage off preserves blocks");

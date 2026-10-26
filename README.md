@@ -1,4 +1,4 @@
-# Night Splitters — 0.2.0-alpha.3
+# Night Splitters — 0.2.0-alpha.4
 
 Private next-update build on `development/0.2.0`. The submitted Modrinth 0.1.5 build and `main` branch are unchanged.
 
@@ -28,7 +28,7 @@ Commands require operator permissions. The global `enable`, `disable`, `clear`, 
 
 ## Creeper encounter
 
-The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. Each interval randomly selects 3, 4, or 5 completed spider waves (including baby hordes). Creeper completion never counts as a spider wave. If no valid spawn is found, the encounter stays due for the next completed wave. Clear, restart, dawn cleanup, toggling creepers, and testcreeper reset the interval. The old creeperChance config field is ignored.
+The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies spawn on opposite sides of the blast, about five blocks apart, using loaded, collision-free positions with solid footing. If no safe pair fits, spawning retries for up to ten extra seconds before cancellation. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. Each interval randomly selects 3, 4, or 5 completed spider waves (including baby hordes). Creeper completion never counts as a spider wave. If no valid spawn is found, the encounter stays due for the next completed wave. Clear, restart, dawn cleanup, toggling creepers, and testcreeper reset the interval. The old creeperChance config field is ignored.
 
 Both parent and babies hunt nearby non-Spectator players, including Creative players, but use vanilla explosion damage/immunity. The existing Creative half-damage exception applies only to swarm **spider melee**. Darkness-only mode also applies only to spiders; creepers still explode normally.
 

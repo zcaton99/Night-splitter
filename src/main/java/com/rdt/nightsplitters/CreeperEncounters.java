@@ -103,17 +103,37 @@ public final class CreeperEncounters {
             long now = level.getGameTime();
             if (!allowed(level) || now > brood.due() + 200) { iterator.remove(); continue; }
             if (now < brood.due()) continue;
-            BlockPos pos = BlockPos.containing(brood.position());
-            // Never force-load terrain to finish an encounter.
-            if (!level.hasChunksAt(pos.getX() - 1, pos.getZ() - 1, pos.getX() + 1, pos.getZ() + 1)) continue;
-            iterator.remove();
-            for (int i = 0; i < 2; i++) {
-                Creeper child = make(level, false);
-                child.snapTo(brood.position().x, brood.position().y, brood.position().z);
-                if (level.getWorldBorder().isWithinBounds(child.blockPosition())
-                        && level.noCollision(child, child.getBoundingBox())) level.addFreshEntity(child);
+            // Search opposite sides of the blast, with safe footing and no chunk loading.
+            Creeper first = null, second = null;
+            double startAngle = level.getRandom().nextDouble() * Math.PI * 2;
+            for (int attempt = 0; attempt < 8 && first == null; attempt++) {
+                double angle = startAngle + attempt * Math.PI / 4;
+                double dx = Math.cos(angle) * 2.5, dz = Math.sin(angle) * 2.5;
+                Creeper left = childAt(level, brood.position().add(dx, 0, dz));
+                Creeper right = childAt(level, brood.position().add(-dx, 0, -dz));
+                if (left != null && right != null) { first = left; second = right; }
             }
+            if (first == null) continue; // Retry until the existing ten-second deadline.
+            if (!level.addFreshEntity(first)) continue;
+            if (!level.addFreshEntity(second)) { first.discard(); loaded.remove(first.getUUID()); continue; }
+            iterator.remove();
         }
+    }
+
+    private Creeper childAt(ServerLevel level, Vec3 position) {
+        int x = (int)Math.floor(position.x), z = (int)Math.floor(position.z);
+        if (!level.hasChunksAt(x - 1, z - 1, x + 1, z + 1)
+                || !level.areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(x >> 4, z >> 4))) return null;
+        Creeper child = make(level, false);
+        for (int dy : new int[] {0, -1, 1, -2, 2, -3}) {
+            BlockPos pos = BlockPos.containing(position.x, position.y + dy, position.z);
+            child.snapTo(position.x, pos.getY(), position.z);
+            if (level.getWorldBorder().isWithinBounds(pos)
+                    && level.getFluidState(pos).isEmpty()
+                    && level.getBlockState(pos.below()).isSolidRender()
+                    && level.noCollision(child, child.getBoundingBox())) return child;
+        }
+        return null;
     }
 
     private boolean allowed(ServerLevel level) {
