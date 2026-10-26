@@ -69,7 +69,7 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if (kind.equals("fruit:rubber")) {
-                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; T selects Rubber; Z punches." : "You already know Rubber. Share the fruit!");
+                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "You already know Rubber. Share the fruit!");
             } else if (kind.startsWith("heart:")) {
                 say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
                     : "You already know this element. Keep the heart for a friend.");

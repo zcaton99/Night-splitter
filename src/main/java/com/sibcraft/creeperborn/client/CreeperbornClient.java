@@ -21,7 +21,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private void send(int action,int value){if(ClientPlayNetworking.canSend(ControlPayload.TYPE))ClientPlayNetworking.send(new ControlPayload(action,value));}
     private void cancel(){if(held>=0)send(8,0);held=-1;waitingForRelease=true;}
     @Override public void onInitializeClient(){
-        KeyMapping toggle=key("toggle",InputConstants.KEY_B),cycle=key("cycle",InputConstants.KEY_R),fruits=key("fruit",InputConstants.KEY_T);
+        KeyMapping toggle=key("toggle",InputConstants.KEY_B),cycle=key("cycle",InputConstants.KEY_R),fruits=key("fruit",InputConstants.KEY_G);
         KeyMapping[] moves={key("move1",InputConstants.KEY_Z),key("move2",InputConstants.KEY_X),key("move3",InputConstants.KEY_C)};
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
             if(payload.action()==3){fruit=payload.value()==4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
@@ -35,7 +35,7 @@ public final class CreeperbornClient implements ClientModInitializer {
             }
             while(toggle.consumeClick()){
                 combat=!combat;cancel();if(combat)send(0,0);
-                client.player.sendOverlayMessage(Component.literal("Creeperborn combat "+(combat?"ON — R elements; T fruits; Z/X/C moves":"OFF")));
+                client.player.sendOverlayMessage(Component.literal("Creeperborn combat "+(combat?"ON — R elements; G fruits; Z/X/C moves":"OFF")));
             }
             while(cycle.consumeClick()){if(combat){cancel();send(1,client.options.keyShift.isDown()?-1:1);}}
             while(fruits.consumeClick()){if(combat){cancel();send(4,0);}}

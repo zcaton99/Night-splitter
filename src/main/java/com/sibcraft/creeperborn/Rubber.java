@@ -78,7 +78,7 @@ public final class Rubber {
         String result = cast(p,move,held); if (!result.isEmpty()) Creeperborn.say(p,result);
     }
     public static String cast(Player p, int move, long held) {
-        if (!(p.level() instanceof ServerLevel level) || !selected(p) || !p.isAlive() || p.isSpectator()) return "Select Rubber with T first.";
+        if (!(p.level() instanceof ServerLevel level) || !selected(p) || !p.isAlive() || p.isSpectator()) return "Select Rubber with G first.";
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {

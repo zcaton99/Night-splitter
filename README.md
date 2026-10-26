@@ -90,7 +90,7 @@ GitHub Actions builds with Java 25, runs a real Fabric dedicated-server test mod
 
 Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% (1 in 500)** before the elemental roll, with at most one naturally converted loaded Fruitborn within 128 blocks. Each eligible creeper is checked once. Existing elemental/checked creepers and Night Splitters creepers are excluded. Player kills before explosion drop a marked Rubber Fruit; right-click to consume. Duplicates remain shareable. Unlocks and progression persist through saves and respawn.
 
-**B** toggles combat, **R / Shift+R** select elements, **T** selects Rubber (the first fruit; future fruits will cycle here). **Z/X/C** operate the selected category. Only one fruit input can be held at a time. Releasing or switching categories, disabling combat, opening a menu, death, disconnect, or losing input heartbeat ends held defense. Keys remain rebindable; V and F are unused.
+**B** toggles combat, **R / Shift+R** select elements, **G** selects Rubber (the first fruit; future fruits will cycle here). **Z/X/C** operate the selected category. Only one fruit input can be held at a time. Releasing or switching categories, disabling combat, opening a menu, death, disconnect, or losing input heartbeat ends held defense. Keys remain rebindable; V and F are unused.
 
 | Rubber key | Tap | Hold |
 | --- | --- | --- |
