@@ -104,17 +104,17 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                p.sendSystemMessage(Component.literal("Creeperborn 0.1.0-alpha.7 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
-                    + " | move: " + (ABILITIES.move(p) + 1)
-                    + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
-                    + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
-                    + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%, water breathing, lava + fall immunity)" : "locked")
-                    + " | Rubber fruit: " + (FruitClaims.available()?"available":FruitClaims.owns(p)?"claimed by you":"claimed by another living player")
-                    + " | natural creeper chance: " + config.elementalChance + " | " + Rubber.status(p)
-                    + " | fruit water: " + (!WaterRules.fruitOwner(p)?"not applicable":WaterRules.mastered(p)?"mastery immunity + underwater breathing":WaterRules.suppressed(p)?"SUBMERGED — sinking, powers disabled":"vulnerable")));
-                p.sendSystemMessage(Component.literal("Water check — mode: "+p.gameMode()+", eyes submerged: "+WaterRules.submerged(p)
-                    +", fruit owner: "+WaterRules.fruitOwner(p)+", all four mastered: "+Mastery.harmony(p)
-                    +", air: "+p.getAirSupply()+"/"+p.getMaxAirSupply()+". Creative prevents drowning; all-four mastery grants underwater breathing."));
+                String active=Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
+                chat(p,"Creeperborn 0.1.0-alpha.8 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Elements unlocked: "+known);
+                if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
+                    +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
+                chat(p,Rubber.status(p));
+                chat(p,"Rubber claim: "+(FruitClaims.available()?"available":FruitClaims.owns(p)?"yours":"another living player"));
+                chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall immunity":"not yet mastered"));
+                chat(p,"Water: "+(WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
+                    +" | Eyes submerged: "+WaterRules.submerged(p)+" | Air: "+p.getAirSupply()+"/"+p.getMaxAirSupply());
+                chat(p,"Controls: R elements, Shift+R backward, G Rubber, Z/X/C moves, B combat.");
                 return 1;
             }));
             root.then(Commands.literal("cast").executes(ctx -> { ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, ABILITIES.cast(p)); return 1; }));
@@ -201,6 +201,7 @@ public final class Creeperborn implements ModInitializer {
             .filter(v -> v.isAlive() && Guardians.owns(p, v) && p.hasLineOfSight(v))
             .min(Comparator.comparingDouble(p::distanceToSqr)).orElse(null);
     }
+    private static void chat(Player p,String message){p.sendSystemMessage(Component.literal(message));}
     public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
 }
 

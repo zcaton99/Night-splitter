@@ -30,6 +30,14 @@ public final class CombatNetwork {
             }
         }
     }
+    /** Move presses always use server selection, even before a client selection reply arrives. */
+    public static String press(Player p,int packed){
+        int move=packed&3;
+        if(move>2)return "";
+        if(Rubber.selected(p)){Rubber.press(p,move,packed>>>2);return "";}
+        if(Progress.selected(p)==null)return "Select an unlocked element with R or Rubber with G.";
+        Creeperborn.ABILITIES.move(p,move);return Creeperborn.ABILITIES.cast(p);
+    }
     public static void init() {
         PayloadTypeRegistry.serverboundPlay().register(CastPayload.TYPE, CastPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
@@ -53,7 +61,7 @@ public final class CombatNetwork {
                 if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Directional dodge / hold Grapple | C: Gear 5 / hold Guard"); }
                 else Creeperborn.say(p,"Consume a Rubber Fruit first.");
             }
-            if(payload.action()==5)Rubber.press(p,payload.value() & 3,payload.value() >>> 2);
+            if(payload.action()==5){String result=press(p,payload.value());if(!result.isEmpty())Creeperborn.say(p,result);}
             if(payload.action()==6)Rubber.release(p,payload.value());
             if(payload.action()==7)Rubber.heartbeat(p);
             if(payload.action()==8)Rubber.cancelInput(p);

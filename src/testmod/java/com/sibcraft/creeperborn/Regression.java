@@ -259,6 +259,7 @@ public final class Regression implements ModInitializer {
         checkHarmony(level);
         checkRubber(level);
         checkFruitWater(level);
+        checkMoveRouting(level);
         Player lavaMaster=player(level);
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
@@ -292,6 +293,17 @@ public final class Regression implements ModInitializer {
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkMoveRouting(ServerLevel level){
+        Player p=player(level);Mastery.grant(p,Element.WATER,3);p.addItem(new ItemStack(Items.WATER_BUCKET));
+        Progress.select(p,Element.WATER);p.setHealth(10);
+        check(CombatNetwork.press(p,2).equals("Mending Flow!")&&p.getHealth()==14,"C routes to selected Water immediately");
+        check(Rubber.consume(p,Relics.fruit()),"Routing test acquires Rubber");Rubber.grant(p,3);
+        check(CombatNetwork.press(p,2).isEmpty()&&p.getHealth()==14,"C press routes to newly selected Rubber, not stale Water");
+        Rubber.release(p,2);check(Rubber.gear(p),"C release activates Rubber Gear 5 after selection");
+        Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();p.setHealth(10);
+        check(CombatNetwork.press(p,2).equals("Mending Flow!")&&p.getHealth()==14,"C routes back to element without a failed first cast");
+        FruitClaims.releaseOnDeath(p);Rubber.clear();Creeperborn.ABILITIES.clear();
     }
     private void checkFruitWater(ServerLevel level) {
         Rubber.clear();

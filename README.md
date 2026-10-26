@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.7
+# Creeperborn — 0.1.0-alpha.8
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -158,6 +158,12 @@ Old alpha.1 R/G/H move defaults automatically migrate together to Z/X/C on first
 The server synchronizes the active element/fruit whenever it changes, including after eating hearts/fruits or using selection commands, so the client does not have to discover the selection through a failed first cast. Status now prints in persistent chat with mode, eye submersion, real fruit ownership, all-four mastery, and air supply.
 
 For water diagnosis: use Survival, consume a genuine fruit, and leave at least one element below tier 3. Creative invulnerability and complete elemental mastery intentionally prevent drowning. Unrelated custom bindings/mod conflicts may still require adjustment in Controls. The input fixes need an actual client playtest; dedicated-server tests cannot reproduce your saved keybindings or physical keyboard input.
+
+## Readable status and selected-power routing — alpha.8
+
+Status is split into short messages in chat history. Open chat to read/scroll it; no chat input text is overwritten. It reports the actual active category, separate element/fruit progression, ownership, all-four bonuses and water state.
+
+The default layout is B combat, R next element, Shift+R previous element, G Rubber, Z/X/C first/second/third move. R/G enable combat and remain selected until changed. Move presses use the server's current selection; a delayed client selection reply cannot route the first press into the wrong power. Fresh moves can follow a selection in the same tick. Keys already held while switching or opening menus must be released first. Rubber tap/hold and Air's repeated second move remain supported.
 
 ## Later milestones
 
