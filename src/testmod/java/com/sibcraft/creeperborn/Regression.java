@@ -314,6 +314,15 @@ public final class Regression implements ModInitializer {
         var visuals=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(22));
         check(visuals.stream().noneMatch(d->d.getCustomName()!=null&&d.getCustomName().getString().startsWith("cb_punch|")),
             "Completed punch removes its temporary display entities");
+        Rubber.clear();target.setHealth(20);target.damageCooldownTime=0;
+        for(int dy=8;dy<=10;dy++)level.setBlockAndUpdate(new BlockPos(-12,(int)y+dy,-8),Blocks.STONE.defaultBlockState());
+        Rubber.cast(p,0,8);
+        var activeVisuals=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(22));
+        check(activeVisuals.stream().filter(d->d.getCustomName()!=null&&d.getCustomName().getString().startsWith("cb_punch|")).allMatch(d->!d.shouldBeSaved()),
+            "Punch arm and fist are excluded from world saves");
+        for(int tick=0;tick<6;tick++)Punches.tick();
+        check(target.getHealth()==20,"Wall blocks stretching fist before the hostile behind it");
+        for(int dy=8;dy<=10;dy++)level.setBlockAndUpdate(new BlockPos(-12,(int)y+dy,-8),Blocks.AIR.defaultBlockState());
         target.discard();FruitClaims.releaseOnDeath(p);Rubber.clear();
         check(Punches.visual("cb_punch|"+p.getUUID()+"|L|F").left()&&Punches.visual("bad")==null,"Punch visual metadata validates owner and side");
     }
