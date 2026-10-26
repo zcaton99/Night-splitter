@@ -55,6 +55,7 @@ public final class Abilities {
         int move = move(p);
         if (!Mastery.allowed(p, e, move)) return e.moves[move] + " locked: move 2 needs 10 meaningful uses + 5 active minutes; move 3 needs 40 uses + 20 active minutes.";
         double power = EnvironmentPower.strength(p, e);
+        double harmony = Mastery.multiplier(p);
         String key = e.key() + move;
         Map<String, Long> timers = cooldowns.computeIfAbsent(p.getUUID(), id -> new HashMap<>());
         long now = level.getGameTime(), due = timers.getOrDefault(key, 0L);
@@ -64,20 +65,20 @@ public final class Abilities {
         else if (move == 0) bolt(level, p, e, power);
         else switch (e) {
             case EARTH -> {
-                if (move == 1) rocks.guard(p, (int)(100 * power));
+                if (move == 1) rocks.guard(p, (int)Math.round(100 * power * harmony));
                 else pulse(level, p, e, 5, (float)(5 * power), 10 * power);
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); pulse(level, p, e, 5, 0, 5 * power);
+                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, 0, 5 * power);
                 } else {
-                    float before = p.getHealth(); p.heal((float)(4 * power)); p.clearFire();
+                    float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
                     if (p.getHealth() > before) Mastery.credit(p, e);
                 }
             }
             case FIRE -> {
                 if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
-                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)(160 * power), 0); effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); }
+                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0); effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); }
             }
             case AIR -> {
                 if (move == 1) {
@@ -139,6 +140,7 @@ public final class Abilities {
     }
     public static void strike(ServerLevel level, LivingEntity caster, LivingEntity target, Element e, float damage, double push) {
         if (caster instanceof Player p && target instanceof Enemy && target.isAlive()) Mastery.credit(p, e);
+        if (caster instanceof Player p) damage *= (float)Mastery.multiplier(p);
         if (damage > 0) target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
             : caster.damageSources().mobAttack(caster), damage);
         if (!target.isAlive()) return;

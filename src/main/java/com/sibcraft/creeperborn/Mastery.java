@@ -16,6 +16,11 @@ public final class Mastery {
         return 1;
     }
     public static int tier(Player p, Element e) { return Progress.unlocked(p, e) ? tier(uses(p,e), seconds(p,e)) : 0; }
+    public static boolean harmony(Player p) {
+        for (Element e : Element.values()) if (tier(p,e) < 3) return false;
+        return true;
+    }
+    public static double multiplier(Player p) { return harmony(p) ? 1.15 : 1; }
     public static boolean allowed(Player p, Element e, int move) { return tier(p,e) >= move + 1; }
     public static int uses(Player p, Element e) { return get(p, "cb_uses_" + e.key() + "_"); }
     public static int seconds(Player p, Element e) { return get(p, "cb_time_" + e.key() + "_"); }

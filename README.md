@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.1
+# Creeperborn — 0.1.0-alpha.2
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -22,6 +22,12 @@ Combat keys send a small custom packet to the server, not chat commands. The ser
 Each element progresses separately. A heart grants **tier 1 / move 1**. **Move 2** unlocks at **10 meaningful uses AND 5 active minutes** with that element selected. **Move 3** unlocks at **40 uses AND 20 active minutes**. Active time counts while moving or shortly after a meaningful cast; standing AFK does not accumulate it. Hostile hits, successful rock blocks, and actual healing count as meaningful use, at most once per second per element. Empty casts and Air Step do not grant use credit. Repeated Air Step can count as active movement, but cannot satisfy the combat-use requirement on its own. `/creeperborn status` shows selected-element uses, active seconds, mastery tier, and current environmental power.
 
 For testing only, operators can run `/creeperborn mastery earth 3` (or water/fire/air) after consuming that element's heart. This bypasses the waiting period for that element; use tier `1` to reset its mastery. `/creeperborn use earth 1` selects and casts a specific unlocked move in one command.
+
+## Elemental Harmony
+
+Reach tier 3 in **all four** elements to automatically gain **+15% direct ability damage, healing, and shield duration**. Collecting four hearts alone does not qualify. The bonus multiplies the existing environmental power, so biome strengths and weaknesses remain. It does not stack per element, boost villager/creeper damage, extend burn duration, reduce cooldowns, change knockback/range, or alter Air Step. Shield durations round to whole game ticks.
+
+Use `/creeperborn status` to see whether Harmony is ON. For a quick comparison, consume all four hearts and set all four masteries to 3 with the operator testing commands. Set one element back to tier 2 to remove the bonus, then repeat the same move in the same environment. At full Water power, Mending Flow heals 4 health normally and 4.6 with Harmony; Stone Guard lasts 5 seconds normally and 5.75 with Harmony.
 
 ## Move list
 

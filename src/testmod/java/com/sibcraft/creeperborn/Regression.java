@@ -87,7 +87,9 @@ public final class Regression implements ModInitializer {
         for (String tag : learner.entityTags()) restored.addTag(tag);
         check(Mastery.tier(restored,Element.AIR) == 2 && Mastery.seconds(restored,Element.AIR) == 300,
             "Mastery restored from persistent player tags");
+        check(!Mastery.harmony(p), "Collecting four hearts alone does not grant Harmony");
         for (Element e : Element.values()) Mastery.grant(p,e,3);
+        Mastery.grant(p,Element.AIR,2); // Preserve baseline checks below without all-four mastery bonus.
         check(Progress.cycle(p) == Element.EARTH, "Cycles all unlocked elements");
 
         Progress.select(p, Element.WATER); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
@@ -234,9 +236,60 @@ public final class Regression implements ModInitializer {
         var buffer = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), level.registryAccess());
         CastPayload.CODEC.encode(buffer, new CastPayload(2,1));
         check(CastPayload.CODEC.decode(buffer).equals(new CastPayload(2,1)), "Combat packet codec round trip"); buffer.release();
+        checkHarmony(level);
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkHarmony(ServerLevel level) {
+        Creeperborn.ABILITIES.clear();
+        Player basic = player(level), master = player(level);
+        for (Element e : Element.values()) { Mastery.grant(basic,e,3); Mastery.grant(master,e,3); }
+        Mastery.grant(basic,Element.AIR,2);
+        check(!Mastery.harmony(basic) && Mastery.harmony(master), "Harmony requires tier three in all four elements");
+        check(Mastery.multiplier(basic) == 1 && Mastery.multiplier(master) == 1.15, "Harmony is a single fifteen-percent bonus");
+        basic.addItem(new ItemStack(Items.WATER_BUCKET)); master.addItem(new ItemStack(Items.WATER_BUCKET));
+        Zombie normalTarget = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+        Zombie boostedTarget = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+        for (Zombie target : new Zombie[]{normalTarget,boostedTarget}) {
+            target.snapTo(.5,y,3.5); target.setNoAi(true);
+            target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
+            level.addFreshEntity(target);
+        }
+        Abilities.strike(level,basic,normalTarget,Element.EARTH,8,.35);
+        Abilities.strike(level,master,boostedTarget,Element.EARTH,8,.35);
+        check(Math.abs(normalTarget.getHealth()-12) < .001 && Math.abs(boostedTarget.getHealth()-10.8) < .001,
+            "Harmony increases actual ability damage by fifteen percent");
+        check(normalTarget.getDeltaMovement().equals(boostedTarget.getDeltaMovement()), "Harmony leaves strike knockback unchanged");
+        normalTarget.discard(); boostedTarget.discard();
+        for (Player caster : new Player[]{basic,master}) {
+            Progress.select(caster,Element.WATER); Creeperborn.ABILITIES.move(caster,2);
+            caster.setHealth(10); Creeperborn.ABILITIES.cast(caster);
+        }
+        check(Math.abs(basic.getHealth()-14) < .001 && Math.abs(master.getHealth()-14.6) < .001,
+            "Harmony increases real healing from four to 4.6 health");
+        for (Player caster : new Player[]{basic,master}) {
+            Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
+        }
+        check(basic.getEffect(MobEffects.RESISTANCE).getDuration() == 80
+            && master.getEffect(MobEffects.RESISTANCE).getDuration() == 92, "Tidal Guard duration gets fifteen percent");
+        for (Player caster : new Player[]{basic,master}) {
+            Progress.select(caster,Element.EARTH); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
+        }
+        check(Creeperborn.ABILITIES.rocks.guardTicks(basic) == 100 && Creeperborn.ABILITIES.rocks.guardTicks(master) == 115,
+            "Frontal rock shield duration gets fifteen percent");
+        for (Player caster : new Player[]{basic,master}) {
+            Progress.select(caster,Element.FIRE); Creeperborn.ABILITIES.move(caster,2); Creeperborn.ABILITIES.cast(caster);
+            int expected = (int)Math.round(160 * EnvironmentPower.strength(caster,Element.FIRE) * Mastery.multiplier(caster));
+            check(caster.getEffect(MobEffects.FIRE_RESISTANCE).getDuration() == expected,
+                "Harmony multiplies environmental strength rather than removing weaknesses");
+            Progress.select(caster,Element.AIR); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
+            check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!"), "Harmony keeps Air Step unlimited");
+        }
+        check(basic.getDeltaMovement().equals(master.getDeltaMovement()), "Harmony leaves Air Step movement unchanged");
+        Mastery.grant(master,Element.AIR,2);
+        check(!Mastery.harmony(master) && Mastery.multiplier(master) == 1, "Dropping a mastery tier removes Harmony immediately");
+        Creeperborn.ABILITIES.clear();
     }
     private static int count(Player p, String kind) {
         int count = 0;

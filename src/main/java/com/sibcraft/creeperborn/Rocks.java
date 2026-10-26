@@ -29,6 +29,10 @@ public final class Rocks {
     private final List<Boulder> boulders = new ArrayList<>();
     private final Map<UUID, Guard> guards = new HashMap<>();
     public int activeBoulders() { return boulders.size(); }
+    public long guardTicks(Player p) {
+        Guard guard = guards.get(p.getUUID());
+        return guard == null ? 0 : Math.max(0, guard.expires() - p.level().getGameTime());
+    }
     public boolean guarded(Player p) { return guards.containsKey(p.getUUID()); }
     public void clear() {
         boulders.forEach(b -> b.visual.discard()); boulders.clear();
