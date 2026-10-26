@@ -19,14 +19,28 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 /** Rubber powers, independently unlocked and mastered. All authority remains on the server. */
 public final class Rubber {
     public static final int MAX_GEAR_TICKS = 12000, GEAR_COOLDOWN = 2400;
+    private static final net.minecraft.resources.Identifier GUARD_SCALE=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","bounce_guard");
     private static final Map<UUID, State> states = new HashMap<>();
     private static final Map<UUID, Vec3> positions = new HashMap<>();
     private static final class State {
         long gearUntil, gearReady, punchReady, dodgeReady, grabReady, credit = -10000, recent = -10000;
         long press = -1, guardUntil; int held = -1, direction; ServerLevel level;
+        Player owner;
         boolean guarding, grabAttempted, grantedFlight, nextLeft; LivingEntity grabTarget; Vec3 anchor;
     }
-    private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
+    private static State state(Player p) {
+        State s=states.computeIfAbsent(p.getUUID(),id->new State());s.owner=p;return s;
+    }
+    private static void guardSize(Player p,boolean active) {
+        var scale=p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SCALE);
+        if(scale==null)return;
+        boolean present=scale.hasModifier(GUARD_SCALE);
+        if(active&&!present){
+            scale.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(GUARD_SCALE,.5,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            p.refreshDimensions();
+        }else if(!active&&present){scale.removeModifier(GUARD_SCALE);p.refreshDimensions();}
+    }
     private static long now(Player p) { return p.level().getGameTime(); }
     public static boolean unlocked(Player p) { return p.entityTags().contains("cb_fruit_rubber") && (!(p.level() instanceof ServerLevel) || FruitClaims.owns(p)); }
     public static boolean selected(Player p) { return unlocked(p) && p.entityTags().contains("cb_mode_fruit"); }
@@ -58,9 +72,10 @@ public final class Rubber {
             s.grabReady=now(p)+80;
         }
         s.grabTarget=null;s.anchor=null;s.grabAttempted=false;s.held=-1;s.press=-1;s.guarding=false;
+        guardSize(p,false);
     }
     public static void forget(Player p) { Punches.cancel(p); State s=states.get(p.getUUID()); if(s!=null)end(p,s); states.remove(p.getUUID()); positions.remove(p.getUUID()); }
-    public static void clear() { Punches.clear(); states.clear(); positions.clear(); }
+    public static void clear() { Punches.clear(); states.values().forEach(s->{if(s.owner!=null)guardSize(s.owner,false);}); states.clear(); positions.clear(); }
     public static String status(Player p) {
         return "Rubber " + (unlocked(p) ? "tier " + tier(p) + "/3, " + uses(p) + " uses, " + seconds(p) + " active seconds" : "locked")
             + " | active: " + (selected(p) ? "Rubber" : "elements") + " | Gear 5: " + (gear(p) ? (state(p).gearUntil-now(p)+19)/20 + "s" : "OFF");
@@ -100,6 +115,7 @@ public final class Rubber {
         s.gearReady=Math.max(s.gearReady,recovery(p));
         if(now<s.gearReady)return "Gear 5 recovering: " + ((s.gearReady-now+19)/20) + "s.";
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to enter Gear 5.";
+        s.guarding=false;guardSize(p,false);
         s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
         if(!p.getAbilities().mayfly){s.grantedFlight=true;p.addTag("cb_rubber_gear_flight");p.getAbilities().mayfly=true;p.onUpdateAbilities();}
         return "Gear 5! Double-tap Space to fly. Food fuels it, up to 10 minutes.";
@@ -179,6 +195,7 @@ public final class Rubber {
             if(s.held>=0 && (!selected(p)||now>s.guardUntil))cancelInput(p);
             if(s.held==1 && now-s.press>=7 && tier(p)>=2)grapple(p,s);
             s.guarding=s.held==2 && now-s.press>=7 && !gear(p) && tier(p)>=3 && p.getFoodData().getFoodLevel()>6;
+            guardSize(p,s.guarding);
             if(s.gearUntil>0 && (now>=s.gearUntil || p.getFoodData().getFoodLevel()<=6))end(p,s);
             if(gear(p)) {
                 // Short, refreshable effects avoid permanently altering movement attributes.
@@ -187,7 +204,10 @@ public final class Rubber {
                 p.addEffect(new MobEffectInstance(MobEffects.JUMP_BOOST,25,3,false,false));
                 if(now%40==0)p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
                 if(now%20==0)Abilities.particles((ServerLevel)p.level(),Element.AIR,p.position().add(0,1,0),6);
-            } else if(s.guarding && now%40==0)p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
+             } else if(s.guarding && now%40==0){
+                p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
+                if(p.getFoodData().getFoodLevel()<=6)cancelInput(p);
+            }
             if(now%20==0) {
                 Vec3 previous=positions.put(p.getUUID(),p.position());
                 if(selected(p) && (previous!=null&&previous.distanceToSqr(p.position())>.04 || now-s.recent<200)) {
@@ -205,6 +225,7 @@ public final class Rubber {
         }
     }
     private static void end(Player p,State s) {
+        s.guarding=false;guardSize(p,false);
         if(s.grantedFlight){
             s.grantedFlight=false;p.removeTag("cb_rubber_gear_flight");
             if(!p.isCreative()&&!p.isSpectator()){

@@ -567,12 +567,27 @@ public final class Regression implements ModInitializer {
             float modified=Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10);
             check(Math.abs(modified-3.5)<.01,"Held C activates sustained Bounce Guard after threshold");
             check(!Rubber.gear(rubberLive),"Held C does not activate transformation");
+            check(Math.abs(rubberLive.getBbWidth()-.9)<.01&&Math.abs(rubberLive.getBbHeight()-2.7)<.01,
+                "Bounce Guard scales actual player width and height by 1.5");
+            Rubber.tickPlayer(rubberLive);
+            check(Math.abs(rubberLive.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.SCALE)-1.5)<.001,
+                "Repeated guard ticks do not stack size modifiers");
+            rubberLive.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SCALE).setBaseValue(2);
+            rubberLive.refreshDimensions();
+            check(Math.abs(rubberLive.getBbHeight()-5.4)<.01,"Guard multiplies existing player scale");
+
             Rubber.cancelInput(rubberLive);
             check(Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10)==10,"Cancel immediately clears guard");
+            check(Math.abs(rubberLive.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.SCALE)-2)<.001,
+                "Guard cancel preserves unrelated base scale");
+            rubberLive.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.SCALE).setBaseValue(1);
+            rubberLive.refreshDimensions();
+            check(Math.abs(rubberLive.getBbHeight()-1.8)<.01,"Guard release restores normal hitbox");
             Rubber.press(rubberLive,2);
         }
         if(rubberTicks==25) {
             Rubber.release(rubberLive,2);check(Rubber.gear(rubberLive),"Quick C tap enters Gear 5");
+            check(Math.abs(rubberLive.getBbHeight()-1.8)<.01,"Gear 5 keeps normal size");
             rubberLive.damageCooldownTime=0;float before=rubberLive.getHealth();
             rubberLive.hurtServer((ServerLevel)rubberLive.level(),rubberLive.damageSources().generic(),4);
             check(rubberLive.getHealth()==before,"Native damage path applies Gear 5 immunity");
