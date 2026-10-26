@@ -287,6 +287,15 @@ public final class Regression implements ModInitializer {
             check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!"), "Harmony keeps Air Step unlimited");
         }
         check(basic.getDeltaMovement().equals(master.getDeltaMovement()), "Harmony leaves Air Step movement unchanged");
+        for (boolean boosted : new boolean[]{false,true}) {
+            Player fireShield = player(level);
+            for (Element e : Element.values()) Mastery.grant(fireShield,e,3);
+            if (!boosted) Mastery.grant(fireShield,Element.AIR,2);
+            Progress.select(fireShield,Element.FIRE); Creeperborn.ABILITIES.move(fireShield,2); Creeperborn.ABILITIES.cast(fireShield);
+            int expectedResistance = (int)Math.round(80 * EnvironmentPower.strength(fireShield,Element.FIRE) * Mastery.multiplier(fireShield));
+            check(fireShield.getEffect(MobEffects.RESISTANCE).getDuration() == expectedResistance,
+                "Heat Shield physical protection receives the same Harmony duration bonus");
+        }
         Mastery.grant(master,Element.AIR,2);
         check(!Mastery.harmony(master) && Mastery.multiplier(master) == 1, "Dropping a mastery tier removes Harmony immediately");
         Creeperborn.ABILITIES.clear();

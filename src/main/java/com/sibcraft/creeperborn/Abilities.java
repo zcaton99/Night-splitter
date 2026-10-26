@@ -78,7 +78,7 @@ public final class Abilities {
             }
             case FIRE -> {
                 if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
-                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0); effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); }
+                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0); effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); }
             }
             case AIR -> {
                 if (move == 1) {
