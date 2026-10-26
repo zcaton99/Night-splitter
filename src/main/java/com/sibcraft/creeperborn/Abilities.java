@@ -21,6 +21,7 @@ public final class Abilities {
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     private final Map<UUID, Integer> moves = new HashMap<>();
     public final Rocks rocks = new Rocks();
+    public final AirSteps airSteps = new AirSteps();
     public final Vortices vortices = new Vortices();
     private static final class Push {
         LivingEntity target; Vec3 direction, previous; double remaining; int ticks = 35;
@@ -30,7 +31,7 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
-    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); }
+    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
     public void tick() {
         rocks.tick(); Shackles.tick(); vortices.tick();
         Iterator<Push> iterator = pushes.values().iterator();
@@ -62,6 +63,8 @@ public final class Abilities {
         Map<String, Long> timers = cooldowns.computeIfAbsent(p.getUUID(), id -> new HashMap<>());
         long now = level.getGameTime(), due = timers.getOrDefault(key, 0L);
         if (now < due) return "Cooling down: " + ((due - now + 19) / 20) + "s.";
+        if(e==Element.AIR&&move==1&&!airSteps.use(p,now))
+            return "Air Step recharging: "+airSteps.recoverySeconds(p,now)+"s. Master all four elements for unlimited steps.";
         timers.put(key, now + e.cooldowns[move]);
         if (move == 0 && e == Element.EARTH) rocks.throwBoulder(p, power);
         else if (move == 0) bolt(level, p, e, power);
@@ -77,7 +80,7 @@ public final class Abilities {
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, 0, 10 * power);
+                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, (float)(3 * power), 10 * power);
                 } else {
                     int foodBefore=p.getFoodData().getFoodLevel();
                     float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
@@ -86,7 +89,7 @@ public final class Abilities {
                 }
             }
             case FIRE -> {
-                if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
+                if (move == 1) pulse(level, p, e, 4, (float)(5 * power), 4 * power);
                 else {
                     int protection=(int)Math.round(160 * power * harmony);
                     float before=p.getHealth();p.heal((float)(10*harmony));

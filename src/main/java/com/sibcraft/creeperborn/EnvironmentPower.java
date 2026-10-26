@@ -13,7 +13,7 @@ public final class EnvironmentPower {
             case EARTH -> !wet && p.level().getBlockState(p.blockPosition().below()).isSolidRender() ? 1 : .55;
             case WATER -> wet || Abilities.waterSource(p) ? 1 : .55;
             case FIRE -> wet ? .35 : hot(p) ? 1 : p.isInWaterOrRain() ? .45 : .70;
-            case AIR -> wet ? .55 : p.onGround() ? .75 : 1;
+            case AIR -> wet ? .55 : p.onGround() ? .75 : 1.25;
         };
     }
     private static boolean hot(Player p) {

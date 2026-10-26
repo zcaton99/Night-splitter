@@ -78,6 +78,29 @@ public final class Regression implements ModInitializer {
         inside.discard();outside.discard();v.clear();
     }
 
+
+    private void checkAirSteps(ServerLevel level){
+        Player p=player(level);AirSteps steps=new AirSteps();
+        for(int i=0;i<5;i++)check(steps.use(p,100+i*4),"Five Air Steps available in a burst");
+        check(!steps.use(p,120)&&steps.remaining(p,120)==0,"Sixth Air Step blocked");
+        check(!steps.use(p,175),"Air Step recharge lasts full three seconds after fifth step");
+        check(steps.use(p,176)&&steps.remaining(p,176)==4,"Air Step fully refills at recharge boundary");
+        check(steps.remaining(p,236)==5,"Partial burst also refills after three seconds without stepping");
+        for(Element e:Element.values())Mastery.grant(p,e,3);
+        for(int i=0;i<30;i++)check(steps.use(p,240+i),"All-four mastery permits unlimited Air Steps");
+        check(steps.remaining(p,270)==-1,"Mastered Air Step status is unlimited");
+        Player routed=player(level);Mastery.grant(routed,Element.AIR,2);Progress.select(routed,Element.AIR);
+        Creeperborn.ABILITIES.move(routed,1);
+        for(int i=0;i<5;i++)check(Creeperborn.ABILITIES.cast(routed).equals("Air Step!"),"Actual cast accepts five steps");
+        routed.setDeltaMovement(0,0,0);
+        check(Creeperborn.ABILITIES.cast(routed).startsWith("Air Step recharging")&&routed.getDeltaMovement().lengthSqr()==0,
+            "Exhausted Air Step cast does not launch player");
+        routed.setOnGround(true);double grounded=EnvironmentPower.strength(routed,Element.AIR);
+        routed.setOnGround(false);
+        check(grounded==.75&&EnvironmentPower.strength(routed,Element.AIR)==1.25,"Air has enhanced airborne environmental strength");
+        Creeperborn.ABILITIES.clear();
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -90,6 +113,7 @@ public final class Regression implements ModInitializer {
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
         checkVortex(level);
+        checkAirSteps(level);
         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
             for (int dy = 0; dy <= 4; dy++)
@@ -222,7 +246,12 @@ public final class Regression implements ModInitializer {
                 check(caster.hasEffect(MobEffects.RESISTANCE), "Defensive move grants resistance");
             if (slot == 1 && e == Element.EARTH) check(Creeperborn.ABILITIES.rocks.guarded(caster), "Frontal rock guard created");
             if (slot == 2 && e == Element.EARTH) check(Shackles.rooted(target)&&Shackles.remaining(target)==80, "Slab Shackles roots hostile for four seconds");
-            if (slot == 1 && e == Element.WATER) check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard requests ten-block push");
+            if (slot == 1 && e == Element.WATER) {
+                check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard requests ten-block push");
+                check(target.getHealth()<20,"Tidal Guard damages hostile while pushing");
+            }
+            if(slot==1&&e==Element.FIRE)check(Math.abs(Creeperborn.ABILITIES.pushRemaining(target)-4*EnvironmentPower.strength(caster,e))<.001,
+                "Flame Ring requests sustained four-block push scaled by environment");
             if (slot == 2 && e == Element.WATER) check(caster.getHealth() == 16, "Mending Flow heals four health");
             if (slot == 2 && e == Element.FIRE) check(caster.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield protects");
             if (slot == 1 && e == Element.AIR) check(caster.getDeltaMovement().y > .6, "Air Step has upward impulse");

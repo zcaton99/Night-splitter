@@ -105,7 +105,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.13 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.16 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
@@ -114,6 +114,10 @@ public final class Creeperborn implements ModInitializer {
                 chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall immunity":"not yet mastered"));
                 chat(p,"Water: "+(WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
                     +" | Eyes submerged: "+WaterRules.submerged(p)+" | Air: "+p.getAirSupply()+"/"+p.getMaxAirSupply());
+                if(Progress.unlocked(p,Element.AIR)){
+                    long now=p.level().getGameTime();int steps=ABILITIES.airSteps.remaining(p,now);
+                    chat(p,steps<0?"Air Step: unlimited (all-four mastery)":"Air Step: "+steps+"/5 | Full refill 3s after last step");
+                }
                 chat(p,"Controls: R elements, Shift+R backward, G Rubber, Z/X/C moves, B combat.");
                 return 1;
             }));
