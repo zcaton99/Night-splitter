@@ -22,4 +22,3 @@ public enum Element {
         catch (IllegalArgumentException ex) { return null; }
     }
 }
-

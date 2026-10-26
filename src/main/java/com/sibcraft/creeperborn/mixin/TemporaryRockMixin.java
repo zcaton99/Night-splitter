@@ -13,4 +13,3 @@ public abstract class TemporaryRockMixin {
         if (((Entity)(Object)this).entityTags().contains("cb_temporary_rock")) result.setReturnValue(false);
     }
 }
-

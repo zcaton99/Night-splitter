@@ -110,4 +110,3 @@ public final class Punches {
     public static void cancel(Player owner){active.removeIf(p->{if(p.owner.getUUID().equals(owner.getUUID())){remove(p);return true;}return false;});lastHand.remove(owner.getUUID());}
     public static void clear(){active.forEach(Punches::remove);active.clear();lastHand.clear();}
 }
-

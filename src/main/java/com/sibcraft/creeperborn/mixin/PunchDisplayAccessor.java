@@ -12,4 +12,3 @@ public interface PunchDisplayAccessor {
     @Invoker("setWidth") void creeperborn$width(float width);
     @Invoker("setHeight") void creeperborn$height(float height);
 }
-

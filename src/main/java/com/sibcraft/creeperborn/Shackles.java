@@ -43,4 +43,3 @@ public final class Shackles {
     }
     public static void clear(){bindings.values().forEach(b->b.slabs().forEach(Entity::discard));bindings.clear();}
 }
-

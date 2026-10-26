@@ -16,4 +16,3 @@ public abstract class FruitWaterPlayerMixin {
         if(WaterRules.suppressed(p)&&!p.isPassenger()){WaterRules.travel(p,input);ci.cancel();}
     }
 }
-

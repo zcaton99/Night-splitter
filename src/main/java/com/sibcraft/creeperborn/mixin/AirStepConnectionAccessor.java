@@ -9,4 +9,3 @@ public interface AirStepConnectionAccessor {
     @Accessor("aboveGroundTickCount")
     void creeperborn$resetAirStepCounter(int ticks);
 }
-

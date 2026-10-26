@@ -16,4 +16,3 @@ public abstract class SlabShacklesMixin {
         if(Shackles.rooted(target)){target.setDeltaMovement(0,0,0);ci.cancel();}
     }
 }
-

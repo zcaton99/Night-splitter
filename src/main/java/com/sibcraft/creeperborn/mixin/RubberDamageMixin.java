@@ -21,4 +21,3 @@ public abstract class RubberDamageMixin {
         return (Object)this instanceof Player p ? Rubber.damage(p,source,amount) : amount;
     }
 }
-

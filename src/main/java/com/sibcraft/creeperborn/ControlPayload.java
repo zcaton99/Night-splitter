@@ -20,4 +20,3 @@ public record ControlPayload(int action, int value) implements CustomPacketPaylo
     }
 }
 
-

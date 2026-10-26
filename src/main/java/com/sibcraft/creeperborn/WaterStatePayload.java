@@ -13,4 +13,3 @@ public record WaterStatePayload(int flags) implements CustomPacketPayload {
         ByteBufCodecs.VAR_INT,WaterStatePayload::flags,WaterStatePayload::new);
     @Override public Type<? extends CustomPacketPayload> type(){return TYPE;}
 }
-

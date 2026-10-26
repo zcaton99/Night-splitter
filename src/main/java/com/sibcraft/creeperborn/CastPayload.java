@@ -13,4 +13,3 @@ public record CastPayload(int element, int move) implements CustomPacketPayload 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     public boolean valid() { return element >= 0 && element < 4 && move >= 0 && move < 3; }
 }
-

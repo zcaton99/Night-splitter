@@ -37,4 +37,3 @@ public abstract class PunchDisplayRendererMixin {
         if(data!=null){PunchRenderer.submit(data,poses,collector,light);ci.cancel();}
     }
 }
-

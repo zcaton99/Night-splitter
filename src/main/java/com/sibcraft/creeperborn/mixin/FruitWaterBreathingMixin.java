@@ -25,4 +25,3 @@ public abstract class FruitWaterBreathingMixin {
         return MobEffectUtil.hasWaterBreathing(entity);
     }
 }
-
