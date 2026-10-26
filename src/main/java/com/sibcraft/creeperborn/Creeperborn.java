@@ -50,8 +50,10 @@ public final class Creeperborn implements ModInitializer {
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { CREEPERS.unload(entity); GUARDIANS.unload(entity); });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            ABILITIES.tick();
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
+        ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);

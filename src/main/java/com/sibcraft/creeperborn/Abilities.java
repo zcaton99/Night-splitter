@@ -20,7 +20,32 @@ import net.minecraft.server.level.ServerPlayer;
 public final class Abilities {
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     private final Map<UUID, Integer> moves = new HashMap<>();
-    public void clear() { cooldowns.clear(); moves.clear(); }
+    public final Rocks rocks = new Rocks();
+    private static final class Push {
+        LivingEntity target; Vec3 direction, previous; double remaining; int ticks = 35;
+        Push(LivingEntity target, Vec3 direction, double distance) {
+            this.target = target; this.direction = direction; this.remaining = distance; this.previous = target.position();
+        }
+    }
+    private final Map<UUID, Push> pushes = new HashMap<>();
+    public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
+    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); }
+    public void tick() {
+        rocks.tick();
+        Iterator<Push> iterator = pushes.values().iterator();
+        while (iterator.hasNext()) {
+            Push push = iterator.next(); LivingEntity t = push.target;
+            Vec3 delta = t.position().subtract(push.previous);
+            push.remaining -= Math.max(0, delta.x * push.direction.x + delta.z * push.direction.z);
+            push.previous = t.position();
+            if (!t.isAlive() || t.isRemoved() || --push.ticks <= 0 || push.remaining <= .05) {
+                if (t.isAlive() && !t.isRemoved()) t.setDeltaMovement(0, t.getDeltaMovement().y, 0);
+                iterator.remove(); continue;
+            }
+            double speed = Math.min(.8, push.remaining);
+            t.setDeltaMovement(push.direction.x * speed, t.getDeltaMovement().y, push.direction.z * speed);
+        }
+    }
     public int move(Player p) { return moves.getOrDefault(p.getUUID(), 0); }
     public void move(Player p, int index) { moves.put(p.getUUID(), index); }
     public String cast(Player p) {
@@ -28,49 +53,51 @@ public final class Abilities {
         Element e = Progress.selected(p);
         if (e == null) return "Consume an elemental creeper heart first.";
         int move = move(p);
-        if (e == Element.WATER && !waterSource(p)) return "Water requires a carried water bucket or nearby water within four blocks.";
+        double power = EnvironmentPower.strength(p, e);
         String key = e.key() + move;
         Map<String, Long> timers = cooldowns.computeIfAbsent(p.getUUID(), id -> new HashMap<>());
         long now = level.getGameTime(), due = timers.getOrDefault(key, 0L);
         if (now < due) return "Cooling down: " + ((due - now + 19) / 20) + "s.";
         timers.put(key, now + e.cooldowns[move]);
-        if (move == 0) bolt(level, p, e);
+        if (move == 0 && e == Element.EARTH) rocks.throwBoulder(p, power);
+        else if (move == 0) bolt(level, p, e, power);
         else switch (e) {
             case EARTH -> {
-                if (move == 1) effect(p, MobEffects.RESISTANCE, 100, 1);
-                else area(level, p, e, 5, 5, 0.5);
+                if (move == 1) rocks.guard(p, (int)(100 * power));
+                else pulse(level, p, e, 5, (float)(5 * power), 10 * power);
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, 80, 0); area(level, p, e, 4, 0, 0.7);
-                } else { p.heal(4); p.clearFire(); }
+                    effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); pulse(level, p, e, 5, 0, 5 * power);
+                } else { p.heal((float)(4 * power)); p.clearFire(); }
             }
             case FIRE -> {
-                if (move == 1) area(level, p, e, 4, 5, 0.35);
-                else { effect(p, MobEffects.FIRE_RESISTANCE, 160, 0); effect(p, MobEffects.RESISTANCE, 80, 0); }
+                if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
+                else { effect(p, MobEffects.FIRE_RESISTANCE, (int)(160 * power), 0); effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); }
             }
             case AIR -> {
                 if (move == 1) {
                     Vec3 direction = p.getLookAngle();
                     p.setIgnoreFallDamageFromCurrentImpulse(true, p.position());
-                    p.setDeltaMovement(direction.x * 1.2, 0.65, direction.z * 1.2);
+                    p.setDeltaMovement(direction.x * 1.2 * power, .65 * power, direction.z * 1.2 * power);
                     if (p instanceof ServerPlayer sp) sp.connection.send(new ClientboundSetEntityMotionPacket(p));
-                } else area(level, p, e, 6, 2, -0.5);
+                } else area(level, p, e, 6, (float)(2 * power), -.5 * power);
             }
         }
         particles(level, e, p.position().add(0, 1, 0), 20);
         return e.moves[move] + "!";
     }
     public static boolean waterSource(Player p) {
-        if (p.getInventory().contains(new ItemStack(Items.WATER_BUCKET))) return true;
+        for (int i = 0; i < p.getInventory().getContainerSize(); i++)
+            if (p.getInventory().getItem(i).is(Items.WATER_BUCKET)) return true;
         BlockPos center = p.blockPosition();
         for (BlockPos pos : BlockPos.betweenClosed(center.offset(-4, -2, -4), center.offset(4, 2, 4))) {
             int x = pos.getX(), z = pos.getZ();
-            if (p.level().hasChunksAt(x, z, x, z) && p.level().getFluidState(pos).is(Fluids.WATER)) return true;
+            if (p.level().hasChunksAt(x, z, x, z) && p.level().getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)) return true;
         }
         return false;
     }
-    private static void bolt(ServerLevel level, Player p, Element e) {
+    private static void bolt(ServerLevel level, Player p, Element e, double power) {
         Vec3 origin = p.getEyePosition(), direction = p.getLookAngle();
         Vec3 end = origin.add(direction.scale(16));
         var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
@@ -85,7 +112,17 @@ public final class Abilities {
             }
         }
         for (double d = 0; d < closest; d += 0.5) particles(level, e, origin.add(direction.scale(d)), 1);
-        if (best != null) strike(level, p, best, e, e == Element.AIR ? 2 : 6, e == Element.AIR ? 1.1 : 0.35);
+        if (best != null) strike(level, p, best, e, (float)((e == Element.AIR ? 2 : 6) * power), (e == Element.AIR ? 1.1 : .35) * power);
+    }
+    private void pulse(ServerLevel level, LivingEntity caster, Element e, double radius, float damage, double distance) {
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius))) {
+            if (!(target instanceof Enemy) || !target.isAlive() || target.distanceToSqr(caster) > radius * radius || !caster.hasLineOfSight(target)) continue;
+            strike(level, caster, target, e, damage, 0);
+            Vec3 delta = target.position().subtract(caster.position());
+            Vec3 direction = new Vec3(delta.x, 0, delta.z).normalize();
+            pushes.put(target.getUUID(), new Push(target, direction, distance));
+            target.setDeltaMovement(direction.x * .8, .15, direction.z * .8);
+        }
     }
     private static void area(ServerLevel level, LivingEntity caster, Element e, double radius, float damage, double push) {
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius))) {

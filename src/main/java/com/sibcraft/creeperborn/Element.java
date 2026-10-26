@@ -8,7 +8,7 @@ public enum Element {
     EARTH("Earth", new String[]{"Earth Bolt", "Stone Guard", "Quake"}, new int[]{40, 200, 160}, ParticleTypes.CRIT),
     WATER("Water", new String[]{"Water Whip", "Tidal Guard", "Mending Flow"}, new int[]{40, 160, 240}, ParticleTypes.SPLASH),
     FIRE("Fire", new String[]{"Fire Lance", "Flame Ring", "Heat Shield"}, new int[]{40, 160, 200}, ParticleTypes.FLAME),
-    AIR("Air", new String[]{"Air Gust", "Air Step", "Vortex"}, new int[]{40, 100, 160}, ParticleTypes.CLOUD);
+    AIR("Air", new String[]{"Air Gust", "Air Step", "Vortex"}, new int[]{40, 0, 160}, ParticleTypes.CLOUD);
     public final String title;
     public final String[] moves;
     public final int[] cooldowns;

@@ -68,12 +68,19 @@ public final class Regression implements ModInitializer {
         check(Progress.cycle(p) == Element.EARTH, "Cycles all unlocked elements");
 
         Progress.select(p, Element.WATER); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
-        check(Creeperborn.ABILITIES.cast(p).startsWith("Water requires") && p.getHealth() == 12, "Water needs a source");
-        p.addItem(new ItemStack(Items.WATER_BUCKET));
+        check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && p.getHealth() > 12 && p.getHealth() < 16,
+            "Water still works at reduced strength without a source");
+        Creeperborn.ABILITIES.clear(); p.setHealth(12);
+        ItemStack bucket = new ItemStack(Items.WATER_BUCKET);
+        bucket.set(DataComponents.CUSTOM_NAME, Component.literal("Travel water")); p.addItem(bucket);
         check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && p.getHealth() == 16, "Bucket enables healing");
         check(Creeperborn.ABILITIES.cast(p).startsWith("Cooling down") && p.getHealth() == 16, "Cooldown prevents repeated healing");
         Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 1); Creeperborn.ABILITIES.cast(p);
-        check(p.hasEffect(MobEffects.RESISTANCE), "Stone Guard grants resistance");
+        check(Creeperborn.ABILITIES.rocks.guarded(p), "Stone Guard creates frontal rocks");
+        Zombie front = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND); front.snapTo(.5, y, 3.5);
+        Zombie rear = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND); rear.snapTo(.5, y, -3.5);
+        check(Creeperborn.ABILITIES.rocks.blocks(p, p.damageSources().mobAttack(front)), "Stone Guard blocks front");
+        check(!Creeperborn.ABILITIES.rocks.blocks(p, p.damageSources().mobAttack(rear)), "Stone Guard leaves rear exposed");
         Progress.select(p, Element.FIRE); Creeperborn.ABILITIES.move(p, 2); Creeperborn.ABILITIES.cast(p);
         check(p.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield grants fire protection");
         Progress.select(p, Element.AIR); Creeperborn.ABILITIES.move(p, 1); Creeperborn.ABILITIES.cast(p);
@@ -83,6 +90,7 @@ public final class Regression implements ModInitializer {
         Zombie z = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         z.snapTo(.5, y, 6.5); z.setNoAi(true); level.addFreshEntity(z);
         Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); Creeperborn.ABILITIES.cast(p);
+        for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
         check(z.getHealth() < 20, "Earth Bolt hits hostile in line of sight");
         Zombie blocked = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         blocked.snapTo(.5, y, 9.5); blocked.setNoAi(true); level.addFreshEntity(blocked);
@@ -129,15 +137,21 @@ public final class Regression implements ModInitializer {
             target.snapTo(.5, y, 3.5); target.setNoAi(true); check(level.addFreshEntity(target), "Move target added");
             Creeperborn.ABILITIES.move(caster, slot);
             check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
-            if (slot == 0 || (slot == 2 && e != Element.WATER) || (slot == 1 && e == Element.FIRE))
+            if (e == Element.EARTH && slot == 0) for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
+            if (slot == 0 || (slot == 2 && (e == Element.EARTH || e == Element.AIR)) || (slot == 1 && e == Element.FIRE))
                 check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);
-            if (slot == 1 && (e == Element.EARTH || e == Element.WATER))
+            if (slot == 1 && e == Element.WATER)
                 check(caster.hasEffect(MobEffects.RESISTANCE), "Defensive move grants resistance");
+            if (slot == 1 && e == Element.EARTH) check(Creeperborn.ABILITIES.rocks.guarded(caster), "Frontal rock guard created");
+            if (slot == 2 && e == Element.EARTH) check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Quake requests ten-block push");
+            if (slot == 1 && e == Element.WATER) check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard requests five-block push");
             if (slot == 2 && e == Element.WATER) check(caster.getHealth() == 16, "Mending Flow heals four health");
             if (slot == 2 && e == Element.FIRE) check(caster.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield protects");
             if (slot == 1 && e == Element.AIR) check(caster.getDeltaMovement().y > .6, "Air Step has upward impulse");
             if (slot == 2 && e == Element.AIR) check(target.getDeltaMovement().z < 0, "Vortex pulls target inward");
-            check(Creeperborn.ABILITIES.cast(caster).startsWith("Cooling down"), "Every move enforces its cooldown");
+            if (e == Element.AIR && slot == 1)
+                check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!"), "Air Step can repeat with no cooldown");
+            else check(Creeperborn.ABILITIES.cast(caster).startsWith("Cooling down"), "Other moves enforce cooldowns");
             target.discard();
         }
         Creeper natural = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND);

@@ -9,6 +9,7 @@
   ],
   "license": "MIT",
   "environment": "*",
+  "mixins": ["creeperborn.mixins.json"],
   "entrypoints": {
     "main": [
       "com.sibcraft.creeperborn.Creeperborn"
