@@ -141,8 +141,12 @@ public final class Abilities {
     public static void strike(ServerLevel level, LivingEntity caster, LivingEntity target, Element e, float damage, double push) {
         if (caster instanceof Player p && target instanceof Enemy && target.isAlive()) Mastery.credit(p, e);
         if (caster instanceof Player p) damage *= (float)Mastery.multiplier(p);
-        if (damage > 0) target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
-            : caster.damageSources().mobAttack(caster), damage);
+        if (damage > 0) {
+            Rubber.fireBending(e == Element.FIRE);
+            try { target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
+                : caster.damageSources().mobAttack(caster), damage); }
+            finally { Rubber.fireBending(false); }
+        }
         if (!target.isAlive()) return;
         if (e == Element.WATER || e == Element.EARTH) effect(target, MobEffects.SLOWNESS, 50, 0);
         if (e == Element.FIRE) target.setRemainingFireTicks(40);
@@ -158,3 +162,4 @@ public final class Abilities {
         level.sendParticles(e.particle, pos.x, pos.y, pos.z, count, .2, .3, .2, .02);
     }
 }
+

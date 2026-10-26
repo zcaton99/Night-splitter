@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.2
+# Creeperborn — 0.1.0-alpha.3
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -86,6 +86,35 @@ Configuration: `config/creeperborn.json`, `naturalCreepers` (true/false) and `el
 
 GitHub Actions builds with Java 25, runs a real Fabric dedicated-server test mod, and uploads a JAR only if the regression marker passes. The test mod is excluded from the distributed JAR. Automated checks cover genuine/duplicate hearts, all-four progression, water-source requirements, all twelve moves and their cooldowns, wall blocking, villager ownership/trades/defense, one-time heart drops, natural conversion, reroll prevention, and Night Splitters creeper exclusion. In-game testing is still needed for every move's feel, first-person input, particles, save/rejoin/respawn, villager schedules, and multiplayer performance.
 
+## Rubber core — alpha.3
+
+Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% (1 in 500)** before the elemental roll, with at most one naturally converted loaded Fruitborn within 128 blocks. Each eligible creeper is checked once. Existing elemental/checked creepers and Night Splitters creepers are excluded. Player kills before explosion drop a marked Rubber Fruit; right-click to consume. Duplicates remain shareable. Unlocks and progression persist through saves and respawn.
+
+**B** toggles combat, **R / Shift+R** select elements, **T** selects Rubber (the first fruit; future fruits will cycle here). **Z/X/C** operate the selected category. Only one fruit input can be held at a time. Releasing or switching categories, disabling combat, opening a menu, death, disconnect, or losing input heartbeat ends held defense. Keys remain rebindable; V and F are unused.
+
+| Rubber key | Tap | Hold |
+| --- | --- | --- |
+| Z | Stretch Punch: 8-block aimed hostile-only hit, 5 damage, 1.5s cooldown | Release after 0.35s for a 14-block, 8-damage charged punch |
+| X | Rotate sideways slip → backward rebound → forward sling, 0.8s shared cooldown | Release after 0.35s to pull an aimed hostile from up to 14 blocks; 4s cooldown on a hit |
+| C | Activate Gear 5 | Bounce Guard outside Gear 5: 65% reduction against entity-sourced hits, repels melee attackers; drains food |
+
+A fruit grants punch immediately. Dodge/grab require **10 meaningful uses AND 5 active minutes**. Gear 5/guard require **40 uses AND 1 active hour**. Only selected Rubber gains active time while moving or shortly after meaningful action; idle time does not count. Successful punches, grabs, and actual blocks grant at most one use per second. Empty punches/dodges grant no usage. Elemental Harmony does not boost Rubber.
+
+Gear 5 supplies Speed II, Jump Boost III, Strength II, a 75% Stretch Punch bonus, and no fall damage. Food drops by one point (half an icon) every two seconds; eating normally replenishes it, including in Creative during testing. It ends at three remaining food icons, at ten minutes, on death, disconnect, or dimension change. Recovery is two minutes and survives logout. No permanent attribute changes are applied; short movement effects expire shortly after transformation ends. B controls input, not transformation duration; selecting an element does not remove an active transformation.
+
+In Gear 5, ordinary damage is blocked. Diamond/netherite swords or axes with Sharpness, fire/lava, flaming arrows, and direct Fire bending strikes can hurt the player at 50% incoming damage. The actual direct melee attacker's held weapon is checked; a shooter holding a Sharpness sword does not upgrade ordinary arrows. Void and `/kill` bypass protection. Outside Gear 5, sharp melee weapons, arrows and heat deal 50% extra damage. Bounce Guard is not available during Gear 5. All Rubber attacks/grabs target hostile mobs only. No PvP, terrain deformation, rubber ground, custom stretching models, or copied assets in this core build; effects use vanilla particles and motion.
+
+Operator testing:
+```
+/creeperborn testfruit
+/creeperborn fruitmastery 2
+/creeperborn fruitmastery 3
+/creeperborn testcreeper rubber
+/creeperborn status
+```
+Consume the test fruit before setting mastery. Tier 3 is a testing shortcut; use tier 1 to reset. `/creeperborn fruit` selects Rubber without the client shortcut. Optional client component is required for fruit tap/hold controls. Set `fruitChance` in `config/creeperborn.json` (default 0.002), then restart. This alpha needs in-game client/multiplayer testing, particularly held controls, hunger pacing, grab/dodge feel, and Gear 5 balance.
+
 ## Later milestones
 
 Custom models/UI, richer villager patrol behavior, faction banners, terrain-based earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.
+

@@ -2,7 +2,8 @@
   "key.category.creeperborn.combat": "Creeperborn Combat",
   "key.creeperborn.toggle": "Toggle elemental combat",
   "key.creeperborn.cycle": "Cycle element (Shift: backward)",
-  "key.creeperborn.move1": "Cast first move",
-  "key.creeperborn.move2": "Cast second move (hold for Air Step)",
-  "key.creeperborn.move3": "Cast third move"
+  "key.creeperborn.move1": "Move 1 (Rubber: hold to charge punch)",
+  "key.creeperborn.move2": "Move 2 (Rubber: tap dodge / hold grab; Air: hold step)",
+  "key.creeperborn.move3": "Move 3 (Rubber: tap Gear 5 / hold guard)",
+  "key.creeperborn.fruit": "Select / cycle fruit powers"
 }

@@ -17,6 +17,7 @@ public final class Progress {
     }
     public static boolean select(Player player, Element e) {
         if (!unlocked(player, e)) return false;
+        Rubber.cancelInput(player); player.removeTag("cb_mode_fruit");
         for (Element old : Element.values()) player.removeTag("cb_select_" + old.key());
         player.addTag("cb_select_" + e.key()); return true;
     }
@@ -49,3 +50,4 @@ public final class Progress {
         return true;
     }
 }
+

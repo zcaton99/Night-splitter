@@ -24,14 +24,14 @@ public final class Mastery {
     public static boolean allowed(Player p, Element e, int move) { return tier(p,e) >= move + 1; }
     public static int uses(Player p, Element e) { return get(p, "cb_uses_" + e.key() + "_"); }
     public static int seconds(Player p, Element e) { return get(p, "cb_time_" + e.key() + "_"); }
-    private static int get(Player p, String prefix) {
+    public static int get(Player p, String prefix) {
         for (String tag : p.entityTags()) if (tag.startsWith(prefix)) {
             try { return Math.max(0, Integer.parseInt(tag.substring(prefix.length()))); }
             catch (NumberFormatException ignored) {}
         }
         return 0;
     }
-    private static void set(Player p, String prefix, int value) {
+    public static void set(Player p, String prefix, int value) {
         for (String tag : Set.copyOf(p.entityTags())) if (tag.startsWith(prefix)) p.removeTag(tag);
         p.addTag(prefix + Math.min(1000000, value));
     }
@@ -46,7 +46,7 @@ public final class Mastery {
     public static void tick(MinecraftServer server) {
         for (Player p : server.getPlayerList().getPlayers()) {
             Vec3 previousPosition = lastPosition.put(p.getUUID(), p.position()); Element e = Progress.selected(p);
-            if (e == null || !p.isAlive() || p.isSpectator()) continue;
+            if (Rubber.selected(p) || e == null || !p.isAlive() || p.isSpectator()) continue;
             boolean moving = previousPosition != null && previousPosition.distanceToSqr(p.position()) > .04;
             boolean casting = p.level().getGameTime() - recentAction.getOrDefault(p.getUUID(), Long.MIN_VALUE / 2) < 200;
             if (moving || casting) {
@@ -62,3 +62,4 @@ public final class Mastery {
     }
     public static void clear() { lastCredit.clear(); lastPosition.clear(); recentAction.clear(); }
 }
+

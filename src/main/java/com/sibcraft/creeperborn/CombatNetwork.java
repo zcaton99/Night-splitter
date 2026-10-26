@@ -30,11 +30,20 @@ public final class CombatNetwork {
                 Creeperborn.say(p, selected == null ? "Consume an elemental heart first."
                     : selected.title + " — Z/X/C: " + String.join(" / ", selected.moves));
             }
-            if (payload.action() == 2) {
+            if (payload.action() == 2 && !Rubber.selected(p)) {
                 if (selected == null) Creeperborn.say(p, "Consume an elemental heart first.");
                 else { Creeperborn.ABILITIES.move(p, payload.value()); Creeperborn.say(p, Creeperborn.ABILITIES.cast(p)); }
             }
-            ServerPlayNetworking.send(context.player(), new ControlPayload(3, selected == null ? -1 : selected.ordinal()));
+            if (payload.action() == 4) {
+                Rubber.cancelInput(p);
+                if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Dodge / hold Grab | C: Gear 5 / hold Guard"); }
+                else Creeperborn.say(p,"Consume a Rubber Fruit first.");
+            }
+            if(payload.action()==5)Rubber.press(p,payload.value());
+            if(payload.action()==6)Rubber.release(p,payload.value());
+            if(payload.action()==7)Rubber.heartbeat(p);
+            if(payload.action()==8)Rubber.cancelInput(p);
+            ServerPlayNetworking.send(context.player(), new ControlPayload(3, Rubber.selected(p) ? 4 : selected == null ? -1 : selected.ordinal()));
         });
         ServerPlayNetworking.registerGlobalReceiver(CastPayload.TYPE, (payload, context) -> {
             Player p = context.player();
@@ -45,3 +54,4 @@ public final class CombatNetwork {
         });
     }
 }
+

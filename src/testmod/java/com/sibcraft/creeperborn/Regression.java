@@ -248,9 +248,59 @@ public final class Regression implements ModInitializer {
         CastPayload.CODEC.encode(buffer, new CastPayload(2,1));
         check(CastPayload.CODEC.decode(buffer).equals(new CastPayload(2,1)), "Combat packet codec round trip"); buffer.release();
         checkHarmony(level);
+        checkRubber(level);
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkRubber(ServerLevel level) {
+        Rubber.clear(); FruitCreepers.clear();
+        Player p=player(level);
+        ItemStack fake=new ItemStack(Items.CHORUS_FRUIT);
+        fake.set(DataComponents.CUSTOM_NAME,Component.literal("Rubber Fruit"));
+        check(!Rubber.consume(p,fake),"Renamed vanilla fruit cannot unlock Rubber");
+        ItemStack fruit=Relics.fruit();check(Rubber.consume(p,fruit)&&fruit.isEmpty()&&Rubber.selected(p)&&Progress.selected(p)==null,
+            "Fruit-only player unlocks Rubber without bending");
+        ItemStack duplicate=Relics.fruit();check(!Rubber.consume(p,duplicate)&&duplicate.getCount()==1,"Duplicate fruit is shareable");
+        check(Rubber.progressTier(40,3599)==2&&Rubber.progressTier(39,3600)==2&&Rubber.progressTier(40,3600)==3,
+            "Gear 5 requires 40 uses AND a full active hour");
+        check(Rubber.cast(p,1,0).contains("locked")&&Rubber.cast(p,2,0).contains("locked"),"Fruit mastery gates dodge and Gear 5");
+        Rubber.grant(p,2);check(Rubber.seconds(p)==300&&Rubber.tier(p)==2,"Tier 2 grants five-minute progression only");
+        check(Rubber.cast(p,1,0).contains("dodge")&&p.getDeltaMovement().lengthSqr()>0,"Dodge moves player");
+        check(Rubber.cast(p,1,0).contains("cooling"),"Dodges share a cooldown");
+        Rubber.grant(p,3);p.getFoodData().setFoodLevel(6);
+        check(Rubber.cast(p,2,0).contains("Eat"),"Gear needs food above three icons");
+        p.getFoodData().setFoodLevel(20);
+        check(Rubber.cast(p,2,8).isEmpty()&&!Rubber.gear(p),"Holding C never triggers Gear 5 on release");
+        check(Rubber.cast(p,2,0).contains("Gear 5!")&&Rubber.gear(p),"Tier 3 can activate Gear 5");
+        check(Rubber.MAX_GEAR_TICKS==12000&&Rubber.GEAR_COOLDOWN==2400,"Ten-minute cap and two-minute recovery");
+        check(Rubber.damage(p,p.damageSources().fall(),10)==0,"Gear 5 prevents fall damage");
+        check(Rubber.damage(p,p.damageSources().generic(),10)==0,"Gear 5 prevents ordinary damage");
+        check(Rubber.damage(p,p.damageSources().lava(),10)==5,"Lava bypasses Gear 5 at reduced damage");
+        check(Rubber.damage(p,p.damageSources().fellOutOfWorld(),10)==10,"Void bypasses Gear 5 protection");
+        Player attacker=player(level);attacker.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND,new ItemStack(Items.DIAMOND_SWORD));
+        check(!Rubber.sharp(attacker.damageSources().playerAttack(attacker)),"Unenchanted diamond weapon cannot pierce Gear 5");
+        attacker.getMainHandItem().enchant(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+            .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS),1);
+        check(Rubber.sharp(attacker.damageSources().playerAttack(attacker))&&Rubber.damage(p,attacker.damageSources().playerAttack(attacker),10)==5,
+            "Sharpness diamond melee weapon bypasses Gear 5");
+        Rubber.fireBending(true);
+        check(Rubber.damage(p,attacker.damageSources().playerAttack(attacker),10)==5,"Fire bending direct strike bypasses Gear 5");
+        Rubber.fireBending(false);
+        Rubber.forget(p);check(!Rubber.gear(p)&&Rubber.cast(p,2,0).contains("recovering"),"Logout ends Gear and preserves recovery");
+        check(Rubber.damage(p,p.damageSources().lava(),10)==15,"Normal Rubber remains vulnerable to heat");
+        Progress.consume(p,Relics.heart(Element.EARTH));check(!Rubber.selected(p)&&Rubber.unlocked(p),"Element selection preserves fruit unlock");
+        Player restored=player(level);for(String tag:p.entityTags())restored.addTag(tag);
+        check(Rubber.unlocked(restored)&&Rubber.tier(restored)==3,"Rubber mastery survives persistent-tag restoration");
+        Creeperborn.config().fruitChance=1;Creeperborn.config().naturalCreepers=true;
+        Creeper first=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);first.snapTo(-8,y,-8);FruitCreepers.track(first);
+        check(FruitCreepers.fruit(first),"Configured fruit conversion");
+        Creeper second=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);second.snapTo(-6,y,-8);FruitCreepers.track(second);
+        check(!FruitCreepers.fruit(second),"Nearby Fruitborn suppresses clusters");
+        FruitCreepers.unload(first);FruitCreepers.track(second);check(!FruitCreepers.fruit(second),"Unloading does not reroll checked creepers");
+        Creeper night=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);night.addTag("ns_creeper");FruitCreepers.track(night);
+        check(!FruitCreepers.fruit(night),"Night Splitters creepers excluded from fruit conversion");
+        Creeperborn.config().fruitChance=.002;Creeperborn.config().naturalCreepers=false;Rubber.clear();FruitCreepers.clear();
     }
     private void checkHarmony(ServerLevel level) {
         Creeperborn.ABILITIES.clear();
@@ -320,3 +370,4 @@ public final class Regression implements ModInitializer {
     }
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 }
+

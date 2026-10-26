@@ -34,7 +34,7 @@ public final class Creeperborn implements ModInitializer {
     public static final Abilities ABILITIES = new Abilities();
     public static final Guardians GUARDIANS = new Guardians();
     public static final ElementalCreepers CREEPERS = new ElementalCreepers();
-    public static final class Config { public boolean naturalCreepers = true; public double elementalChance = .02; }
+    public static final class Config { public boolean naturalCreepers = true; public double elementalChance = .02; public double fruitChance = .002; }
     private static Config config = new Config();
     public static Config config() { return config; }
     @Override public void onInitialize() {
@@ -43,20 +43,23 @@ public final class Creeperborn implements ModInitializer {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
             if (Files.exists(path)) config = gson.fromJson(Files.readString(path), Config.class);
-            if (config == null || !Double.isFinite(config.elementalChance) || config.elementalChance < 0 || config.elementalChance > 1)
+            if (config == null || !Double.isFinite(config.elementalChance) || config.elementalChance < 0 || config.elementalChance > 1 || !Double.isFinite(config.fruitChance) || config.fruitChance < 0 || config.fruitChance > 1)
                 throw new IllegalArgumentException("elementalChance must be 0–1");
             Files.createDirectories(path.getParent()); Files.writeString(path, gson.toJson(config) + "\n");
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
-        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { CREEPERS.track(entity); GUARDIANS.track(entity); });
-        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
+        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            ABILITIES.tick();
+            ABILITIES.tick(); Rubber.tick(server);
             if (server.getTickCount() % 20 == 0) Mastery.tick(server);
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
+        ServerLivingEntityEvents.AFTER_DEATH.register(FruitCreepers::died);
+        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) Rubber.forget(p); });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> Rubber.forget(handler.player));
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);
         });
@@ -65,7 +68,9 @@ public final class Creeperborn implements ModInitializer {
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
-            if (kind.startsWith("heart:")) {
+            if (kind.equals("fruit:rubber")) {
+                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; T selects Rubber; Z punches." : "You already know Rubber. Share the fruit!");
+            } else if (kind.startsWith("heart:")) {
                 say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
                     : "You already know this element. Keep the heart for a friend.");
             } else if (kind.equals("focus") || kind.equals("trident")) {
@@ -96,12 +101,12 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                say(p, "Creeperborn 0.1.0-alpha.2 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
+                say(p, "Creeperborn 0.1.0-alpha.3 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
                     + " | move: " + (ABILITIES.move(p) + 1)
                     + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
                     + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
                     + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%)" : "locked")
-                    + " | natural creeper chance: " + config.elementalChance);
+                    + " | natural creeper chance: " + config.elementalChance + " | " + Rubber.status(p));
                 return 1;
             }));
             root.then(Commands.literal("cast").executes(ctx -> { ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, ABILITIES.cast(p)); return 1; }));
@@ -163,6 +168,23 @@ public final class Creeperborn implements ModInitializer {
                 }));
                 hearts.then(Commands.literal(e.key()).executes(ctx -> { Progress.give(ctx.getSource().getPlayerOrException(), Relics.heart(e)); return 1; }));
             }
+            root.then(Commands.literal("testfruit").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .executes(ctx -> { Progress.give(ctx.getSource().getPlayerOrException(),Relics.fruit()); return 1; }));
+            root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
+                    ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p))return 0;
+                    Rubber.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,Rubber.status(p));return 1;
+                })));
+            root.then(Commands.literal("fruit").executes(ctx -> {
+                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p))return 0;
+                p.addTag("cb_mode_fruit");say(p,Rubber.status(p));return 1;
+            }));
+            test.then(Commands.literal("rubber").executes(ctx -> {
+                ServerPlayer p=ctx.getSource().getPlayerOrException();ServerLevel level=(ServerLevel)p.level();
+                Creeper c=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);if(c==null)return 0;
+                c.snapTo(p.getX()+5,p.getY(),p.getZ());FruitCreepers.assign(c);
+                if(!level.noCollision(c,c.getBoundingBox())||!level.addFreshEntity(c)){FruitCreepers.unload(c);return 0;}return 1;
+            }));
             root.then(test); root.then(hearts); dispatcher.register(root);
         });
     }
@@ -173,3 +195,4 @@ public final class Creeperborn implements ModInitializer {
     }
     public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
 }
+

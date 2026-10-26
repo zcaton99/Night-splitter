@@ -14,7 +14,7 @@ public final class ElementalCreepers {
     public void clear() { loaded.clear(); attacks.clear(); }
     public void track(Entity entity) {
         if (!(entity instanceof Creeper c) || !(c.level() instanceof ServerLevel level)) return;
-        if (element(c) == null && !c.entityTags().contains("cb_checked") && !c.entityTags().contains("ns_creeper")) {
+        if (!FruitCreepers.fruit(c) && element(c) == null && !c.entityTags().contains("cb_checked") && !c.entityTags().contains("ns_creeper")) {
             c.addTag("cb_checked");
             if (Creeperborn.config().naturalCreepers && level.getDifficulty() != Difficulty.PEACEFUL
                     && level.getRandom().nextDouble() < Creeperborn.config().elementalChance)
@@ -56,3 +56,4 @@ public final class ElementalCreepers {
         }
     }
 }
+

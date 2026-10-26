@@ -2,6 +2,12 @@
   "required": true,
   "package": "com.sibcraft.creeperborn.mixin",
   "compatibilityLevel": "JAVA_25",
-  "mixins": ["TemporaryRockMixin", "AirStepConnectionAccessor"],
-  "injectors": {"defaultRequire": 1}
+  "mixins": [
+    "TemporaryRockMixin",
+    "AirStepConnectionAccessor",
+    "RubberDamageMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
