@@ -16,7 +16,7 @@ public final class Relics {
         return item;
     }
     public static ItemStack focus() {
-        ItemStack item = new ItemStack(Items.BLAZE_ROD);
+        ItemStack item = new ItemStack(Items.STICK);
         mark(item, "focus");
         item.set(DataComponents.CUSTOM_NAME, Component.literal("Elemental Focus — sneak-use to change element"));
         return item;

@@ -108,7 +108,13 @@ public final class Creeperborn implements ModInitializer {
                 if (Progress.selected(p) == null) { say(p, "Unlock an element first."); return 0; }
                 for (int i = 0; i < p.getInventory().getContainerSize(); i++)
                     if (Relics.kind(p.getInventory().getItem(i)).equals("focus")) { say(p, "You already carry a focus."); return 0; }
-                Progress.give(p, Relics.focus()); return 1;
+                for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
+                    ItemStack item = p.getInventory().getItem(i);
+                    if (item.is(net.minecraft.world.item.Items.STICK) && Relics.kind(item).isEmpty()) {
+                        item.shrink(1); Progress.give(p, Relics.focus()); return 1;
+                    }
+                }
+                say(p, "Carry one plain stick to replace your focus."); return 0;
             }));
             root.then(Commands.literal("guardpost").executes(ctx -> {
                 ServerPlayer p = ctx.getSource().getPlayerOrException(); Villager v = nearestOwned(p);
@@ -139,5 +145,5 @@ public final class Creeperborn implements ModInitializer {
             .filter(v -> v.isAlive() && Guardians.owns(p, v) && p.hasLineOfSight(v))
             .min(Comparator.comparingDouble(p::distanceToSqr)).orElse(null);
     }
-    public static void say(Player p, String message) { p.displayClientMessage(Component.literal(message), true); }
+    public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
 }
