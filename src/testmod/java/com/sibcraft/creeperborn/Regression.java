@@ -430,7 +430,8 @@ public final class Regression implements ModInitializer {
         Creeper blocked=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);FruitCreepers.track(blocked);
         check(!FruitCreepers.fruit(blocked),"Claimed fruit suppresses natural fruit creepers");
         Mastery.grant(p,Element.EARTH,3);Progress.select(p,Element.EARTH);
-        FruitClaims.releaseOnDeath(p);
+        p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().genericKill(),1000);
+        check(!p.isAlive(),"Native player death triggered");
         check(FruitClaims.available()&&!Rubber.unlocked(p)&&Rubber.uses(p)==0&&Rubber.seconds(p)==0,
             "Owner death releases fruit and clears fruit mastery");
         check(Progress.unlocked(p,Element.EARTH)&&Mastery.tier(p,Element.EARTH)==3&&Progress.selected(p)==Element.EARTH,
