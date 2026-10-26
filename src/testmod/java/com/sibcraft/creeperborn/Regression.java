@@ -48,8 +48,11 @@ public final class Regression implements ModInitializer {
     }
     private void run(ServerLevel level) {
         y = level.getMaxY() - 40;
-        for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++)
+        for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
+            for (int dy = 0; dy <= 4; dy++)
+                level.setBlockAndUpdate(new BlockPos(x, (int)y + dy, z), Blocks.AIR.defaultBlockState());
+        }
         Player p = player(level);
         check(!Progress.all(p) && Progress.selected(p) == null, "Starts without powers");
         ItemStack renamed = new ItemStack(Items.HEART_OF_THE_SEA);
@@ -79,14 +82,8 @@ public final class Regression implements ModInitializer {
 
         Zombie z = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         z.snapTo(.5, y, 6.5); z.setNoAi(true); level.addFreshEntity(z);
-        Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); String bolt = Creeperborn.ABILITIES.cast(p);
-        check(z.getHealth() < 20, "Earth Bolt hits hostile in line of sight: result=" + bolt
-            + ", health=" + z.getHealth() + ", eye=" + p.getEyePosition() + ", look=" + p.getLookAngle()
-            + ", target=" + z.getBoundingBox() + ", visible=" + p.hasLineOfSight(z) + ", alive=" + z.isAlive()
-            + ", enemy=" + (z instanceof net.minecraft.world.entity.monster.Enemy)
-            + ", queried=" + level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(17)).contains(z)
-            + ", intersection=" + z.getBoundingBox().inflate(.35).clip(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(16)))
-            + ", directDamage=" + z.hurtServer(level, p.damageSources().playerAttack(p), 6));
+        Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); Creeperborn.ABILITIES.cast(p);
+        check(z.getHealth() < 20, "Earth Bolt hits hostile in line of sight");
         Zombie blocked = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         blocked.snapTo(.5, y, 9.5); blocked.setNoAi(true); level.addFreshEntity(blocked);
         z.discard();
@@ -125,6 +122,32 @@ public final class Regression implements ModInitializer {
         try { server.getCommands().getDispatcher().execute("creeperborn move 4", server.createCommandSourceStack()); }
         catch (Exception expected) { rejected = true; }
         check(rejected, "Invalid move slot rejected");
+        for (Element e : Element.values()) for (int slot = 0; slot < 3; slot++) {
+            Player caster = player(level); caster.addTag("cb_unlock_" + e.key()); Progress.select(caster, e);
+            caster.addItem(new ItemStack(Items.WATER_BUCKET)); caster.setHealth(12);
+            Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+            target.snapTo(.5, y, 3.5); target.setNoAi(true); check(level.addFreshEntity(target), "Move target added");
+            Creeperborn.ABILITIES.move(caster, slot);
+            check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
+            if (slot == 0 || (slot == 2 && e != Element.WATER) || (slot == 1 && e == Element.FIRE))
+                check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);
+            if (slot == 1 && (e == Element.EARTH || e == Element.WATER))
+                check(caster.hasEffect(MobEffects.RESISTANCE), "Defensive move grants resistance");
+            if (slot == 2 && e == Element.WATER) check(caster.getHealth() == 16, "Mending Flow heals four health");
+            if (slot == 2 && e == Element.FIRE) check(caster.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield protects");
+            if (slot == 1 && e == Element.AIR) check(caster.getDeltaMovement().y > .6, "Air Step has upward impulse");
+            if (slot == 2 && e == Element.AIR) check(target.getDeltaMovement().z < 0, "Vortex pulls target inward");
+            check(Creeperborn.ABILITIES.cast(caster).startsWith("Cooling down"), "Every move enforces its cooldown");
+            target.discard();
+        }
+        Creeper natural = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND);
+        Creeperborn.config().naturalCreepers = true; Creeperborn.config().elementalChance = 1;
+        Creeperborn.CREEPERS.track(natural); Element rolled = ElementalCreepers.element(natural);
+        check(rolled != null, "Natural conversion uses configured probability");
+        natural.removeTag("cb_creeper_" + rolled.key()); Creeperborn.CREEPERS.track(natural);
+        check(ElementalCreepers.element(natural) == null, "Already examined creeper cannot reroll");
+        Creeper split = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND); split.addTag("ns_creeper");
+        Creeperborn.CREEPERS.track(split); check(ElementalCreepers.element(split) == null, "Night Splitters creepers excluded");
     }
     private static int count(Player p, String kind) {
         int count = 0;
