@@ -21,9 +21,12 @@ public final class Progress {
         player.addTag("cb_select_" + e.key()); return true;
     }
     public static Element cycle(Player player) {
+        return cycle(player, 1);
+    }
+    public static Element cycle(Player player, int direction) {
         Element current = selected(player);
         for (int i = 1; i <= 4; i++) {
-            Element next = Element.values()[((current == null ? -1 : current.ordinal()) + i) % 4];
+            Element next = Element.values()[Math.floorMod((current == null ? (direction > 0 ? -1 : 0) : current.ordinal()) + i * direction, 4)];
             if (select(player, next)) return next;
         }
         return null;

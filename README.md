@@ -15,13 +15,15 @@ Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0
 
 ## Combat controls and mastery
 
-Press **B** to toggle elemental combat (starts OFF). **Z/X/C/V** select Earth/Water/Fire/Air; **R/G/H** cast moves 1/2/3. Select an element then press an ability key, or hold a selector while pressing the ability. Normal movement, jumping, sprinting, weapon attacks, and offhand swap remain available. Hold **G** with Air selected to repeat Air Step. All eight bindings can be changed in Options → Controls → Key Binds → Creeperborn Combat; resolve conflicts with other mods there. Keys are ignored while menus/chat are open. The mode resets OFF after disconnecting.
+Press **B** to toggle elemental combat (starts OFF). **R** cycles through unlocked elements in Earth → Water → Fire → Air order; **Shift + R** cycles backward. **Z/X/C** cast moves 1/2/3 for the selected element. The server selects the element and shows its name and move list onscreen when cycling. Normal movement, jumping, sprinting, weapon attacks, and offhand swap remain available. Hold **X** with Air selected to repeat Air Step. **V** is free for voice chat. All five bindings can be changed in Options → Controls → Key Binds → Creeperborn Combat; resolve conflicts with other mods there. Keys are ignored while menus/chat are open. The mode resets OFF after disconnecting.
 
 Combat keys send a small custom packet to the server, not chat commands. The server validates element unlocks, mastery, cooldowns, and packet bounds. You do not need to hold a focus when using combat keys, so you can keep a sword/shield equipped. Focus/command activation remains available without the client component.
 
 Each element progresses separately. A heart grants **tier 1 / move 1**. **Move 2** unlocks at **10 meaningful uses AND 5 active minutes** with that element selected. **Move 3** unlocks at **40 uses AND 20 active minutes**. Active time counts while moving or shortly after a meaningful cast; standing AFK does not accumulate it. Hostile hits, successful rock blocks, and actual healing count as meaningful use, at most once per second per element. Empty casts and Air Step do not grant use credit. Repeated Air Step can count as active movement, but cannot satisfy the combat-use requirement on its own. `/creeperborn status` shows selected-element uses, active seconds, mastery tier, and current environmental power.
 
 For testing only, operators can run `/creeperborn mastery earth 3` (or water/fire/air) after consuming that element's heart. This bypasses the waiting period for that element; use tier `1` to reset its mastery. `/creeperborn use earth 1` selects and casts a specific unlocked move in one command.
+
+This updated alpha.2 replaces the earlier alpha.2 JAR and includes both the revised controls and Elemental Harmony. Existing saved move bindings may retain their old keys: reset the Creeperborn bindings in Controls to apply the new defaults.
 
 ## Elemental Harmony
 

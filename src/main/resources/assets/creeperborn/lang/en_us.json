@@ -1,10 +1,7 @@
 {
   "key.category.creeperborn.combat": "Creeperborn Combat",
   "key.creeperborn.toggle": "Toggle elemental combat",
-  "key.creeperborn.earth": "Select Earth",
-  "key.creeperborn.water": "Select Water",
-  "key.creeperborn.fire": "Select Fire",
-  "key.creeperborn.air": "Select Air",
+  "key.creeperborn.cycle": "Cycle element (Shift: backward)",
   "key.creeperborn.move1": "Cast first move",
   "key.creeperborn.move2": "Cast second move (hold for Air Step)",
   "key.creeperborn.move3": "Cast third move"

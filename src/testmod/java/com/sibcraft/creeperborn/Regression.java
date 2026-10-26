@@ -59,6 +59,17 @@ public final class Regression implements ModInitializer {
             for (int dy = 0; dy <= 4; dy++)
                 level.setBlockAndUpdate(new BlockPos(x, (int)y + dy, z), Blocks.AIR.defaultBlockState());
         }
+        Player cycling = player(level);
+        check(Progress.cycle(cycling, 1) == null && Progress.cycle(cycling, -1) == null, "No cycling without hearts");
+        Progress.consume(cycling, Relics.heart(Element.EARTH));
+        check(Progress.cycle(cycling, -1) == Element.EARTH, "Single unlocked element stays selected");
+        Progress.consume(cycling, Relics.heart(Element.AIR));
+        check(Progress.cycle(cycling, 1) == Element.EARTH && Progress.cycle(cycling, -1) == Element.AIR,
+            "Forward and reverse cycling skip locked elements and wrap");
+        check(new ControlPayload(0,0).validRequest() && new ControlPayload(1,-1).validRequest()
+            && new ControlPayload(1,1).validRequest() && new ControlPayload(2,2).validRequest()
+            && !new ControlPayload(1,0).validRequest() && !new ControlPayload(2,3).validRequest()
+            && !new ControlPayload(3,0).validRequest(), "Control packets validate actions, direction and move bounds");
         Player p = player(level);
         check(!Progress.all(p) && Progress.selected(p) == null, "Starts without powers");
         ItemStack renamed = new ItemStack(Items.HEART_OF_THE_SEA);
