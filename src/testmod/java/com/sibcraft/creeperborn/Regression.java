@@ -47,6 +47,8 @@ public final class Regression implements ModInitializer {
         p.snapTo(.5, y, .5); p.setHealth(20); p.setYRot(0); p.setXRot(0); return p;
     }
     private void run(ServerLevel level) {
+        try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
+        catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());

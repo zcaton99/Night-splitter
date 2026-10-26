@@ -102,7 +102,9 @@ public final class Rocks {
                     closest = b.position.distanceTo(hit.get()); victim = target;
                 }
             }
-            if (victim != null || wall.getType() != HitResult.Type.MISS) {
+            boolean volumeBlocked = !level.noCollision(b.visual,
+                new AABB(next.x - .6, next.y - .6, next.z - .6, next.x + .6, next.y + .6, next.z + .6));
+            if (victim != null || wall.getType() != HitResult.Type.MISS || volumeBlocked) {
                 if (victim != null) Abilities.strike(level, b.caster, victim, Element.EARTH, b.damage, .4);
                 Abilities.particles(level, Element.EARTH, end, 16); b.visual.discard(); iterator.remove();
             } else { b.position = next; b.visual.snapTo(next.x, next.y, next.z); }

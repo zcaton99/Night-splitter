@@ -80,7 +80,10 @@ public final class Abilities {
                     Vec3 direction = p.getLookAngle();
                     p.setIgnoreFallDamageFromCurrentImpulse(true, p.position());
                     p.setDeltaMovement(direction.x * 1.2 * power, .65 * power, direction.z * 1.2 * power);
-                    if (p instanceof ServerPlayer sp) sp.connection.send(new ClientboundSetEntityMotionPacket(p));
+                    if (p instanceof ServerPlayer sp) {
+                        ((com.sibcraft.creeperborn.mixin.AirStepConnectionAccessor)sp.connection).creeperborn$resetAirStepCounter(0);
+                        sp.connection.send(new ClientboundSetEntityMotionPacket(p));
+                    }
                 } else area(level, p, e, 6, (float)(2 * power), -.5 * power);
             }
         }

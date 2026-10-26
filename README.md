@@ -15,16 +15,20 @@ Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0
 
 ## Moves
 
-Cooldowns are independent per player, element and move; switching elements does not reset them. One damage point is half a heart.
+Cooldowns are independent per player, element and move; switching elements does not reset them. **Air Step has no cooldown or use limit.** One damage point is half a heart. Listed damage/distances/durations are at full environmental strength.
 
 | Element | Move 1 | Move 2 | Move 3 |
 | --- | --- | --- | --- |
-| Earth | **Earth Bolt:** 16-block aimed strike, 6 damage and brief Slowness; 2s cooldown. | **Stone Guard:** Resistance II for 5s; 10s cooldown. | **Quake:** 5-block hostile-only pulse, 5 damage, Slowness and knockback; 8s cooldown. |
-| Water | **Water Whip:** 16-block aimed strike, 6 damage and brief Slowness; 2s cooldown. | **Tidal Guard:** Resistance I for 4s and a 4-block push/slow pulse; 8s cooldown. | **Mending Flow:** restores 4 health and extinguishes the caster; 12s cooldown. |
+| Earth | **Earth Bolt:** throws a visible 1.5-block stone boulder, up to roughly 30 blocks, 8 damage and brief Slowness; 2s cooldown. | **Stone Guard:** three floating rocks block entity-sourced hits in your forward 120-degree arc for 5s; sides/rear remain exposed; 10s cooldown. | **Quake:** 5-block hostile-only pulse, 5 damage, Slowness and up to 10 blocks of outward knockback; 8s cooldown. |
+| Water | **Water Whip:** 16-block aimed strike, 6 damage and brief Slowness; 2s cooldown. | **Tidal Guard:** a full 360-degree pulse within 5 blocks, pushes enemies up to 5 blocks away, slows them, and grants Resistance I for 4s; 8s cooldown. | **Mending Flow:** restores 4 health and extinguishes the caster; 12s cooldown. |
 | Fire | **Fire Lance:** 16-block aimed strike, 6 damage and 2s burning; 2s cooldown. | **Flame Ring:** 4-block hostile-only pulse, 5 damage and 2s burning; 8s cooldown. | **Heat Shield:** Fire Resistance for 8s and Resistance I for 4s; 10s cooldown. |
-| Air | **Air Gust:** 16-block aimed strike, 2 damage and strong knockback; 2s cooldown. | **Air Step:** forward/upward impulse with native protection for the added jump height; 5s cooldown. | **Vortex:** 6-block hostile-only pulse, 2 damage and inward pull; 8s cooldown. |
+| Air | **Air Gust:** 16-block aimed strike, 2 damage and strong knockback; 2s cooldown. | **Air Step:** repeatable forward/upward impulse for sky-walking, native protection for the added jump height; no cooldown, charge or use limit. | **Vortex:** 6-block hostile-only pulse, 2 damage and inward pull; 8s cooldown. |
 
-Water moves require a water bucket in the player's inventory or water within four blocks horizontally and two vertically. The bucket is not consumed and water blocks are not removed. Targeted moves stop at solid blocks; pulses require line of sight. Air Step does not make the player immune to later falls below their launch elevation.
+## Environmental strength
+
+Every unlocked element remains usable outside its preferred environment, with reduced power rather than a hard lock. Earth is full strength on solid ground and 55% while airborne/over water. Water is full strength in/near water or with a carried water bucket, otherwise 55%. Nearby water/lava checks cover four blocks horizontally and two vertically, and include flowing fluids. Fire is full strength in the Nether, in hot biomes (base temperature at least 1), or near lava; otherwise 70%, 45% in rain, and 35% in water. Air is full strength while airborne, 75% on the ground, and 55% in water. Damage, powered knockback, and defensive/healing duration or amount scale accordingly; cooldowns remain fixed.
+
+The bucket is not consumed and fluid blocks are not removed. Boulders are temporary block-display projectiles, not placed terrain. Stone Guard is a directional damage shield, not a permanent wall or global resistance effect. Quake/Tidal pushes use normal entity movement, stop at obstacles, and can travel less than their maximum distance. Targeted moves stop at solid blocks; pulses require line of sight. Air Step does not make the player immune to later falls below their launch elevation.
 
 ## Villager factions and guard posts
 
@@ -66,4 +70,4 @@ GitHub Actions builds with Java 25, runs a real Fabric dedicated-server test mod
 
 ## Later milestones
 
-Custom models/UI, richer villager patrol behavior, faction banners, temporary earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.
+Custom models/UI, richer villager patrol behavior, faction banners, terrain-based earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.
