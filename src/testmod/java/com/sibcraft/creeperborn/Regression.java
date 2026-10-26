@@ -179,19 +179,27 @@ public final class Regression implements ModInitializer {
         }
         Creeperborn.ABILITIES.clear(); Player tidal = player(level); tidal.addTag("cb_unlock_water");
         tidal.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(tidal, Element.WATER);
+        // Keep all four directions inside the same fully loaded entity chunk.
+        for (int x = 5; x <= 12; x++) for (int z = 5; z <= 12; z++) {
+            level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
+            for (int dy = 0; dy <= 4; dy++) level.setBlockAndUpdate(new BlockPos(x, (int)y + dy, z), Blocks.AIR.defaultBlockState());
+        }
+        tidal.snapTo(8.5, y, 8.5);
         java.util.List<Zombie> surrounding = new java.util.ArrayList<>();
         for (int[] offset : new int[][]{{2,0},{-2,0},{0,2},{0,-2}}) {
             Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
-            target.snapTo(.5 + offset[0], y, .5 + offset[1]); target.setNoAi(true); level.addFreshEntity(target); surrounding.add(target);
+            target.snapTo(8.5 + offset[0], y, 8.5 + offset[1]); target.setNoAi(true);
+            check(level.addFreshEntity(target), "Tidal target added"); surrounding.add(target);
         }
         Creeperborn.ABILITIES.move(tidal, 1); Creeperborn.ABILITIES.cast(tidal);
         for (Zombie target : surrounding) {
-            check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides"); target.discard();
+            check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides: pos="
+                + target.position() + ", remaining=" + Creeperborn.ABILITIES.pushRemaining(target) + ", visible=" + tidal.hasLineOfSight(target)); target.discard();
         }
         tidal.addTag("cb_unlock_earth"); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
         Creeperborn.ABILITIES.cast(tidal);
         var rockVisuals = level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
-            new AABB(-5, y - 2, -5, 6, y + 5, 12));
+            new AABB(5, y - 2, 5, 12, y + 5, 12));
         check(rockVisuals.size() == 3 && rockVisuals.stream().allMatch(display -> !display.shouldBeSaved()),
             "Temporary rock visuals are excluded from world saves");
     }
