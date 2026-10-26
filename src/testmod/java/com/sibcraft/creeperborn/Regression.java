@@ -209,13 +209,18 @@ public final class Regression implements ModInitializer {
         // Normal range is 64, so this location remains in range; unloaded-world bounds may restore the last position.
         DoorSpace.forget(owner);check(!DoorSpace.active(owner)&&!DoorSpace.ownsSession(owner)&&owner.gameMode()==GameType.SURVIVAL,"Disconnect cleanup restores owner state");
         owner.snapTo(-10.5,y+20,22.5);
+        check(Rubber.consume(friend,Relics.fruit()),"A different fruit owner can join shared Door travel");
+        Rubber.grant(friend,3);friend.getFoodData().setFoodLevel(20);Rubber.cast(friend,2,0);
+        check(Rubber.gear(friend)&&friend.getAbilities().mayfly,"Shared passenger begins in Gear flight");
         check(DoorFruit.cast(owner,2).startsWith("Door opened"),"Shared Passage creates entrance");
         owner.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(owner),"Shared owner enters first");
         friend.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(friend)&&DoorSpace.active(friend),"Friend voluntarily joins shared entrance");
+        check(!Rubber.gear(friend),"Entering shared travel ends temporary Gear flight before snapshot");
         owner.snapTo(-10.5,y+20,28.5);check(DoorSpace.exit(owner).startsWith("Exit opened"),"Owner places group exit");
         check(!DoorSpace.active(owner)&&DoorSpace.active(friend),"Passenger may independently reach the exit");
         friend.snapTo(-10.5,y+20,28.5);DoorSpace.tick(server);
-        check(!DoorSpace.active(friend)&&friend.gameMode()==GameType.SURVIVAL,"Passenger walking through exit returns to Survival");
+        check(!DoorSpace.active(friend)&&friend.gameMode()==GameType.SURVIVAL&&!friend.getAbilities().mayfly,"Passenger returns to Survival without retaining temporary Gear flight");
+        FruitClaims.releaseOnDeath(friend);
         check(!DoorSpace.ownsSession(owner)&&DoorFruit.ready(owner,2)>level.getGameTime(),"Shared cooldown begins after final passenger exits");
         // Simulate a server restart: snapshot recovery must work without the in-memory session.
         ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+601);owner.snapTo(-10.5,y+20,22.5);
