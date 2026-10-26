@@ -37,7 +37,7 @@ public final class WaterRules {
     /** Run in both normal client prediction and server travel; collision remains vanilla. */
     public static void travel(Player p,Vec3 input){
         p.setSwimming(false);p.setSprinting(false);
-        p.moveRelative(.008,new Vec3(input.x,0,input.z));
+        p.moveRelative(.008f,new Vec3(input.x,0,input.z));
         p.setDeltaMovement(sinkingVelocity(p.getDeltaMovement()));
         p.move(MoverType.SELF,p.getDeltaMovement());
     }
