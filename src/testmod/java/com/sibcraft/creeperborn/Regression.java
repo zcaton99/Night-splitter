@@ -53,6 +53,31 @@ public final class Regression implements ModInitializer {
             catch (Throwable error) { error.printStackTrace(); server=null; s.halt(false); }
         });
     }
+
+    private void checkVortex(ServerLevel level){
+        Player caster=player(level);caster.snapTo(-8,y+12,8);
+        Zombie inside=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        inside.snapTo(1,y+12,8);level.addFreshEntity(inside);
+        Zombie outside=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        outside.snapTo(3,y+12,8);level.addFreshEntity(outside);
+        Vortices v=new Vortices();v.start(caster,1);v.tick();
+        check(inside.getDeltaMovement().x<0,"Vortex pulls hostile nine blocks from its fixed center");
+        check(outside.getDeltaMovement().lengthSqr()==0,"Normal vortex excludes targets beyond ten blocks");
+        inside.setDeltaMovement(0,0,0);v.tick();
+        check(inside.getDeltaMovement().x<0,"Vortex applies repeated inward force");
+        for(int i=2;i<99;i++)v.tick();
+        check(v.activeCount()==1&&inside.getDeltaMovement().x<0,"Vortex keeps swirling through tick 99");
+        v.tick();
+        check(v.activeCount()==0&&inside.getDeltaMovement().x>0&&inside.getDeltaMovement().y>0,"Vortex launches outward and upward at five seconds");
+        for(Element e:Element.values()){Mastery.set(caster,"cb_uses_"+e.key()+"_",40);Mastery.set(caster,"cb_time_"+e.key()+"_",1200);}
+        // Unlock tags as well as progress are required for Harmony.
+        for(Element e:Element.values())Progress.consume(caster,Relics.heart(e));
+        v.start(caster,1);v.tick();
+        check(outside.getDeltaMovement().x<0,"Harmony vortex includes hostile eleven blocks away");
+        caster.setHealth(0);v.tick();check(v.activeCount()==0,"Caster death cancels vortex");
+        inside.discard();outside.discard();v.clear();
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -64,6 +89,7 @@ public final class Regression implements ModInitializer {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
+        checkVortex(level);
         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
             for (int dy = 0; dy <= 4; dy++)

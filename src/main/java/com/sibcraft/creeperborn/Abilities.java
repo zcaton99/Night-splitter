@@ -21,6 +21,7 @@ public final class Abilities {
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     private final Map<UUID, Integer> moves = new HashMap<>();
     public final Rocks rocks = new Rocks();
+    public final Vortices vortices = new Vortices();
     private static final class Push {
         LivingEntity target; Vec3 direction, previous; double remaining; int ticks = 35;
         Push(LivingEntity target, Vec3 direction, double distance) {
@@ -29,9 +30,9 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
-    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); }
+    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); }
     public void tick() {
-        rocks.tick(); Shackles.tick();
+        rocks.tick(); Shackles.tick(); vortices.tick();
         Iterator<Push> iterator = pushes.values().iterator();
         while (iterator.hasNext()) {
             Push push = iterator.next(); LivingEntity t = push.target;
@@ -108,7 +109,7 @@ public final class Abilities {
                         ((com.sibcraft.creeperborn.mixin.AirStepConnectionAccessor)sp.connection).creeperborn$resetAirStepCounter(0);
                         sp.connection.send(new ClientboundSetEntityMotionPacket(p));
                     }
-                } else area(level, p, e, 6, (float)(2 * power), -.5 * power);
+                } else vortices.start(p,power);
             }
         }
         particles(level, e, p.position().add(0, 1, 0), 20);
