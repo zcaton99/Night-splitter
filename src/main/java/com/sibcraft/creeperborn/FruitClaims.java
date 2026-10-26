@@ -10,41 +10,57 @@ import net.minecraft.world.entity.player.Player;
 
 /** One living owner per fruit in this world, including offline owners. Written before claims succeed. */
 public final class FruitClaims {
-    private record Data(String rubberOwner){}
-    private static UUID rubberOwner;
+    private record Data(String rubberOwner,String doorOwner){}
+    private static UUID rubberOwner,doorOwner;
     private static Path path;
     private FruitClaims(){}
     public static void load(MinecraftServer server){
         path=server.getWorldPath(LevelResource.ROOT).resolve("creeperborn-fruits.json");
         try {
-            rubberOwner=null;
+            rubberOwner=null;doorOwner=null;
             if(Files.exists(path)){
                 Data data=new Gson().fromJson(Files.readString(path),Data.class);
                 if(data!=null&&data.rubberOwner()!=null)rubberOwner=UUID.fromString(data.rubberOwner());
+                if(data!=null&&data.doorOwner()!=null)doorOwner=UUID.fromString(data.doorOwner());
             }
         }catch(Exception error){throw new IllegalStateException("Cannot read Creeperborn fruit ownership",error);}
     }
-    private static void save(UUID next){
+    private static void save(UUID next){save(next,doorOwner);}
+    private static void save(UUID next,UUID nextDoor){
         if(path==null)throw new IllegalStateException("Fruit ownership world has not loaded");
         try {
             Files.createDirectories(path.getParent());
             Path temporary=path.resolveSibling(path.getFileName()+".tmp");
-            Files.writeString(temporary,new Gson().toJson(new Data(next==null?null:next.toString()))+"\n");
+            Files.writeString(temporary,new Gson().toJson(new Data(next==null?null:next.toString(),nextDoor==null?null:nextDoor.toString()))+"\n");
             try{Files.move(temporary,path,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);}
             catch(AtomicMoveNotSupportedException ignored){Files.move(temporary,path,StandardCopyOption.REPLACE_EXISTING);}
-            rubberOwner=next;
+            rubberOwner=next;doorOwner=nextDoor;
         }catch(Exception error){throw new IllegalStateException("Cannot save Creeperborn fruit ownership",error);}
     }
     public static boolean available(){return rubberOwner==null;}
     public static boolean owns(Player p){return p.getUUID().equals(rubberOwner);}
+    public static boolean doorAvailable(){return doorOwner==null;}
+    public static boolean ownsDoor(Player p){return p.getUUID().equals(doorOwner);}
+    public static boolean hasFruit(Player p){return owns(p)||ownsDoor(p)||p.entityTags().contains("cb_fruit_rubber")||p.entityTags().contains("cb_fruit_door");}
+    public static boolean claimDoor(Player p){
+        if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!doorAvailable()||hasFruit(p))return false;
+        save(rubberOwner,p.getUUID());return true;
+    }
     public static boolean claim(Player p){
-        if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!available())return false;
+        if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!available()||hasFruit(p))return false;
         save(p.getUUID());return true;
     }
     /** Upgrade old alpha saves on join. Disconnects and dimension changes never release a claim. */
     public static void reconcile(Player p){
+        if(p.entityTags().contains("cb_fruit_door")){
+            if(owns(p)||p.entityTags().contains("cb_fruit_rubber")){
+                if(ownsDoor(p))save(rubberOwner,null);
+                resetDoorProgress(p);
+            }else if(doorAvailable())save(rubberOwner,p.getUUID());
+            else if(!ownsDoor(p))resetDoorProgress(p);
+        }
         if(!p.entityTags().contains("cb_fruit_rubber"))return;
-        if(available())claim(p);
+        if(available())save(p.getUUID());
         else if(!owns(p)){
             resetFruitProgress(p);
             Creeperborn.say(p,"Rubber is already claimed by another living player in this world.");
@@ -53,11 +69,18 @@ public final class FruitClaims {
     private static void resetFruitProgress(Player p){
         for(String tag:Set.copyOf(p.entityTags()))if(tag.equals("cb_fruit_rubber")||tag.equals("cb_mode_fruit")||tag.startsWith("cb_rubber_"))p.removeTag(tag);
     }
+    private static void resetDoorProgress(Player p){
+        for(String tag:Set.copyOf(p.entityTags()))if(tag.equals("cb_fruit_door")||tag.startsWith("cb_door_")||tag.equals("cb_mode_fruit"))p.removeTag(tag);
+    }
     public static void releaseOnDeath(Player p){
+        DoorSpace.forget(p);DoorFruit.forget(p);
+        if(ownsDoor(p))save(rubberOwner,null);
+        resetDoorProgress(p);
         Rubber.forget(p);
         if(owns(p))save(null);
         resetFruitProgress(p);
         WaterRules.forget(p);
     }
-    public static void clear(){rubberOwner=null;path=null;}
+    public static void clear(){rubberOwner=null;doorOwner=null;path=null;}
 }
+
