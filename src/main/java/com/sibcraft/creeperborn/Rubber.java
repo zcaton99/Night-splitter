@@ -52,7 +52,7 @@ public final class Rubber {
     public static void cancelInput(Player p) {
         State s=state(p);
         if(s.grabTarget!=null||s.anchor!=null) {
-            LivingEntity moved=s.grabTarget instanceof Player ? s.grabTarget : p;
+            LivingEntity moved=p;
             moved.setDeltaMovement(Vec3.ZERO);
             if(moved instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(sp));
             s.grabReady=now(p)+80;
@@ -85,8 +85,8 @@ public final class Rubber {
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {
-            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+30;
-            LivingEntity target=target(p, charged ? 14 : 8);
+            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?20:30);
+            LivingEntity target=target(p, gear(p)?20:charged?14:8);
             if(target!=null) {
                 float damage=(float)((charged ? 8 : 5) * (gear(p) ? 1.75 : 1));
                 if(target.hurtServer(level,p.damageSources().playerAttack(p),damage)) credit(p);
@@ -109,10 +109,6 @@ public final class Rubber {
         s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
         return "Gear 5! Food fuels it, up to 10 minutes.";
     }
-    public static boolean canGrabPlayer(Player p,Player target) {
-        return target!=p && target.isAlive() && !target.isCreative() && !target.isSpectator()
-            && p.level() instanceof ServerLevel level && level.isPvpAllowed() && p.canHarmPlayer(target);
-    }
     private static void grapple(Player p,State s) {
         if(!s.grabAttempted) {
             s.grabAttempted=true;
@@ -122,25 +118,25 @@ public final class Rubber {
             if(block.getType()!=HitResult.Type.MISS)end=block.getLocation();
             double nearest=from.distanceTo(end);
             for(LivingEntity t:p.level().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(14))) {
-                if(t==p||!t.isAlive()||t.isSpectator()||!p.hasLineOfSight(t)||t instanceof Player other&&!canGrabPlayer(p,other))continue;
+                if(t instanceof Player||!t.isAlive()||t.isSpectator()||!p.hasLineOfSight(t))continue;
                 var intersection=t.getBoundingBox().inflate(.4).clip(from,end);
                 if(intersection.isPresent()&&from.distanceTo(intersection.get())<nearest){s.grabTarget=t;nearest=from.distanceTo(intersection.get());}
             }
             if(s.grabTarget==null&&block.getType()!=HitResult.Type.MISS)s.anchor=block.getLocation();
-            if(s.grabTarget!=null||s.anchor!=null){credit(p);Creeperborn.say(p,s.grabTarget instanceof Player?"Stretch Grab — pulling player!":"Stretch Grab — pulling you! Release X to let go.");}
+            if(s.grabTarget!=null||s.anchor!=null){credit(p);Creeperborn.say(p,"Stretch Grab — pulling you! Release X to let go.");}
             else Creeperborn.say(p,"Stretch Grab missed.");
         }
         if(s.grabTarget==null&&s.anchor==null)return;
         if(s.grabTarget!=null&&(!s.grabTarget.isAlive()||s.grabTarget.level()!=p.level()
-            ||!p.hasLineOfSight(s.grabTarget)||s.grabTarget instanceof Player other&&!canGrabPlayer(p,other))){cancelInput(p);return;}
+            ||!p.hasLineOfSight(s.grabTarget))){cancelInput(p);return;}
         Vec3 destination=s.grabTarget!=null?s.grabTarget.getEyePosition():s.anchor;
         if(p.getEyePosition().distanceTo(destination)>20){cancelInput(p);return;}
         if(s.anchor!=null) {
             var block=p.level().clip(new ClipContext(p.getEyePosition(),destination,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
             if(block.getType()!=HitResult.Type.MISS&&block.getLocation().distanceTo(destination)>.6){cancelInput(p);return;}
         }
-        LivingEntity moved=s.grabTarget instanceof Player?s.grabTarget:p;
-        Vec3 delta=s.grabTarget instanceof Player?p.getEyePosition().subtract(s.grabTarget.getEyePosition()):destination.subtract(p.getEyePosition());
+        LivingEntity moved=p;
+        Vec3 delta=destination.subtract(p.getEyePosition());
         if(delta.length()<2){moved.setDeltaMovement(Vec3.ZERO);return;}
         Vec3 motion=delta.normalize().scale(Math.min(.75,(delta.length()-2)*.25));
         if(moved instanceof Player player)impulse(player,motion);else moved.setDeltaMovement(motion);
@@ -190,9 +186,9 @@ public final class Rubber {
             if(s.gearUntil>0 && (now>=s.gearUntil || p.getFoodData().getFoodLevel()<=6))end(p,s);
             if(gear(p)) {
                 // Short, refreshable effects avoid permanently altering movement attributes.
-                p.addEffect(new MobEffectInstance(MobEffects.SPEED,25,1,false,false));
+                p.addEffect(new MobEffectInstance(MobEffects.SPEED,25,2,false,false));
                 p.addEffect(new MobEffectInstance(MobEffects.STRENGTH,25,1,false,false));
-                p.addEffect(new MobEffectInstance(MobEffects.JUMP_BOOST,25,2,false,false));
+                p.addEffect(new MobEffectInstance(MobEffects.JUMP_BOOST,25,3,false,false));
                 if(now%40==0)p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));
                 if(now%20==0)Abilities.particles((ServerLevel)p.level(),Element.AIR,p.position().add(0,1,0),6);
             } else if(s.guarding && now%40==0)p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));

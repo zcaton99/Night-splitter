@@ -51,7 +51,8 @@ public final class Rocks {
     public void throwBoulder(Player p, double power) {
         ServerLevel level = (ServerLevel)p.level(); Vec3 direction = p.getLookAngle();
         Vec3 origin = p.getEyePosition().add(direction.scale(1.2));
-        boulders.add(new Boulder(visual(level, origin, (float)(1 + .5 * power)), p, origin, direction.scale(1.2), (float)(8 * power)));
+        Boulder boulder=new Boulder(visual(level, origin, (float)(1 + .5 * power)), p, origin, direction.scale(1.2), (float)(8 * power));
+        boulder.life=Mastery.harmony(p)?38:25; boulders.add(boulder);
     }
     public void guard(Player p, int duration) {
         Guard previous = guards.remove(p.getUUID()); if (previous != null) previous.visuals().forEach(v -> v.discard());

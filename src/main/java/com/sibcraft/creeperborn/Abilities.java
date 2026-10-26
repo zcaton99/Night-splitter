@@ -73,8 +73,10 @@ public final class Abilities {
                 if (move == 1) {
                     effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, 0, 5 * power);
                 } else {
+                    int foodBefore=p.getFoodData().getFoodLevel();
                     float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
-                    if (p.getHealth() > before) Mastery.credit(p, e);
+                    p.getFoodData().setFoodLevel(20);
+                    if (p.getHealth() > before || foodBefore<20) Mastery.credit(p, e);
                 }
             }
             case FIRE -> {
@@ -108,11 +110,12 @@ public final class Abilities {
     }
     private static void bolt(ServerLevel level, Player p, Element e, double power) {
         Vec3 origin = p.getEyePosition(), direction = p.getLookAngle();
-        Vec3 end = origin.add(direction.scale(16));
+        double maximum=Mastery.harmony(p)?24:16;
+        Vec3 end = origin.add(direction.scale(maximum));
         var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
-        double range = block.getType() == HitResult.Type.MISS ? 16 : origin.distanceTo(block.getLocation());
+        double range = block.getType() == HitResult.Type.MISS ? maximum : origin.distanceTo(block.getLocation());
         LivingEntity best = null; double closest = range;
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(17))) {
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(maximum+1))) {
             if (!(target instanceof Enemy) || !target.isAlive() || !p.hasLineOfSight(target)) continue;
             var intersection = target.getBoundingBox().inflate(0.35).clip(origin, origin.add(direction.scale(range)));
             if (intersection.isPresent()) {

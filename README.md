@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.8
+# Creeperborn — 0.1.0-alpha.9
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -95,14 +95,14 @@ Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% 
 | Rubber key | Tap | Hold |
 | --- | --- | --- |
 | Z | Stretch Punch: 8-block aimed hostile-only hit, 5 damage, 1.5s cooldown | Release after 0.35s for a 14-block, 8-damage charged punch |
-| X | Dodge using held movement keys: W forward, A left, D right, S backward; diagonals supported; no input defaults backward; 0.8s shared cooldown | Hold for 0.35s to latch up to 14 blocks away: pull a targeted player toward you, or pull yourself toward a mob/solid block. Release to detach; 4s cooldown after detaching. Player grabs respect PvP/team protections. |
+| X | Dodge using held movement keys: W forward, A left, D right, S backward; diagonals supported; no input defaults backward; 0.8s shared cooldown | Hold for 0.35s to latch up to 14 blocks away: pull yourself toward a mob/solid block. Players are excluded. Release to detach; 4s cooldown after detaching. The grapple never moves other players. |
 | C | Activate Gear 5 | Bounce Guard outside Gear 5: 65% reduction against entity-sourced hits, repels melee attackers; drains food |
 
 A fruit grants punch immediately. Dodge/grab require **10 meaningful uses AND 5 active minutes**. Gear 5/guard require **40 uses AND 1 active hour**. Only selected Rubber gains active time while moving or shortly after meaningful action; idle time does not count. Successful punches, grabs, and actual blocks grant at most one use per second. Empty punches/dodges grant no usage. Elemental Harmony does not boost Rubber.
 
-Gear 5 supplies Speed II, Jump Boost III, Strength II, a 75% Stretch Punch bonus, and no fall damage. Food drops by one point (half an icon) every two seconds; eating normally replenishes it, including in Creative during testing. It ends at three remaining food icons, at ten minutes, on death, disconnect, or dimension change. Recovery is two minutes and survives logout. No permanent attribute changes are applied; short movement effects expire shortly after transformation ends. B controls input, not transformation duration; selecting an element does not remove an active transformation.
+Gear 5 supplies Speed III, Jump Boost IV, Strength II, a 75% Stretch Punch bonus, and no fall damage. Food drops by one point (half an icon) every two seconds; eating normally replenishes it, including in Creative during testing. It ends at three remaining food icons, at ten minutes, on death, disconnect, or dimension change. Recovery is two minutes and survives logout. No permanent attribute changes are applied; short movement effects expire shortly after transformation ends. B controls input, not transformation duration; selecting an element does not remove an active transformation.
 
-In Gear 5, ordinary damage is blocked. Diamond/netherite swords or axes with Sharpness, fire/lava, flaming arrows, and direct Fire bending strikes can hurt the player at 50% incoming damage. The actual direct melee attacker's held weapon is checked; a shooter holding a Sharpness sword does not upgrade ordinary arrows. Void and `/kill` bypass protection. Outside Gear 5, sharp melee weapons, arrows and heat deal 50% extra damage. Bounce Guard is not available during Gear 5. Rubber punches target hostile mobs only. Grapples do no damage; player pulls require PvP enabled and respect teams, excluding Creative/spectator players. Other living mobs (including villagers/pets) serve as anchors that pull the caster, without moving or damaging them. No terrain deformation, rubber ground, custom stretching models, or copied assets in this core build; effects use vanilla particles and motion.
+In Gear 5, ordinary damage is blocked. Diamond/netherite swords or axes with Sharpness, fire/lava, flaming arrows, and direct Fire bending strikes can hurt the player at 50% incoming damage. The actual direct melee attacker's held weapon is checked; a shooter holding a Sharpness sword does not upgrade ordinary arrows. Void and `/kill` bypass protection. Outside Gear 5, sharp melee weapons, arrows and heat deal 50% extra damage. Bounce Guard is not available during Gear 5. Rubber punches target hostile mobs only. Grapples do no damage; players are excluded from grappling. Other living mobs (including villagers/pets) serve as anchors that pull the caster, without moving or damaging them. No terrain deformation, rubber ground, custom stretching models, or copied assets in this core build; effects use vanilla particles and motion.
 
 Operator testing:
 ```
@@ -164,6 +164,16 @@ For water diagnosis: use Survival, consume a genuine fruit, and leave at least o
 Status is split into short messages in chat history. Open chat to read/scroll it; no chat input text is overwritten. It reports the actual active category, separate element/fruit progression, ownership, all-four bonuses and water state.
 
 The default layout is B combat, R next element, Shift+R previous element, G Rubber, Z/X/C first/second/third move. R/G enable combat and remain selected until changed. Move presses use the server's current selection; a delayed client selection reply cannot route the first press into the wrong power. Fresh moves can follow a selection in the same tick. Keys already held while switching or opening menus must be released first. Rubber tap/hold and Air's repeated second move remain supported.
+
+## Reach, movement and nourishment — alpha.9
+
+Gear 5 tap and charged punches reach **20 blocks**, with a **1-second punch cooldown** (normal Rubber remains 8/14 blocks and 1.5s). Speed is now **III** and Jump Boost **IV**; damage, hunger fuel, duration and recovery rules remain.
+
+Stretch Grab only pulls the caster toward a nonplayer living mob or solid block. Players cannot be latched onto or pulled; releasing X detaches and stops the imposed grapple motion. Punches still target hostile mobs only.
+
+All-four elemental masters gain **24-block Water/Fire/Air Z bolts**, up from 16. The Earth boulder keeps its existing speed and lasts 38 ticks instead of 25, traveling roughly 46 blocks instead of 30 in clear loaded space. Wall blocking and hostile-only targeting remain. Other ability ranges are unchanged.
+
+Mending Flow restores the hunger bar to **20/20**, alongside its existing environmentally scaled health healing and extinguishing. It does not grant extra saturation or change the 12-second cooldown. Restoring actual hunger counts as a meaningful Water use. This can replenish Gear 5 fuel, while its ten-minute hard limit still applies. Quake remains unchanged pending a replacement design.
 
 ## Later milestones
 

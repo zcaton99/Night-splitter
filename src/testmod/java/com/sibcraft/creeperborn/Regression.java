@@ -260,6 +260,7 @@ public final class Regression implements ModInitializer {
         checkRubber(level);
         checkFruitWater(level);
         checkMoveRouting(level);
+        checkReachAndNourishment(level);
         Player lavaMaster=player(level);
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
@@ -293,6 +294,35 @@ public final class Regression implements ModInitializer {
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkReachAndNourishment(ServerLevel level){
+        for(boolean mastered:new boolean[]{false,true}){
+            Player p=player(level);p.snapTo(-12,y+5,-14);p.addItem(new ItemStack(Items.WATER_BUCKET));
+            Mastery.grant(p,Element.WATER,3);if(mastered)for(Element e:Element.values())Mastery.grant(p,e,3);
+            Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);
+            Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);
+            target.snapTo(-12,y+5,6);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+            Creeperborn.ABILITIES.cast(p);
+            check((target.getHealth()<target.getMaxHealth())==mastered,"Only all-four mastery reaches a target twenty blocks away with elemental Z");target.discard();
+            p.snapTo(-14,y+5,-14);p.setYRot(-45);
+            Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.rocks.throwBoulder(p,1);
+            for(int tick=0;tick<26;tick++)Creeperborn.ABILITIES.rocks.tick();
+            check(Creeperborn.ABILITIES.rocks.activeBoulders()==(mastered?1:0),"Mastered Earth boulder travels beyond baseline lifetime");Creeperborn.ABILITIES.clear();
+        }
+        Player nourished=player(level);Mastery.grant(nourished,Element.WATER,3);Progress.select(nourished,Element.WATER);
+        nourished.getFoodData().setFoodLevel(2);nourished.setHealth(nourished.getMaxHealth());
+        Creeperborn.ABILITIES.move(nourished,2);check(Creeperborn.ABILITIES.cast(nourished).equals("Mending Flow!"),"Mending Flow casts at full health while hungry");
+        check(nourished.getFoodData().getFoodLevel()==20,"Mending Flow fills all hunger");
+        check(Creeperborn.ABILITIES.cast(nourished).startsWith("Cooling down"),"Hunger refill preserves Mending cooldown");Creeperborn.ABILITIES.clear();
+        Player rubber=player(level);rubber.snapTo(-12,y+5,-14);check(Rubber.consume(rubber,Relics.fruit()),"Reach test acquires Rubber");Rubber.grant(rubber,3);
+        Zombie far=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);far.snapTo(-12,y+5,4);far.setNoAi(true);far.setNoGravity(true);level.addFreshEntity(far);
+        Rubber.cast(rubber,0,8);check(far.getHealth()==far.getMaxHealth(),"Normal charged punch cannot reach eighteen blocks");
+        Rubber.clear();Rubber.cast(rubber,2,0);Rubber.cast(rubber,0,0);
+        check(far.getHealth()<far.getMaxHealth(),"Gear 5 tap punch reaches eighteen blocks");
+        Rubber.tickPlayer(rubber);
+        check(rubber.getEffect(MobEffects.SPEED).getAmplifier()==2&&rubber.getEffect(MobEffects.JUMP_BOOST).getAmplifier()==3,
+            "Gear 5 supplies Speed III and Jump Boost IV");
+        far.discard();FruitClaims.releaseOnDeath(rubber);Rubber.clear();
     }
     private void checkMoveRouting(ServerLevel level){
         Player p=player(level);Mastery.grant(p,Element.WATER,3);p.addItem(new ItemStack(Items.WATER_BUCKET));
