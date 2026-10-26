@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.3
+# Creeperborn — 0.1.0-alpha.4
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -114,7 +114,27 @@ Operator testing:
 ```
 Consume the test fruit before setting mastery. Tier 3 is a testing shortcut; use tier 1 to reset. `/creeperborn fruit` selects Rubber without the client shortcut. Optional client component is required for fruit tap/hold controls. Set `fruitChance` in `config/creeperborn.json` (default 0.002), then restart. This alpha needs in-game client/multiplayer testing, particularly held controls, hunger pacing, grab/directional-dodge feel, and Gear 5 balance.
 
+## Fruit water weakness — alpha.4
+
+Owning a fruit creates the weakness even when an element is selected or combat is OFF. **Eyes below a water surface** (including flowing water) suppress new element/fruit casts, end Gear 5, release held grapples/guard, prevent upward swimming, and make the player sink. Rain, splashes, shallow water with the head above the surface, and carried water buckets do not trigger it. Boats are safe while your head stays above water. Ordinary nonfruit players retain vanilla swimming and breathing.
+
+Air depletes through the normal drowning system. Water Breathing effects do not bypass the fruit curse; potion effects are not removed. Gear 5 cannot block drowning damage. Creative/spectator invulnerability still follows vanilla rules; use Survival for drowning tests.
+
+**All four elements at mastery tier 3** cancel the weakness, allow normal swimming and powers underwater, replenish air, and prevent drowning. Owning four hearts alone is insufficient. This is the same all-four mastery condition as Elemental Harmony; Rubber mastery does not qualify. Dropping one element below tier 3 restores the weakness immediately. Ownership/mastery are read from saved progression, with server-to-client state synchronization for local swimming physics. Install the matching alpha.4 JAR on the client and server for the intended movement behavior.
+
+### Alpha.4 test route
+
+1. Consume `/creeperborn testfruit`, stay without mastered elements, and test **Z** (hold to charge), **X + WASD** dodges, hold-X grapple, and hold-C guard. Use `/creeperborn fruitmastery 3` to bypass the one-hour Gear 5 unlock for testing.
+2. In Survival, enter deep water. Confirm sinking, no upward swimming, blocked powers even after selecting Water with R, and air bubbles running out. Enter with Gear 5 active and verify it ends; drowning remains dangerous.
+3. Check that rain, carrying a water bucket, and wading with your head above water do not trigger the curse.
+4. Consume all four hearts. Set each to tier 2 first; the weakness must remain. Then run `/creeperborn mastery earth 3`, `/creeperborn mastery water 3`, `/creeperborn mastery fire 3`, and `/creeperborn mastery air 3`.
+5. Reenter deep water: swim normally, keep full air, and cast abilities. `/creeperborn status` reports the current water rule. Set Air to tier 2 underwater to verify the weakness returns.
+6. Save/rejoin and respawn to check persistent ownership/mastery. Test grapples with a second player on a PvP-enabled test server, and check PvP/team protections.
+
+GitHub Actions runs the existing element/Rubber tests plus a real water pool, native upward travel, native air depletion (including a breathing potion), drowning during Gear 5, mastery transitions, shallow-water exclusions, and water-state packet encoding. Client movement feel and multiplayer synchronization still need in-game testing.
+
 ## Later milestones
 
 Custom models/UI, richer villager patrol behavior, faction banners, terrain-based earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.
+
 

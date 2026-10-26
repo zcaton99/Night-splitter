@@ -50,6 +50,7 @@ public final class Abilities {
     public void move(Player p, int index) { moves.put(p.getUUID(), index); }
     public String cast(Player p) {
         if (!(p.level() instanceof ServerLevel level) || p.isSpectator() || !p.isAlive()) return "Cannot cast now.";
+        if(WaterRules.suppressed(p))return "Fruit weakness: powers are disabled while submerged. Master all four elements to overcome it.";
         Element e = Progress.selected(p);
         if (e == null) return "Consume an elemental creeper heart first.";
         int move = move(p);
@@ -162,4 +163,5 @@ public final class Abilities {
         level.sendParticles(e.particle, pos.x, pos.y, pos.z, count, .2, .3, .2, .02);
     }
 }
+
 

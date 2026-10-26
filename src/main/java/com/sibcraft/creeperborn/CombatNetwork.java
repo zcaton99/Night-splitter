@@ -21,6 +21,7 @@ public final class CombatNetwork {
         PayloadTypeRegistry.serverboundPlay().register(CastPayload.TYPE, CastPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(WaterStatePayload.TYPE,WaterStatePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE, (payload, context) -> {
             Player p = context.player();
             if (!payload.validRequest() || !p.isAlive() || p.isSpectator() || !allow(p)) return;
@@ -54,4 +55,5 @@ public final class CombatNetwork {
         });
     }
 }
+
 

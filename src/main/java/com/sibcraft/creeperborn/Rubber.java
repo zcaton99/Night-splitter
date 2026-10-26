@@ -66,10 +66,11 @@ public final class Rubber {
     }
     public static void press(Player p,int move) { press(p,move,0); }
     public static void press(Player p, int move,int direction) {
-        if (!selected(p) || !p.isAlive() || p.isSpectator() || move < 0 || move > 2) return;
+        if (WaterRules.suppressed(p) || !selected(p) || !p.isAlive() || p.isSpectator() || move < 0 || move > 2) return;
         State s = state(p); if (s.held >= 0) return;
         s.direction=direction & 15; s.held=move; s.press=now(p); s.level=(ServerLevel)p.level(); s.guardUntil=now(p)+15;
     }
+    public static void suspendInWater(Player p){State s=state(p);cancelInput(p);end(p,s);}
     public static void heartbeat(Player p) { State s=state(p); if(s.held>=0) s.guardUntil=now(p)+15; }
     public static void release(Player p, int move) {
         State s=state(p); if (s.held!=move) return;
@@ -79,6 +80,7 @@ public final class Rubber {
     }
     public static String cast(Player p, int move, long held) {
         if (!(p.level() instanceof ServerLevel level) || !selected(p) || !p.isAlive() || p.isSpectator()) return "Select Rubber with G first.";
+        if (WaterRules.suppressed(p))return "Fruit weakness: powers are disabled while submerged. Master all four elements to overcome it.";
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {
@@ -177,6 +179,7 @@ public final class Rubber {
     }
     public static void tickPlayer(Player p) {
             State s=state(p);long now=now(p);
+            if(WaterRules.suppressed(p)){suspendInWater(p);return;}
             if(!p.isAlive()||p.isSpectator()||s.level!=null&&s.level!=p.level()) {
                 end(p,s);cancelInput(p);return;
             }
@@ -223,6 +226,7 @@ public final class Rubber {
     public static float damage(Player p, DamageSource source, float amount) {
         if(!unlocked(p))return amount;
         if(source.typeHolder().equals(p.damageSources().fellOutOfWorld().typeHolder())||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
+        if(source.typeHolder().equals(p.damageSources().drown().typeHolder()))return WaterRules.mastered(p)?0:amount;
         boolean heat=heat(source);
         if(gear(p)) {
             if(source.is(DamageTypeTags.IS_FALL))return 0;
@@ -237,3 +241,4 @@ public final class Rubber {
         return amount;
     }
 }
+

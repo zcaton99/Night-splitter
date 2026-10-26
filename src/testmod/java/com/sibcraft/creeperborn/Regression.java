@@ -257,9 +257,60 @@ public final class Regression implements ModInitializer {
         check(CastPayload.CODEC.decode(buffer).equals(new CastPayload(2,1)), "Combat packet codec round trip"); buffer.release();
         checkHarmony(level);
         checkRubber(level);
+        checkFruitWater(level);
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkFruitWater(ServerLevel level) {
+        Rubber.clear();
+        for(int x=6;x<=10;x++)for(int z=-10;z<=-6;z++) {
+            level.setBlockAndUpdate(new BlockPos(x,(int)y-1,z),Blocks.STONE.defaultBlockState());
+            for(int dy=0;dy<4;dy++)level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),Blocks.WATER.defaultBlockState());
+        }
+        Player ordinary=player(level);ordinary.snapTo(8.5,y,-8.5);
+        check(WaterRules.submerged(ordinary)&&!WaterRules.suppressed(ordinary),"Ordinary submerged players retain swimming");
+        check(!ordinary.canBreatheUnderwater(),"Nonfruit ordinary players retain normal breathing");
+        Player fruit=player(level);Rubber.consume(fruit,Relics.fruit());Rubber.grant(fruit,3);
+        check(Rubber.cast(fruit,2,0).contains("Gear 5!"),"Gear starts on land for drowning test");
+        fruit.snapTo(8.5,y,-8.5);
+        check(WaterRules.suppressed(fruit),"Fruit-only player is weak when eyes are underwater");
+        fruit.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WATER_BREATHING,600,0));
+        fruit.setAirSupply(100);fruit.baseTick();
+        check(fruit.getAirSupply()==99,"Fruit curse consumes normal air even with breathing potion");
+        fruit.damageCooldownTime=0;fruit.setAirSupply(-19);float before=fruit.getHealth();fruit.baseTick();
+        check(fruit.getHealth()<before&&Rubber.gear(fruit),"Native drowning damages an active Gear 5 player");
+        WaterRules.apply(fruit);
+        check(!Rubber.gear(fruit),"Submersion ends Gear 5");
+        fruit.setDeltaMovement(0,.8,0);double previousY=fruit.getY();
+        fruit.travel(new net.minecraft.world.phys.Vec3(0,1,0));
+        check(fruit.getY()<previousY&&fruit.getDeltaMovement().y<0,"Native travel overrides upward swim input with sinking");
+        check(Rubber.cast(fruit,0,0).contains("disabled"),"Rubber powers disabled underwater");
+        for(Element e:Element.values())Mastery.grant(fruit,e,2);
+        Progress.select(fruit,Element.WATER);
+        check(WaterRules.suppressed(fruit)&&Creeperborn.ABILITIES.cast(fruit).contains("disabled"),
+            "Owning all hearts or selecting Water cannot bypass fruit weakness");
+        fruit.snapTo(8.5,y+3,-8.5);
+        check(!WaterRules.suppressed(fruit),"Feet in shallow water with head above surface are safe");
+        fruit.snapTo(.5,y,.5);check(!WaterRules.suppressed(fruit),"Dry land does not trigger fruit weakness");
+        fruit.snapTo(8.5,y,-8.5);
+        for(Element e:Element.values())Mastery.grant(fruit,e,3);
+        check(WaterRules.mastered(fruit)&&!WaterRules.suppressed(fruit)&&fruit.canBreatheUnderwater(),
+            "All four fully mastered elements restore swimming and grant underwater breathing");
+        fruit.setAirSupply(-19);before=fruit.getHealth();fruit.damageCooldownTime=0;fruit.baseTick();WaterRules.apply(fruit);
+        check(fruit.getAirSupply()==fruit.getMaxAirSupply()&&fruit.getHealth()==before,"Mastered fruit user restores air without drowning");
+        check(Rubber.damage(fruit,fruit.damageSources().drown(),2)==0,"Harmony protects against drowning damage");
+        check(!Creeperborn.ABILITIES.cast(fruit).contains("disabled"),"Mastered player can cast underwater");
+        Mastery.grant(fruit,Element.AIR,2);
+        check(WaterRules.suppressed(fruit)&&!fruit.canBreatheUnderwater(),"Losing one mastery immediately restores the weakness");
+        Player restored=player(level);for(String tag:fruit.entityTags())restored.addTag(tag);restored.snapTo(8.5,y,-8.5);
+        check(WaterRules.suppressed(restored),"Restored fruit ownership still applies water weakness");
+        var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),level.registryAccess());
+        WaterStatePayload.CODEC.encode(buffer,new WaterStatePayload(3));
+        check(WaterStatePayload.CODEC.decode(buffer).flags()==3,"Water-state packet round trip");buffer.release();
+        Rubber.clear();Creeperborn.ABILITIES.clear();
+        for(int x=6;x<=10;x++)for(int z=-10;z<=-6;z++)for(int dy=0;dy<4;dy++)
+            level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),Blocks.AIR.defaultBlockState());
     }
     private void startRubberLive(ServerLevel level) {
         rubberLive=player(level); rubberLive.snapTo(-8,y,-8);
@@ -434,4 +485,5 @@ public final class Regression implements ModInitializer {
     }
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 }
+
 

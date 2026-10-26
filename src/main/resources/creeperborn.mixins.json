@@ -5,7 +5,9 @@
   "mixins": [
     "TemporaryRockMixin",
     "AirStepConnectionAccessor",
-    "RubberDamageMixin"
+    "RubberDamageMixin",
+    "FruitWaterPlayerMixin",
+    "FruitWaterBreathingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

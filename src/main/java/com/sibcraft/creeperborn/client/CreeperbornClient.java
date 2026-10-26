@@ -3,6 +3,8 @@ package com.sibcraft.creeperborn.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.sibcraft.creeperborn.Element;
 import com.sibcraft.creeperborn.ControlPayload;
+import com.sibcraft.creeperborn.WaterStatePayload;
+import com.sibcraft.creeperborn.WaterRules;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -26,9 +28,14 @@ public final class CreeperbornClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
             if(payload.action()==3){fruit=payload.value()==4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
         });
+        ClientPlayNetworking.registerGlobalReceiver(WaterStatePayload.TYPE,(payload,context)->{
+            var player=net.minecraft.client.Minecraft.getInstance().player;
+            if(player!=null)WaterRules.clientState(player.getUUID(),payload.flags());
+        });
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
-            if(client.player==null||client.getConnection()==null){combat=false;fruit=false;selected=null;held=-1;waitingForRelease=true;return;}
+            if(client.player==null||client.getConnection()==null){WaterRules.clearClient();combat=false;fruit=false;selected=null;held=-1;waitingForRelease=true;return;}
+            if(WaterRules.suppressed(client.player))cancel();
             if(client.gui.screen()!=null||client.isPaused()){
                 cancel();while(toggle.consumeClick()){}while(cycle.consumeClick()){}while(fruits.consumeClick()){}
                 for(KeyMapping mapping:moves)while(mapping.consumeClick()){}return;
@@ -57,3 +64,4 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
     }
 }
+
