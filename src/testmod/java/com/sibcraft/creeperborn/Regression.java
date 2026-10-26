@@ -273,7 +273,7 @@ public final class Regression implements ModInitializer {
         check(!ordinary.canBreatheUnderwater(),"Nonfruit ordinary players retain normal breathing");
         Player fruit=player(level);Rubber.consume(fruit,Relics.fruit());Rubber.grant(fruit,3);
         check(Rubber.cast(fruit,2,0).contains("Gear 5!"),"Gear starts on land for drowning test");
-        fruit.snapTo(8.5,y,-8.5);
+        fruit.snapTo(8.5,y+1,-8.5);
         check(WaterRules.suppressed(fruit),"Fruit-only player is weak when eyes are underwater");
         fruit.addEffect(new net.minecraft.world.effect.MobEffectInstance(MobEffects.WATER_BREATHING,600,0));
         fruit.setAirSupply(100);fruit.baseTick();
@@ -293,13 +293,16 @@ public final class Regression implements ModInitializer {
         fruit.snapTo(8.5,y+3,-8.5);
         check(!WaterRules.suppressed(fruit),"Feet in shallow water with head above surface are safe");
         fruit.snapTo(.5,y,.5);check(!WaterRules.suppressed(fruit),"Dry land does not trigger fruit weakness");
-        fruit.snapTo(8.5,y,-8.5);
+        fruit.snapTo(8.5,y+1,-8.5);
         for(Element e:Element.values())Mastery.grant(fruit,e,3);
         check(WaterRules.mastered(fruit)&&!WaterRules.suppressed(fruit)&&fruit.canBreatheUnderwater(),
             "All four fully mastered elements restore swimming and grant underwater breathing");
         fruit.setAirSupply(-19);before=fruit.getHealth();fruit.damageCooldownTime=0;fruit.baseTick();WaterRules.apply(fruit);
         check(fruit.getAirSupply()==fruit.getMaxAirSupply()&&fruit.getHealth()==before,"Mastered fruit user restores air without drowning");
         check(Rubber.damage(fruit,fruit.damageSources().drown(),2)==0,"Harmony protects against drowning damage");
+        fruit.setDeltaMovement(0,.3,0);double swimY=fruit.getY();
+        fruit.travel(net.minecraft.world.phys.Vec3.ZERO);
+        check(fruit.getY()>swimY,"Mastery restores native upward water movement");
         check(!Creeperborn.ABILITIES.cast(fruit).contains("disabled"),"Mastered player can cast underwater");
         Mastery.grant(fruit,Element.AIR,2);
         check(WaterRules.suppressed(fruit)&&!fruit.canBreatheUnderwater(),"Losing one mastery immediately restores the weakness");
