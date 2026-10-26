@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.6
+# Creeperborn — 0.1.0-alpha.7
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -150,6 +150,14 @@ Test lava in Survival before/after mastering all four, then test residual burnin
 Mastering all four elements to tier 3 grants underwater breathing, prevents drowning, and prevents fall damage, alongside lava/fire immunity. These rewards apply with or without any fruit; fruit owners additionally lose the water curse. It works without any fruit, with combat OFF, and with any element selected. Air mastery alone does not grant this all-four reward. Ordinary damage and void damage remain unchanged. Dropping any element below tier 3 removes the immunity immediately; elemental progression remains preserved on death.
 
 Test in Survival with all four masteries at tier 3: fall from a safe test tower and verify no health loss. Then set Air to tier 2 and repeat a short, nonlethal fall to verify damage returns. Existing Gear 5 fall protection and Air Step's scoped jump protection remain separate. Automated tests exercise native fall damage before and after downgrading mastery, underwater breathing for nonfruit masters, air replenishment, and native drowning protection.
+
+## Control recovery and diagnostics — alpha.7
+
+Old alpha.1 R/G/H move defaults automatically migrate together to Z/X/C on first world entry, avoiding collisions with R element selection and G fruit selection. The old T fruit default migrates to G. Other custom move layouts are preserved. Pressing R or G now enables combat and selects that category directly; B still toggles combat. Enabling combat prints the actual assigned keys in chat, and missing server networking support produces a clear message.
+
+The server synchronizes the active element/fruit whenever it changes, including after eating hearts/fruits or using selection commands, so the client does not have to discover the selection through a failed first cast. Status now prints in persistent chat with mode, eye submersion, real fruit ownership, all-four mastery, and air supply.
+
+For water diagnosis: use Survival, consume a genuine fruit, and leave at least one element below tier 3. Creative invulnerability and complete elemental mastery intentionally prevent drowning. Unrelated custom bindings/mod conflicts may still require adjustment in Controls. The input fixes need an actual client playtest; dedicated-server tests cannot reproduce your saved keybindings or physical keyboard input.
 
 ## Later milestones
 

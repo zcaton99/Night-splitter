@@ -14,7 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public final class CreeperbornClient implements ClientModInitializer {
-    private boolean combat, fruit;
+    private boolean combat, fruit, checkedBindings;
     private Element selected;
     private int ticks, lastAirStep=-100, held=-1;
     private boolean waitingForRelease;
@@ -35,17 +35,47 @@ public final class CreeperbornClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
             if(client.player==null||client.getConnection()==null){WaterRules.clearClient();combat=false;fruit=false;selected=null;held=-1;waitingForRelease=true;return;}
+            if(!checkedBindings){
+                checkedBindings=true;
+                boolean legacy=moves[0].matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_R))
+                    &&moves[1].matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_G))
+                    &&moves[2].matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_H));
+                boolean changed=false;
+                if(legacy){
+                    int[] defaults={InputConstants.KEY_Z,InputConstants.KEY_X,InputConstants.KEY_C};
+                    for(int i=0;i<3;i++)moves[i].setKey(InputConstants.Type.KEYBOARD.getOrCreate(defaults[i]));
+                    changed=true;
+                }
+                if(fruits.matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_T))){
+                    fruits.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_G));changed=true;
+                }
+                if(changed){
+                    KeyMapping.resetMapping();client.options.save();
+                    client.player.sendSystemMessage(Component.literal("Creeperborn updated old controls: R elements, G fruits, Z/X/C moves. Custom bindings remain available in Controls."));
+                }
+            }
             if(WaterRules.suppressed(client.player))cancel();
             if(client.gui.screen()!=null||client.isPaused()){
                 cancel();while(toggle.consumeClick()){}while(cycle.consumeClick()){}while(fruits.consumeClick()){}
                 for(KeyMapping mapping:moves)while(mapping.consumeClick()){}return;
             }
             while(toggle.consumeClick()){
-                combat=!combat;cancel();if(combat)send(0,0);
+                combat=!combat;cancel();
+                if(combat&&!ClientPlayNetworking.canSend(ControlPayload.TYPE)){
+                    combat=false;
+                    client.player.sendSystemMessage(Component.literal("Creeperborn controls are unavailable on this server. Install the matching client/server version."));
+                    continue;
+                }
+                if(combat){
+                    send(0,0);
+                    client.player.sendSystemMessage(Component.literal("Creeperborn controls — elements: "+cycle.getTranslatedKeyMessage().getString()
+                        +"; fruit: "+fruits.getTranslatedKeyMessage().getString()+"; moves: "
+                        +moves[0].getTranslatedKeyMessage().getString()+"/"+moves[1].getTranslatedKeyMessage().getString()+"/"+moves[2].getTranslatedKeyMessage().getString()));
+                }
                 client.player.sendOverlayMessage(Component.literal("Creeperborn combat "+(combat?"ON — R elements; G fruits; Z/X/C moves":"OFF")));
             }
-            while(cycle.consumeClick()){if(combat){cancel();send(1,client.options.keyShift.isDown()?-1:1);}}
-            while(fruits.consumeClick()){if(combat){cancel();send(4,0);}}
+            while(cycle.consumeClick()){if(ClientPlayNetworking.canSend(ControlPayload.TYPE)){combat=true;cancel();send(1,client.options.keyShift.isDown()?-1:1);}}
+            while(fruits.consumeClick()){if(ClientPlayNetworking.canSend(ControlPayload.TYPE)){combat=true;cancel();send(4,0);}}
             boolean down=false;for(KeyMapping mapping:moves)down|=mapping.isDown();
             if(waitingForRelease&&!down)waitingForRelease=false;
             for(int i=0;i<3;i++)while(moves[i].consumeClick()){

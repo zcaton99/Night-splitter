@@ -410,6 +410,7 @@ public final class Regression implements ModInitializer {
         check(!Rubber.consume(p,fake),"Renamed vanilla fruit cannot unlock Rubber");
         ItemStack fruit=Relics.fruit();check(Rubber.consume(p,fruit)&&fruit.isEmpty()&&Rubber.selected(p)&&Progress.selected(p)==null,
             "Fruit-only player unlocks Rubber without bending");
+        check(CombatNetwork.selection(p)==4,"Server selection reports newly consumed fruit immediately");
         ItemStack duplicate=Relics.fruit();check(!Rubber.consume(p,duplicate)&&duplicate.getCount()==1,"Duplicate fruit is shareable");
         check(Rubber.progressTier(40,3599)==2&&Rubber.progressTier(39,3600)==2&&Rubber.progressTier(40,3600)==3,
             "Gear 5 requires 40 uses AND a full active hour");
@@ -439,6 +440,7 @@ public final class Regression implements ModInitializer {
         Rubber.forget(p);check(!Rubber.gear(p)&&Rubber.cast(p,2,0).contains("recovering"),"Logout ends Gear and preserves recovery");
         check(Rubber.damage(p,p.damageSources().lava(),10)==15,"Normal Rubber remains vulnerable to heat");
         Progress.consume(p,Relics.heart(Element.EARTH));check(!Rubber.selected(p)&&Rubber.unlocked(p),"Element selection preserves fruit unlock");
+        check(CombatNetwork.selection(p)==Element.EARTH.ordinal(),"Server selection reports element switch after fruit");
         Player restored=player(level,p.getUUID());for(String tag:p.entityTags())restored.addTag(tag);
         check(Rubber.unlocked(restored)&&Rubber.tier(restored)==3,"Rubber mastery survives persistent-tag restoration");
         Player challenger=player(level);ItemStack spare=Relics.fruit();

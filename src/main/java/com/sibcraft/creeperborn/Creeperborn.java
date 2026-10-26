@@ -53,7 +53,7 @@ public final class Creeperborn implements ModInitializer {
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server);
+            CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server);
             if (server.getTickCount() % 20 == 0) Mastery.tick(server);
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
@@ -61,10 +61,10 @@ public final class Creeperborn implements ModInitializer {
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
         ServerLivingEntityEvents.AFTER_DEATH.register(FruitCreepers::died);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) FruitClaims.releaseOnDeath(p); });
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Rubber.forget(handler.player); WaterRules.forget(handler.player); });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Rubber.forget(handler.player); WaterRules.forget(handler.player); CombatNetwork.forget(handler.player); });
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);
-            WaterRules.forget(newPlayer);
+            WaterRules.forget(newPlayer); CombatNetwork.forget(newPlayer);
         });
         UseItemCallback.EVENT.register((player, level, hand) -> {
             ItemStack stack = player.getItemInHand(hand); String kind = Relics.kind(stack);
@@ -104,14 +104,17 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                say(p, "Creeperborn 0.1.0-alpha.6 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
+                p.sendSystemMessage(Component.literal("Creeperborn 0.1.0-alpha.7 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
                     + " | move: " + (ABILITIES.move(p) + 1)
                     + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
                     + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
                     + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%, water breathing, lava + fall immunity)" : "locked")
                     + " | Rubber fruit: " + (FruitClaims.available()?"available":FruitClaims.owns(p)?"claimed by you":"claimed by another living player")
                     + " | natural creeper chance: " + config.elementalChance + " | " + Rubber.status(p)
-                    + " | fruit water: " + (!WaterRules.fruitOwner(p)?"not applicable":WaterRules.mastered(p)?"mastery immunity + underwater breathing":WaterRules.suppressed(p)?"SUBMERGED — sinking, powers disabled":"vulnerable"));
+                    + " | fruit water: " + (!WaterRules.fruitOwner(p)?"not applicable":WaterRules.mastered(p)?"mastery immunity + underwater breathing":WaterRules.suppressed(p)?"SUBMERGED — sinking, powers disabled":"vulnerable")));
+                p.sendSystemMessage(Component.literal("Water check — mode: "+p.gameMode()+", eyes submerged: "+WaterRules.submerged(p)
+                    +", fruit owner: "+WaterRules.fruitOwner(p)+", all four mastered: "+Mastery.harmony(p)
+                    +", air: "+p.getAirSupply()+"/"+p.getMaxAirSupply()+". Creative prevents drowning; all-four mastery grants underwater breathing."));
                 return 1;
             }));
             root.then(Commands.literal("cast").executes(ctx -> { ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, ABILITIES.cast(p)); return 1; }));

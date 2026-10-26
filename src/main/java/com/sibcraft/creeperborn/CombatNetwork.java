@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Player;
 public final class CombatNetwork {
     private record Window(long second, int used) {}
     private static final Map<UUID, Window> limits = new HashMap<>();
+    private static final Map<UUID,Integer> sentSelection=new HashMap<>();
     private CombatNetwork() {}
     public static boolean allow(Player p) {
         long second = p.level().getGameTime() / 20;
@@ -16,7 +17,19 @@ public final class CombatNetwork {
         if (w.used() >= 20) return false;
         limits.put(p.getUUID(), new Window(second, w.used() + 1)); return true;
     }
-    public static void clear() { limits.clear(); }
+    public static void clear() { limits.clear();sentSelection.clear(); }
+    public static int selection(Player p){
+        Element e=Progress.selected(p);return Rubber.selected(p)?4:e==null?-1:e.ordinal();
+    }
+    public static void forget(Player p){limits.remove(p.getUUID());sentSelection.remove(p.getUUID());}
+    public static void tick(net.minecraft.server.MinecraftServer server){
+        for(var p:server.getPlayerList().getPlayers()){
+            int value=selection(p);
+            if(!Objects.equals(sentSelection.get(p.getUUID()),value)&&ServerPlayNetworking.canSend(p,ControlPayload.TYPE)){
+                ServerPlayNetworking.send(p,new ControlPayload(3,value));sentSelection.put(p.getUUID(),value);
+            }
+        }
+    }
     public static void init() {
         PayloadTypeRegistry.serverboundPlay().register(CastPayload.TYPE, CastPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
