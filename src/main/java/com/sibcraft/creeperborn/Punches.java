@@ -16,7 +16,7 @@ import net.minecraft.world.phys.*;
 public final class Punches {
     public record Visual(UUID owner,boolean left,boolean fist){}
     private static final class Punch {
-        Player owner; ServerLevel level; Vec3 aim,tip; boolean left,charged,gear,struck;float damage;int age;
+        Player owner; ServerLevel level; Vec3 aim,tip,shoulderOffset; boolean left,charged,gear,struck;float damage;int age;
         Display.BlockDisplay arm,fist;
     }
     private static final List<Punch> active=new ArrayList<>();
@@ -36,6 +36,7 @@ public final class Punches {
         Vec3 eye=owner.getEyePosition();p.aim=eye.add(owner.getLookAngle().scale(range));
         var wall=level.clip(new ClipContext(eye,p.aim,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,owner));
         if(wall.getType()!=HitResult.Type.MISS)p.aim=wall.getLocation();
+        p.shoulderOffset=shoulderOffset(owner,left);
         p.tip=origin(p);p.arm=display(p,false);p.fist=display(p,true);
         lastHand.put(owner.getUUID(),left);active.add(p);advance(p);
     }
@@ -46,12 +47,20 @@ public final class Punches {
         d.setCustomName(Component.literal("cb_punch|"+p.owner.getUUID()+"|"+(p.left?"L":"R")+"|"+(fist?"F":"A")));
         d.setCustomNameVisible(false);d.setBlockState(Blocks.STONE.defaultBlockState());
         var settings=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;
-        settings.creeperborn$duration(1);settings.creeperborn$positionDuration(1);settings.creeperborn$view(1);settings.creeperborn$width(48);settings.creeperborn$height(48);
+        // Never interpolate from a newly spawned display's upright identity pose.
+        // Position and transformation must describe the same straight segment each frame.
+        settings.creeperborn$duration(0);settings.creeperborn$positionDuration(0);settings.creeperborn$view(1);settings.creeperborn$width(48);settings.creeperborn$height(48);
         Vec3 from=origin(p);d.snapTo(from.x,from.y,from.z);p.level.addFreshEntity(d);return d;
     }
+    private static Vec3 shoulderOffset(Player owner,boolean left){
+        // Yaw gives a stable shoulder side even while aiming straight up or down.
+        double yaw=Math.toRadians(owner.getYRot());
+        Vec3 right=new Vec3(-Math.cos(yaw),0,-Math.sin(yaw));
+        return new Vec3(0,-.32,0).add(right.scale(left?-.28:.28)).add(owner.getLookAngle().scale(.15));
+    }
     private static Vec3 origin(Punch p){
-        Vec3 look=p.owner.getLookAngle();Vec3 right=new Vec3(-look.z,0,look.x).normalize();
-        return p.owner.getEyePosition().add(0,-.32,0).add(right.scale(p.left?-.28:.28)).add(look.scale(.15));
+        // Keep the launch shoulder during this punch; turning cannot swing its base overhead.
+        return p.owner.getEyePosition().add(p.shoulderOffset);
     }
     private static void transform(Display.BlockDisplay d,Vec3 at,Vec3 direction,float width,float length){
         d.snapTo(at.x,at.y,at.z);
