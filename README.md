@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.12
+# Creeperborn — 0.1.0-alpha.13
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -200,6 +200,16 @@ Rooted enemies cannot travel, jump or use ordinary knockback velocity to move. N
 Tidal Guard remains a **360-degree, 5-block-radius** pulse, now pushing enemies **up to 10 blocks** at full environmental strength (previously 5). Environmental power still scales push distance; walls/collisions can shorten actual travel. Its resistance and cooldown remain.
 
 Test Earth C on a group, watch the slab visuals, and verify movement resumes after four seconds. Master all four and repeat for nine seconds. Check that Tidal Guard pushes enemies in front, behind and beside you roughly ten blocks in open space at full Water power.
+
+## Stretching punch animation — alpha.13
+
+Rubber Z now alternates **right / left** on accepted punches, including misses. A temporary arm and fist extend from the selected shoulder, sweep outward over two server steps, and retract over four. Charged punches use a thicker arm and larger fist. Existing reach, cooldown, damage and Gear 5 rules remain.
+
+Damage occurs once, when the narrow swept fist path first reaches a hostile mob; retracting does not hit again. Walls stop the punch. No player/pet/villager targets and no extension of the player's body hitbox. Pending punches cancel on owner removal/death, dimension change, water suppression or disconnect. Temporary display entities are excluded from saves and cleaned up after each animation.
+
+The matching Fabric client renders the stretched arm/fist using the caster's current skin, with classic/slim widths and sleeve visibility. The animation is a world-rendered effect visible from first person, third person, and other modded clients. Unmodified clients see vanilla display-block fallback visuals. Native player arm/item poses are retained in this first visual prototype, so first-person alignment and overlapping held-item poses need playtesting. No external assets or player textures are copied into the JAR.
+
+Automated checks exercise swept delayed hits, one-hit retraction, alternating hands, cleanup, and an unchanged body hitbox. Rendering is compiled against Minecraft 26.3 APIs; actual visuals and multiplayer appearance require in-game client testing. Use a copied world, compare tap/charged punches, switch camera views, try walls, and have a second player watch.
 
 ## Later milestones
 

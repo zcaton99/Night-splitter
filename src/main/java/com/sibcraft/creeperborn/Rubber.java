@@ -24,7 +24,7 @@ public final class Rubber {
     private static final class State {
         long gearUntil, gearReady, punchReady, dodgeReady, grabReady, credit = -10000, recent = -10000;
         long press = -1, guardUntil; int held = -1, direction; ServerLevel level;
-        boolean guarding, grabAttempted, grantedFlight; LivingEntity grabTarget; Vec3 anchor;
+        boolean guarding, grabAttempted, grantedFlight, nextLeft; LivingEntity grabTarget; Vec3 anchor;
     }
     private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
     private static long now(Player p) { return p.level().getGameTime(); }
@@ -59,8 +59,8 @@ public final class Rubber {
         }
         s.grabTarget=null;s.anchor=null;s.grabAttempted=false;s.held=-1;s.press=-1;s.guarding=false;
     }
-    public static void forget(Player p) { State s=states.get(p.getUUID()); if(s!=null)end(p,s); states.remove(p.getUUID()); positions.remove(p.getUUID()); }
-    public static void clear() { states.clear(); positions.clear(); }
+    public static void forget(Player p) { Punches.cancel(p); State s=states.get(p.getUUID()); if(s!=null)end(p,s); states.remove(p.getUUID()); positions.remove(p.getUUID()); }
+    public static void clear() { Punches.clear(); states.clear(); positions.clear(); }
     public static String status(Player p) {
         return "Rubber " + (unlocked(p) ? "tier " + tier(p) + "/3, " + uses(p) + " uses, " + seconds(p) + " active seconds" : "locked")
             + " | active: " + (selected(p) ? "Rubber" : "elements") + " | Gear 5: " + (gear(p) ? (state(p).gearUntil-now(p)+19)/20 + "s" : "OFF");
@@ -71,7 +71,7 @@ public final class Rubber {
         State s = state(p); if (s.held >= 0) return;
         s.direction=direction & 15; s.held=move; s.press=now(p); s.level=(ServerLevel)p.level(); s.guardUntil=now(p)+15;
     }
-    public static void suspendInWater(Player p){State s=state(p);cancelInput(p);end(p,s);}
+    public static void suspendInWater(Player p){Punches.cancel(p);State s=state(p);cancelInput(p);end(p,s);}
     public static void heartbeat(Player p) { State s=state(p); if(s.held>=0) s.guardUntil=now(p)+15; }
     public static void release(Player p, int move) {
         State s=state(p); if (s.held!=move) return;
@@ -86,15 +86,8 @@ public final class Rubber {
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {
             if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?6:10);
-            LivingEntity target=target(p, gear(p)?20:charged?14:8);
-            if(target!=null) {
-                float damage=(float)((charged ? 8 : 5) * (gear(p) ? 1.75 : 1));
-                if(gear(p))target.damageCooldownTime=0;
-                if(target.hurtServer(level,p.damageSources().playerAttack(p),damage)) credit(p);
-                Vec3 push=target.position().subtract(p.position()).normalize().scale(charged ? 1 : .4);
-                target.setDeltaMovement(target.getDeltaMovement().add(push.x,.15,push.z));
-            }
-            Abilities.particles(level,Element.AIR,p.getEyePosition().add(p.getLookAngle().scale(2)),12);
+            boolean left=s.nextLeft;s.nextLeft=!s.nextLeft;
+            Punches.launch(p,gear(p)?20:charged?14:8,(float)((charged?8:5)*(gear(p)?1.75:1)),charged,gear(p),left);
             return charged ? "Charged Stretch Punch!" : "Stretch Punch!";
         }
         if(move==1) {
@@ -174,6 +167,7 @@ public final class Rubber {
         return best;
     }
     public static void tick(MinecraftServer server) {
+        Punches.tick();
         for(ServerPlayer p:server.getPlayerList().getPlayers()) tickPlayer(p);
     }
     public static void tickPlayer(Player p) {

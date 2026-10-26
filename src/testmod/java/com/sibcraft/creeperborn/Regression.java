@@ -263,6 +263,7 @@ public final class Regression implements ModInitializer {
         checkMoveRouting(level);
         checkReachAndNourishment(level);
         checkFiftyBlocksAndShield(level);
+        checkStretchPunches(level);
         checkFlightCleanup(level);
         Player lavaMaster=player(level);
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
@@ -297,6 +298,24 @@ public final class Regression implements ModInitializer {
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
+    }
+    private void checkStretchPunches(ServerLevel level){
+        Player p=player(level);p.snapTo(-12,y+8,-14);
+        check(Rubber.consume(p,Relics.fruit()),"Animation fixture acquires Rubber");Rubber.grant(p,3);
+        var body=p.getBoundingBox();
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);target.snapTo(-12,y+8,-2);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+        Rubber.cast(p,0,8);
+        check(Punches.activeCount()==1&&!Punches.lastLeft(p),"First punch uses right arm");
+        check(target.getHealth()==20,"Distant target is not hit before fist reaches it");
+        Punches.tick();check(target.getHealth()<20,"Extending fist sweeps into distant hostile");
+        float after=target.getHealth();for(int tick=0;tick<5;tick++)Punches.tick();
+        check(target.getHealth()==after&&Punches.activeCount()==0,"Retraction does not hit twice and displays expire");
+        check(p.getBoundingBox().equals(body),"Stretch punch does not extend player body hitbox");
+        var visuals=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(22));
+        check(visuals.stream().noneMatch(d->d.getCustomName()!=null&&d.getCustomName().getString().startsWith("cb_punch|")),
+            "Completed punch removes its temporary display entities");
+        target.discard();FruitClaims.releaseOnDeath(p);Rubber.clear();
+        check(Punches.visual("cb_punch|"+p.getUUID()+"|L|F").left()&&Punches.visual("bad")==null,"Punch visual metadata validates owner and side");
     }
     private void checkFlightCleanup(ServerLevel level){
         Player p=player(level);check(Rubber.consume(p,Relics.fruit()),"Flight cleanup test acquires Rubber");Rubber.grant(p,3);
@@ -367,7 +386,7 @@ public final class Regression implements ModInitializer {
         Player rubber=player(level);rubber.snapTo(-12,y+5,-14);check(Rubber.consume(rubber,Relics.fruit()),"Reach test acquires Rubber");Rubber.grant(rubber,3);
         Zombie far=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);far.snapTo(-12,y+5,4);far.setNoAi(true);far.setNoGravity(true);level.addFreshEntity(far);
         Rubber.cast(rubber,0,8);check(far.getHealth()==far.getMaxHealth(),"Normal charged punch cannot reach eighteen blocks");
-        Rubber.clear();Rubber.cast(rubber,2,0);Rubber.cast(rubber,0,0);
+        Rubber.clear();Rubber.cast(rubber,2,0);Rubber.cast(rubber,0,0);Punches.tick();
         check(far.getHealth()<far.getMaxHealth(),"Gear 5 tap punch reaches eighteen blocks");
         Rubber.tickPlayer(rubber);
         check(rubber.getEffect(MobEffects.SPEED).getAmplifier()==2&&rubber.getEffect(MobEffects.JUMP_BOOST).getAmplifier()==3,
@@ -505,6 +524,7 @@ public final class Regression implements ModInitializer {
             rubberTarget.snapTo(-8,y,-3);rubberTarget.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
             float before=rubberTarget.getHealth();
             check(Rubber.cast(rubberLive,0,0).equals("Stretch Punch!"),"Gear punch recovers after six ticks");
+            check(Punches.lastLeft(rubberLive)==(rubberTicks==31),"Successive punches alternate left and right");
             check(rubberTarget.getHealth()<before,"Rapid Gear punches bypass hostile hurt cooldown");
         }
         if(rubberTicks==38)rubberLive.getFoodData().setFoodLevel(7);
