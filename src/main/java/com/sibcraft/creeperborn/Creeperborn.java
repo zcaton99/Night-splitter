@@ -108,7 +108,7 @@ public final class Creeperborn implements ModInitializer {
                     + " | move: " + (ABILITIES.move(p) + 1)
                     + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
                     + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
-                    + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%, lava + fall immunity)" : "locked")
+                    + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%, water breathing, lava + fall immunity)" : "locked")
                     + " | Rubber fruit: " + (FruitClaims.available()?"available":FruitClaims.owns(p)?"claimed by you":"claimed by another living player")
                     + " | natural creeper chance: " + config.elementalChance + " | " + Rubber.status(p)
                     + " | fruit water: " + (!WaterRules.fruitOwner(p)?"not applicable":WaterRules.mastered(p)?"mastery immunity + underwater breathing":WaterRules.suppressed(p)?"SUBMERGED — sinking, powers disabled":"vulnerable"));

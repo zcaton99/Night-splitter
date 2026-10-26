@@ -14,7 +14,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class FruitWaterBreathingMixin {
     @Inject(method="canBreatheUnderwater",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteredBreathing(CallbackInfoReturnable<Boolean> cir){
-        if((Object)this instanceof Player p&&WaterRules.fruitOwner(p))cir.setReturnValue(WaterRules.mastered(p));
+        if((Object)this instanceof Player p){
+            if(WaterRules.mastered(p))cir.setReturnValue(true);
+            else if(WaterRules.fruitOwner(p))cir.setReturnValue(false);
+        }
     }
     @Redirect(method="baseTick",at=@At(value="INVOKE",target="Lnet/minecraft/world/effect/MobEffectUtil;hasWaterBreathing(Lnet/minecraft/world/entity/LivingEntity;)Z"))
     private boolean creeperborn$fruitCurseBypassesBreathingPotion(LivingEntity entity){

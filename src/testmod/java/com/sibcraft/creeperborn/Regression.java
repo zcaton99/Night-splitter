@@ -263,6 +263,13 @@ public final class Regression implements ModInitializer {
         for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
             "All-four mastery grants lava immunity without any fruit");
+        check(WaterRules.mastered(lavaMaster)&&lavaMaster.canBreatheUnderwater(),"All-four mastery grants underwater breathing without a fruit");
+        lavaMaster.setAirSupply(1);WaterRules.apply(lavaMaster);
+        check(lavaMaster.getAirSupply()==lavaMaster.getMaxAirSupply(),"Nonfruit master replenishes air");
+        float breathBefore=lavaMaster.getHealth();
+        lavaMaster.hurtServer(level,lavaMaster.damageSources().drown(),4);
+        check(lavaMaster.getHealth()==breathBefore,"Native drowning damage cannot hurt a nonfruit master");
+        lavaMaster.damageCooldownTime=0;
         float lavaBefore=lavaMaster.getHealth();lavaMaster.hurtServer(level,lavaMaster.damageSources().lava(),4);
         check(lavaMaster.getHealth()==lavaBefore,"Native lava damage respects elemental mastery immunity");
         lavaMaster.damageCooldownTime=0;
@@ -278,6 +285,8 @@ public final class Regression implements ModInitializer {
         lavaMaster.damageCooldownTime=0;float fallBefore=lavaMaster.getHealth();
         lavaMaster.hurtServer(level,lavaMaster.damageSources().fall(),4);
         check(lavaMaster.getHealth()<fallBefore,"Native fall damage returns without full mastery");
+        check(!WaterRules.mastered(lavaMaster)&&!lavaMaster.canBreatheUnderwater(),"Losing one mastery removes underwater breathing");
+        check(Rubber.damage(lavaMaster,lavaMaster.damageSources().drown(),4)==4,"Drowning protection requires all-four mastery");
         Player airOnly=player(level);Mastery.grant(airOnly,Element.AIR,3);
         check(Rubber.damage(airOnly,airOnly.damageSources().fall(),4)==4,"Air-only mastery does not grant the all-four reward");
         Player budget = player(level);

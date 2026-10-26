@@ -24,7 +24,7 @@ public final class WaterRules {
         return (Rubber.unlocked(p)?1:0)|(Mastery.harmony(p)?2:0);
     }
     public static boolean fruitOwner(Player p){return (flags(p)&1)!=0;}
-    public static boolean mastered(Player p){return (flags(p)&3)==3;}
+    public static boolean mastered(Player p){return (flags(p)&2)!=0;}
     public static boolean vulnerable(Player p){return fruitOwner(p)&&!mastered(p)&&p.isAlive()&&!p.isSpectator();}
     /** Eye below actual source/flowing-water surface. Rain and ankle-deep water do not qualify. */
     public static boolean submerged(Player p){

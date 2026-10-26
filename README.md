@@ -147,9 +147,9 @@ Test lava in Survival before/after mastering all four, then test residual burnin
 
 ## All-four fall immunity — alpha.6
 
-Mastering all four elements to tier 3 now also prevents fall damage, alongside lava/fire immunity. It works without any fruit, with combat OFF, and with any element selected. Air mastery alone does not grant this all-four reward. Ordinary damage and void damage remain unchanged. Dropping any element below tier 3 removes the immunity immediately; elemental progression remains preserved on death.
+Mastering all four elements to tier 3 grants underwater breathing, prevents drowning, and prevents fall damage, alongside lava/fire immunity. These rewards apply with or without any fruit; fruit owners additionally lose the water curse. It works without any fruit, with combat OFF, and with any element selected. Air mastery alone does not grant this all-four reward. Ordinary damage and void damage remain unchanged. Dropping any element below tier 3 removes the immunity immediately; elemental progression remains preserved on death.
 
-Test in Survival with all four masteries at tier 3: fall from a safe test tower and verify no health loss. Then set Air to tier 2 and repeat a short, nonlethal fall to verify damage returns. Existing Gear 5 fall protection and Air Step's scoped jump protection remain separate. Automated tests exercise native fall damage before and after downgrading mastery.
+Test in Survival with all four masteries at tier 3: fall from a safe test tower and verify no health loss. Then set Air to tier 2 and repeat a short, nonlethal fall to verify damage returns. Existing Gear 5 fall protection and Air Step's scoped jump protection remain separate. Automated tests exercise native fall damage before and after downgrading mastery, underwater breathing for nonfruit masters, air replenishment, and native drowning protection.
 
 ## Later milestones
 
