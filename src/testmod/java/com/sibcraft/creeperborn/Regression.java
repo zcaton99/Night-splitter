@@ -72,6 +72,17 @@ public final class Regression implements ModInitializer {
             "Second move requires both use count and active time");
         check(Mastery.tier(39, 1200) == 2 && Mastery.tier(40, 1199) == 2 && Mastery.tier(40, 1200) == 3,
             "Third move requires both use count and active time");
+        Player learner = player(level); Progress.consume(learner, Relics.heart(Element.AIR));
+        Creeperborn.ABILITIES.move(learner,1);
+        check(Creeperborn.ABILITIES.cast(learner).contains("locked"), "Mastery gate blocks advanced move before unlock");
+        Creeperborn.ABILITIES.move(learner,0); Creeperborn.ABILITIES.cast(learner);
+        check(Mastery.uses(learner,Element.AIR) == 0, "Empty cast grants no use credit");
+        Mastery.credit(learner,Element.AIR); Mastery.credit(learner,Element.AIR);
+        check(Mastery.uses(learner,Element.AIR) == 1, "Use credit limited to once per second");
+        Mastery.grant(learner,Element.AIR,2); Player restored = player(level);
+        for (String tag : learner.entityTags()) restored.addTag(tag);
+        check(Mastery.tier(restored,Element.AIR) == 2 && Mastery.seconds(restored,Element.AIR) == 300,
+            "Mastery restored from persistent player tags");
         for (Element e : Element.values()) Mastery.grant(p,e,3);
         check(Progress.cycle(p) == Element.EARTH, "Cycles all unlocked elements");
 
@@ -158,7 +169,8 @@ public final class Regression implements ModInitializer {
             if (slot == 1 && e == Element.AIR) check(caster.getDeltaMovement().y > .6, "Air Step has upward impulse");
             if (slot == 2 && e == Element.AIR) check(target.getDeltaMovement().z < 0, "Vortex pulls target inward");
             if (e == Element.AIR && slot == 1)
-                check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!"), "Air Step can repeat with no cooldown");
+                check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!") && Mastery.uses(caster,e) == 40,
+                    "Air Step repeats without cooldown and grants no use credit");
             else check(Creeperborn.ABILITIES.cast(caster).startsWith("Cooling down"), "Other moves enforce cooldowns");
             target.discard();
         }
@@ -208,6 +220,14 @@ public final class Regression implements ModInitializer {
             new AABB(5, y - 2, 5, 12, y + 5, 12));
         check(rockVisuals.size() == 3 && rockVisuals.stream().allMatch(display -> !display.shouldBeSaved()),
             "Temporary rock visuals are excluded from world saves");
+        check(new CastPayload(3,2).valid() && !new CastPayload(-1,0).valid() && !new CastPayload(4,0).valid()
+            && !new CastPayload(0,3).valid(), "Combat packet bounds validated");
+        var buffer = new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), level.registryAccess());
+        CastPayload.CODEC.encode(buffer, new CastPayload(2,1));
+        check(CastPayload.CODEC.decode(buffer).equals(new CastPayload(2,1)), "Combat packet codec round trip"); buffer.release();
+        Player budget = player(level);
+        for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
+        check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
     }
     private static int count(Player p, String kind) {
         int count = 0;

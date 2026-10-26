@@ -4,16 +4,26 @@ An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, ma
 
 ## First alpha scope
 
-Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0+26.3**. Install the JAR on the server or in singleplayer. The first alpha uses named vanilla items and particles, so vanilla clients can connect without a resource pack. Test in a copied world. This prototype is not yet published to Modrinth.
+Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0+26.3**. Install the JAR on the server or in singleplayer. Install the same JAR on a Fabric client to get the optional combat keys. Vanilla clients can still connect and use focus/commands. No resource pack is required. Test in a copied world. This prototype is not yet published to Modrinth.
 
 - **2%** of unexamined vanilla creepers become a random Earth, Water, Fire, or Air creeper when loaded. Each creeper is checked only once; unloading/reloading does not reroll it. Existing unexamined creepers can also convert. Night Splitters' marked creepers are excluded.
 - Elemental creepers have visible names/particles and a short elemental attack every six seconds against their vanilla target within ten blocks. They retain normal creeper explosions. Hearts drop once only when a player kills one before it explodes.
-- Right-click a marked heart to consume it and permanently unlock that element. Duplicate hearts are not consumed, so they can be shared. Unlocks survive logout and player respawn.
+- Right-click a marked heart to consume it and permanently unlock that element's basic move. Duplicate hearts are not consumed, so they can be shared. Unlocks and mastery counters survive logout and player respawn.
 - The first heart grants an **Elemental Focus** (named stick). Collecting all four grants one **Elemental Trident**. Vanilla items with matching names do not grant powers.
 - Right-click the focus to cast. Sneak-right-click it or the trident to cycle unlocked elements. `/creeperborn element earth|water|fire|air` selects directly. `/creeperborn move 1|2|3` selects a move. `/creeperborn cast` is an alternative to focus use.
 - All player attacks target hostile mobs only. No PvP, friendly fire, terrain removal, placed fire, or permanent barriers in this alpha.
 
-## Moves
+## Combat controls and mastery
+
+Press **B** to toggle elemental combat (starts OFF). **Z/X/C/V** select Earth/Water/Fire/Air; **R/G/H** cast moves 1/2/3. Select an element then press an ability key, or hold a selector while pressing the ability. Normal movement, jumping, sprinting, weapon attacks, and offhand swap remain available. Hold **G** with Air selected to repeat Air Step. All eight bindings can be changed in Options → Controls → Key Binds → Creeperborn Combat; resolve conflicts with other mods there. Keys are ignored while menus/chat are open. The mode resets OFF after disconnecting.
+
+Combat keys send a small custom packet to the server, not chat commands. The server validates element unlocks, mastery, cooldowns, and packet bounds. You do not need to hold a focus when using combat keys, so you can keep a sword/shield equipped. Focus/command activation remains available without the client component.
+
+Each element progresses separately. A heart grants **tier 1 / move 1**. **Move 2** unlocks at **10 meaningful uses AND 5 active minutes** with that element selected. **Move 3** unlocks at **40 uses AND 20 active minutes**. Active time counts while moving or shortly after a meaningful cast; standing AFK does not accumulate it. Hostile hits, successful rock blocks, and actual healing count as meaningful use, at most once per second per element. Empty casts and Air Step do not grant use credit. Repeated Air Step can count as active movement, but cannot satisfy the combat-use requirement on its own. `/creeperborn status` shows selected-element uses, active seconds, mastery tier, and current environmental power.
+
+For testing only, operators can run `/creeperborn mastery earth 3` (or water/fire/air) after consuming that element's heart. This bypasses the waiting period for that element; use tier `1` to reset its mastery. `/creeperborn use earth 1` selects and casts a specific unlocked move in one command.
+
+## Move list
 
 Cooldowns are independent per player, element and move; switching elements does not reset them. **Air Step has no cooldown or use limit.** One damage point is half a heart. Listed damage/distances/durations are at full environmental strength.
 

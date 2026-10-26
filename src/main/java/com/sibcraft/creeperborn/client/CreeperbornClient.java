@@ -10,7 +10,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 public final class CreeperbornClient implements ClientModInitializer {
     private boolean combat;
@@ -18,16 +17,16 @@ public final class CreeperbornClient implements ClientModInitializer {
     private int ticks, lastAirStep = -100;
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("creeperborn", "combat"));
     private static KeyMapping key(String name, int code) {
-        return KeyMappingHelper.registerKeyMapping(new KeyMapping("key.creeperborn." + name, InputConstants.Type.KEYSYM, code, CATEGORY));
+        return KeyMappingHelper.registerKeyMapping(new KeyMapping("key.creeperborn." + name, InputConstants.Type.KEYBOARD, code, CATEGORY));
     }
     @Override public void onInitializeClient() {
-        KeyMapping toggle = key("toggle", GLFW.GLFW_KEY_B);
-        KeyMapping[] elements = {key("earth", GLFW.GLFW_KEY_Z), key("water", GLFW.GLFW_KEY_X), key("fire", GLFW.GLFW_KEY_C), key("air", GLFW.GLFW_KEY_V)};
-        KeyMapping[] moves = {key("move1", GLFW.GLFW_KEY_R), key("move2", GLFW.GLFW_KEY_G), key("move3", GLFW.GLFW_KEY_H)};
+        KeyMapping toggle = key("toggle", InputConstants.KEY_B);
+        KeyMapping[] elements = {key("earth", InputConstants.KEY_Z), key("water", InputConstants.KEY_X), key("fire", InputConstants.KEY_C), key("air", InputConstants.KEY_V)};
+        KeyMapping[] moves = {key("move1", InputConstants.KEY_R), key("move2", InputConstants.KEY_G), key("move3", InputConstants.KEY_H)};
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ticks++;
             if (client.player == null || client.getConnection() == null) { combat = false; return; }
-            if (client.screen != null || client.isPaused()) {
+            if (client.gui.screen() != null || client.isPaused()) {
                 while (toggle.consumeClick()) {}
                 for (KeyMapping mapping : elements) while (mapping.consumeClick()) {}
                 for (KeyMapping mapping : moves) while (mapping.consumeClick()) {}
