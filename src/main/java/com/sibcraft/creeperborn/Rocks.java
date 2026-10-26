@@ -64,7 +64,9 @@ public final class Rocks {
         Vec3 toSource = sourcePosition.subtract(entity.position());
         Vec3 horizontal = new Vec3(toSource.x, 0, toSource.z).normalize();
         Vec3 look = entity.getLookAngle(); Vec3 facing = new Vec3(look.x, 0, look.z).normalize();
-        return horizontal.dot(facing) >= .5; // Only the forward 120-degree arc.
+        boolean front = horizontal.dot(facing) >= .5; // Only the forward 120-degree arc.
+        if (front) Mastery.credit(guard.caster(), Element.EARTH);
+        return front;
     }
     private void positionGuard(Guard g) {
         Vec3 look = g.caster().getLookAngle(); Vec3 forward = new Vec3(look.x, 0, look.z).normalize();

@@ -48,9 +48,10 @@ public final class Creeperborn implements ModInitializer {
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { CREEPERS.track(entity); GUARDIANS.track(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ABILITIES.clear(); Mastery.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ABILITIES.tick();
+            if (server.getTickCount() % 20 == 0) Mastery.tick(server);
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
@@ -97,6 +98,7 @@ public final class Creeperborn implements ModInitializer {
                 say(p, "Creeperborn 0.1.0-alpha.1 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
                     + " | move: " + (ABILITIES.move(p) + 1)
                     + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
+                    + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
                     + " | natural creeper chance: " + config.elementalChance);
                 return 1;
             }));
@@ -110,6 +112,21 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, Progress.select(p, e) ? "Selected " + e.title : "Consume this element's heart first."); return 1;
             }));
             root.then(element);
+            var use = Commands.literal("use");
+            var mastery = Commands.literal("mastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
+            for (Element e : Element.values()) {
+                use.then(Commands.literal(e.key()).then(Commands.argument("slot", IntegerArgumentType.integer(1, 3)).executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    if (!Progress.select(p,e)) { say(p, "Consume the " + e.title + " heart first."); return 0; }
+                    ABILITIES.move(p, IntegerArgumentType.getInteger(ctx, "slot") - 1); say(p, ABILITIES.cast(p)); return 1;
+                })));
+                mastery.then(Commands.literal(e.key()).then(Commands.argument("tier", IntegerArgumentType.integer(1, 3)).executes(ctx -> {
+                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                    if (!Progress.unlocked(p,e)) { say(p, "Consume this heart first."); return 0; }
+                    Mastery.grant(p, e, IntegerArgumentType.getInteger(ctx, "tier")); say(p, e.title + " testing mastery set to " + Mastery.tier(p,e)); return 1;
+                })));
+            }
+            root.then(use); root.then(mastery);
             root.then(Commands.literal("focus").executes(ctx -> {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 if (Progress.selected(p) == null) { say(p, "Unlock an element first."); return 0; }

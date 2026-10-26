@@ -11,6 +11,7 @@
   "environment": "*",
   "mixins": ["creeperborn.mixins.json"],
   "entrypoints": {
+    "client": ["com.sibcraft.creeperborn.client.CreeperbornClient"],
     "main": [
       "com.sibcraft.creeperborn.Creeperborn"
     ]

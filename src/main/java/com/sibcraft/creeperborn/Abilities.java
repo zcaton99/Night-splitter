@@ -53,6 +53,7 @@ public final class Abilities {
         Element e = Progress.selected(p);
         if (e == null) return "Consume an elemental creeper heart first.";
         int move = move(p);
+        if (!Mastery.allowed(p, e, move)) return e.moves[move] + " locked: move 2 needs 10 meaningful uses + 5 active minutes; move 3 needs 40 uses + 20 active minutes.";
         double power = EnvironmentPower.strength(p, e);
         String key = e.key() + move;
         Map<String, Long> timers = cooldowns.computeIfAbsent(p.getUUID(), id -> new HashMap<>());
@@ -69,7 +70,10 @@ public final class Abilities {
             case WATER -> {
                 if (move == 1) {
                     effect(p, MobEffects.RESISTANCE, (int)(80 * power), 0); pulse(level, p, e, 5, 0, 5 * power);
-                } else { p.heal((float)(4 * power)); p.clearFire(); }
+                } else {
+                    float before = p.getHealth(); p.heal((float)(4 * power)); p.clearFire();
+                    if (p.getHealth() > before) Mastery.credit(p, e);
+                }
             }
             case FIRE -> {
                 if (move == 1) area(level, p, e, 4, (float)(5 * power), .35 * power);
@@ -134,6 +138,7 @@ public final class Abilities {
         }
     }
     public static void strike(ServerLevel level, LivingEntity caster, LivingEntity target, Element e, float damage, double push) {
+        if (caster instanceof Player p && target instanceof Enemy && target.isAlive()) Mastery.credit(p, e);
         if (damage > 0) target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
             : caster.damageSources().mobAttack(caster), damage);
         if (!target.isAlive()) return;

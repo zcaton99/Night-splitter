@@ -67,6 +67,12 @@ public final class Regression implements ModInitializer {
             check(!Progress.consume(p, duplicate) && duplicate.getCount() == 1, "Duplicates stay available for trading");
         }
         check(Progress.all(p) && count(p, "trident") == 1 && count(p, "focus") == 1, "One focus and one all-elements trident");
+        check(Mastery.tier(p, Element.EARTH) == 1 && !Mastery.allowed(p, Element.EARTH, 1), "Heart starts with basic move only");
+        check(Mastery.tier(9, 300) == 1 && Mastery.tier(10, 299) == 1 && Mastery.tier(10, 300) == 2,
+            "Second move requires both use count and active time");
+        check(Mastery.tier(39, 1200) == 2 && Mastery.tier(40, 1199) == 2 && Mastery.tier(40, 1200) == 3,
+            "Third move requires both use count and active time");
+        for (Element e : Element.values()) Mastery.grant(p,e,3);
         check(Progress.cycle(p) == Element.EARTH, "Cycles all unlocked elements");
 
         Progress.select(p, Element.WATER); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
@@ -133,7 +139,7 @@ public final class Regression implements ModInitializer {
         catch (Exception expected) { rejected = true; }
         check(rejected, "Invalid move slot rejected");
         for (Element e : Element.values()) for (int slot = 0; slot < 3; slot++) {
-            Player caster = player(level); caster.addTag("cb_unlock_" + e.key()); Progress.select(caster, e);
+            Player caster = player(level); Mastery.grant(caster,e,3); Progress.select(caster, e);
             caster.addItem(new ItemStack(Items.WATER_BUCKET)); caster.setHealth(12);
             Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
             target.snapTo(.5, y, 3.5); target.setNoAi(true); check(level.addFreshEntity(target), "Move target added");
@@ -165,7 +171,7 @@ public final class Regression implements ModInitializer {
         Creeper split = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND); split.addTag("ns_creeper");
         Creeperborn.CREEPERS.track(split); check(ElementalCreepers.element(split) == null, "Night Splitters creepers excluded");
         for (Element e : new Element[]{Element.EARTH, Element.WATER}) {
-            Creeperborn.ABILITIES.clear(); Player caster = player(level); caster.addTag("cb_unlock_" + e.key());
+            Creeperborn.ABILITIES.clear(); Player caster = player(level); Mastery.grant(caster,e,3);
             caster.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(caster, e);
             Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
             target.snapTo(.5, y, 2.5); target.setNoAi(true); level.addFreshEntity(target);
@@ -177,7 +183,7 @@ public final class Regression implements ModInitializer {
                 e.title + " actual push distance: " + travelled + ", expected about " + expected);
             target.discard();
         }
-        Creeperborn.ABILITIES.clear(); Player tidal = player(level); tidal.addTag("cb_unlock_water");
+        Creeperborn.ABILITIES.clear(); Player tidal = player(level); Mastery.grant(tidal,Element.WATER,3);
         tidal.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(tidal, Element.WATER);
         // Keep all four directions inside the same fully loaded entity chunk.
         for (int x = 5; x <= 12; x++) for (int z = 5; z <= 12; z++) {
@@ -196,7 +202,7 @@ public final class Regression implements ModInitializer {
             check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides: pos="
                 + target.position() + ", remaining=" + Creeperborn.ABILITIES.pushRemaining(target) + ", visible=" + tidal.hasLineOfSight(target)); target.discard();
         }
-        tidal.addTag("cb_unlock_earth"); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
+        Mastery.grant(tidal,Element.EARTH,3); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
         Creeperborn.ABILITIES.cast(tidal);
         var rockVisuals = level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
             new AABB(5, y - 2, 5, 12, y + 5, 12));
