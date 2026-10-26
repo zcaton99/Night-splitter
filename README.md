@@ -95,7 +95,7 @@ Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% 
 | Rubber key | Tap | Hold |
 | --- | --- | --- |
 | Z | Stretch Punch: 8-block aimed hostile-only hit, 5 damage, 1.5s cooldown | Release after 0.35s for a 14-block, 8-damage charged punch |
-| X | Rotate sideways slip → backward rebound → forward sling, 0.8s shared cooldown | Release after 0.35s to pull an aimed hostile from up to 14 blocks; 4s cooldown on a hit |
+| X | Dodge using held movement keys: W forward, A left, D right, S backward; diagonals supported; no input defaults backward; 0.8s shared cooldown | Release after 0.35s to pull an aimed hostile from up to 14 blocks; 4s cooldown on a hit |
 | C | Activate Gear 5 | Bounce Guard outside Gear 5: 65% reduction against entity-sourced hits, repels melee attackers; drains food |
 
 A fruit grants punch immediately. Dodge/grab require **10 meaningful uses AND 5 active minutes**. Gear 5/guard require **40 uses AND 1 active hour**. Only selected Rubber gains active time while moving or shortly after meaningful action; idle time does not count. Successful punches, grabs, and actual blocks grant at most one use per second. Empty punches/dodges grant no usage. Elemental Harmony does not boost Rubber.
@@ -112,7 +112,7 @@ Operator testing:
 /creeperborn testcreeper rubber
 /creeperborn status
 ```
-Consume the test fruit before setting mastery. Tier 3 is a testing shortcut; use tier 1 to reset. `/creeperborn fruit` selects Rubber without the client shortcut. Optional client component is required for fruit tap/hold controls. Set `fruitChance` in `config/creeperborn.json` (default 0.002), then restart. This alpha needs in-game client/multiplayer testing, particularly held controls, hunger pacing, grab/dodge feel, and Gear 5 balance.
+Consume the test fruit before setting mastery. Tier 3 is a testing shortcut; use tier 1 to reset. `/creeperborn fruit` selects Rubber without the client shortcut. Optional client component is required for fruit tap/hold controls. Set `fruitChance` in `config/creeperborn.json` (default 0.002), then restart. This alpha needs in-game client/multiplayer testing, particularly held controls, hunger pacing, grab/directional-dodge feel, and Gear 5 balance.
 
 ## Later milestones
 

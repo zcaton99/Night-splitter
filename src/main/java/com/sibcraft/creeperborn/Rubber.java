@@ -23,7 +23,7 @@ public final class Rubber {
     private static final Map<UUID, Vec3> positions = new HashMap<>();
     private static final class State {
         long gearUntil, gearReady, punchReady, dodgeReady, grabReady, credit = -10000, recent = -10000;
-        long press = -1, guardUntil; int held = -1, dodge; ServerLevel level;
+        long press = -1, guardUntil; int held = -1, direction; ServerLevel level;
         boolean guarding;
     }
     private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
@@ -55,10 +55,11 @@ public final class Rubber {
         return "Rubber " + (unlocked(p) ? "tier " + tier(p) + "/3, " + uses(p) + " uses, " + seconds(p) + " active seconds" : "locked")
             + " | active: " + (selected(p) ? "Rubber" : "elements") + " | Gear 5: " + (gear(p) ? (state(p).gearUntil-now(p)+19)/20 + "s" : "OFF");
     }
-    public static void press(Player p, int move) {
+    public static void press(Player p,int move) { press(p,move,0); }
+    public static void press(Player p, int move,int direction) {
         if (!selected(p) || !p.isAlive() || p.isSpectator() || move < 0 || move > 2) return;
         State s = state(p); if (s.held >= 0) return;
-        s.held=move; s.press=now(p); s.level=(ServerLevel)p.level(); s.guardUntil=now(p)+15;
+        s.direction=direction & 15; s.held=move; s.press=now(p); s.level=(ServerLevel)p.level(); s.guardUntil=now(p)+15;
     }
     public static void heartbeat(Player p) { State s=state(p); if(s.held>=0) s.guardUntil=now(p)+15; }
     public static void release(Player p, int move) {
@@ -93,13 +94,7 @@ public final class Rubber {
                 credit(p); Abilities.particles(level,Element.AIR,target.getEyePosition(),12); return "Stretch Grab!";
             }
             if(now<s.dodgeReady)return "Dodge cooling down.";s.dodgeReady=now+16;
-            Vec3 look=p.getLookAngle(); Vec3 forward=new Vec3(look.x,0,look.z).normalize();
-            Vec3 motion=switch(s.dodge++ % 3) {
-                case 0 -> new Vec3(-forward.z,0,forward.x).scale(1.1);
-                case 1 -> forward.scale(-1.1);
-                default -> forward.scale(1.4);
-            };
-            impulse(p,motion.add(0,.18,0)); return "Rubber dodge " + ((s.dodge-1)%3+1) + "/3!";
+            impulse(p,dodgeMotion(p.getLookAngle(),s.direction)); return "Rubber dodge!";
         }
         if(charged)return ""; // Hold C is maintained defense, never a transformation on release.
         if(gear(p))return "Gear 5 is already active.";
@@ -108,6 +103,16 @@ public final class Rubber {
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to enter Gear 5.";
         s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
         return "Gear 5! Food fuels it, up to 10 minutes.";
+    }
+    public static Vec3 dodgeMotion(Vec3 look,int keys) {
+        Vec3 forward=new Vec3(look.x,0,look.z).normalize();
+        if(forward.lengthSqr()<.01)forward=new Vec3(0,0,1);
+        Vec3 right=new Vec3(-forward.z,0,forward.x);
+        int f=((keys&1)!=0?1:0)-((keys&2)!=0?1:0);
+        int r=((keys&8)!=0?1:0)-((keys&4)!=0?1:0);
+        Vec3 direction=forward.scale(f).add(right.scale(r));
+        if(direction.lengthSqr()<.01)direction=forward.scale(-1);
+        return direction.normalize().scale(1.2).add(0,.18,0);
     }
     public static void impulse(Player p, Vec3 motion) {
         p.setIgnoreFallDamageFromCurrentImpulse(true,p.position()); p.setDeltaMovement(motion);
@@ -129,10 +134,12 @@ public final class Rubber {
         return best;
     }
     public static void tick(MinecraftServer server) {
-        for(ServerPlayer p:server.getPlayerList().getPlayers()) {
+        for(ServerPlayer p:server.getPlayerList().getPlayers()) tickPlayer(p);
+    }
+    public static void tickPlayer(Player p) {
             State s=state(p);long now=now(p);
             if(!p.isAlive()||p.isSpectator()||s.level!=null&&s.level!=p.level()) {
-                end(p,s);cancelInput(p);continue;
+                end(p,s);cancelInput(p);return;
             }
             if(s.held>=0 && (!selected(p)||now>s.guardUntil))cancelInput(p);
             s.guarding=s.held==2 && now-s.press>=7 && !gear(p) && tier(p)>=3 && p.getFoodData().getFoodLevel()>6;
@@ -152,7 +159,6 @@ public final class Rubber {
                     if(tier(p)>before)Creeperborn.say(p,"Rubber mastery increased! Move " + tier(p) + " unlocked.");
                 }
             }
-        }
     }
     private static void end(Player p,State s) {
         if(s.gearUntil>0){s.gearUntil=0;s.gearReady=now(p)+GEAR_COOLDOWN;

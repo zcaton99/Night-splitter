@@ -36,10 +36,10 @@ public final class CombatNetwork {
             }
             if (payload.action() == 4) {
                 Rubber.cancelInput(p);
-                if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Dodge / hold Grab | C: Gear 5 / hold Guard"); }
+                if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Directional dodge / hold Grab | C: Gear 5 / hold Guard"); }
                 else Creeperborn.say(p,"Consume a Rubber Fruit first.");
             }
-            if(payload.action()==5)Rubber.press(p,payload.value());
+            if(payload.action()==5)Rubber.press(p,payload.value() & 3,payload.value() >>> 2);
             if(payload.action()==6)Rubber.release(p,payload.value());
             if(payload.action()==7)Rubber.heartbeat(p);
             if(payload.action()==8)Rubber.cancelInput(p);

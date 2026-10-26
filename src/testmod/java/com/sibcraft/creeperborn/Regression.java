@@ -28,6 +28,9 @@ public final class Regression implements ModInitializer {
     private MinecraftServer server;
     private int ticks;
     private double y;
+    private Player rubberLive;
+    private Zombie rubberTarget;
+    private int rubberTicks;
     @Override public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register(s -> {
             server = s; Creeperborn.config().naturalCreepers = false;
@@ -35,13 +38,18 @@ public final class Regression implements ModInitializer {
         });
         ServerTickEvents.END_SERVER_TICK.register(s -> {
             if (server == null || ++ticks < 30) return;
+            if (rubberLive != null) {
+                try {
+                    if (runRubberLive()) { System.out.println("CREEPERBORN_REGRESSION_PASSED"); server=null; s.halt(false); }
+                } catch (Throwable error) { error.printStackTrace(); server=null; s.halt(false); }
+                return;
+            }
             boolean ready = true;
             for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++)
                 ready &= s.overworld().areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(x,z));
             if (!ready && ticks < 600) return;
-            try { run(s.overworld()); System.out.println("CREEPERBORN_REGRESSION_PASSED"); }
-            catch (Throwable error) { error.printStackTrace(); }
-            finally { server = null; s.halt(false); }
+            try { run(s.overworld()); startRubberLive(s.overworld()); }
+            catch (Throwable error) { error.printStackTrace(); server=null; s.halt(false); }
         });
     }
     private Player player(ServerLevel level) {
@@ -253,8 +261,63 @@ public final class Regression implements ModInitializer {
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
     }
+    private void startRubberLive(ServerLevel level) {
+        rubberLive=player(level); rubberLive.snapTo(-8,y,-8);
+        Rubber.consume(rubberLive,Relics.fruit());Rubber.grant(rubberLive,3);
+        rubberTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);
+        rubberTarget.snapTo(-8,y,-3);rubberTarget.setNoAi(true);rubberTarget.setNoGravity(true);
+        check(level.addFreshEntity(rubberTarget),"Rubber live hostile fixture added");
+        Rubber.press(rubberLive,0);
+    }
+    private boolean runRubberLive() {
+        rubberTicks++;Rubber.tickPlayer(rubberLive);
+        if(rubberTicks==8) {
+            Rubber.release(rubberLive,0);
+            check(rubberTarget.getHealth()<rubberTarget.getMaxHealth(),"Held punch damages a real aimed hostile");
+            check(Rubber.uses(rubberLive)==41,"Successful punch credits fruit progression");
+            Rubber.press(rubberLive,1);
+        }
+        if(rubberTicks==16) {
+            Rubber.release(rubberLive,1);
+            check(rubberTarget.getDeltaMovement().z<0,"Held grab pulls hostile toward player");
+            Rubber.press(rubberLive,2);
+        }
+        if(rubberTicks==24) {
+            float modified=Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10);
+            check(Math.abs(modified-3.5)<.01,"Held C activates sustained Bounce Guard after threshold");
+            check(!Rubber.gear(rubberLive),"Held C does not activate transformation");
+            Rubber.cancelInput(rubberLive);
+            check(Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10)==10,"Cancel immediately clears guard");
+            Rubber.press(rubberLive,2);
+        }
+        if(rubberTicks==25) {
+            Rubber.release(rubberLive,2);check(Rubber.gear(rubberLive),"Quick C tap enters Gear 5");
+            rubberLive.damageCooldownTime=0;float before=rubberLive.getHealth();
+            rubberLive.hurtServer((ServerLevel)rubberLive.level(),rubberLive.damageSources().generic(),4);
+            check(rubberLive.getHealth()==before,"Native damage path applies Gear 5 immunity");
+            rubberLive.damageCooldownTime=0;
+            rubberLive.hurtServer((ServerLevel)rubberLive.level(),rubberLive.damageSources().lava(),4);
+            check(rubberLive.getHealth()<before,"Native lava damage bypasses Gear 5");
+            rubberLive.getFoodData().setFoodLevel(7);
+        }
+        if(rubberTicks==80) {
+            check(!Rubber.gear(rubberLive)&&rubberLive.getFoodData().getFoodLevel()==6,"Food drain ends Gear at three icons");
+            rubberLive.getFoodData().setFoodLevel(20);
+            check(Rubber.cast(rubberLive,2,0).contains("recovering"),"Food cannot bypass post-Gear cooldown");
+            rubberTarget.discard();Rubber.clear();return true;
+        }
+        return false;
+    }
     private void checkRubber(ServerLevel level) {
         Rubber.clear(); FruitCreepers.clear();
+        var look=new net.minecraft.world.phys.Vec3(0,0,1);
+        check(Rubber.dodgeMotion(look,1).z>1 && Rubber.dodgeMotion(look,2).z< -1,
+            "W/S dodge forward/back relative to view");
+        check(Rubber.dodgeMotion(look,4).x>1 && Rubber.dodgeMotion(look,8).x< -1,
+            "A/D dodge left/right relative to view");
+        check(Math.abs(Rubber.dodgeMotion(look,9).horizontalDistance()-1.2)<.001,
+            "Diagonal dodge has same speed, not a diagonal boost");
+        check(Rubber.dodgeMotion(look,0).z< -1,"No input defaults to backward dodge");
         Player p=player(level);
         ItemStack fake=new ItemStack(Items.CHORUS_FRUIT);
         fake.set(DataComponents.CUSTOM_NAME,Component.literal("Rubber Fruit"));

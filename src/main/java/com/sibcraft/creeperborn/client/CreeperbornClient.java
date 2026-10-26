@@ -43,7 +43,10 @@ public final class CreeperbornClient implements ClientModInitializer {
             if(waitingForRelease&&!down)waitingForRelease=false;
             for(int i=0;i<3;i++)while(moves[i].consumeClick()){
                 if(!combat||waitingForRelease)continue;
-                if(fruit){if(held<0){held=i;send(5,i);}}
+                if(fruit){if(held<0){held=i;
+                    int direction=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)
+                        |(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0);
+                    send(5,i|(direction<<2));}}
                 else {send(2,i);if(selected==Element.AIR&&i==1)lastAirStep=ticks;}
             }
             if(combat&&fruit&&held>=0){
