@@ -28,11 +28,12 @@ public final class Rubber {
     }
     private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
     private static long now(Player p) { return p.level().getGameTime(); }
-    public static boolean unlocked(Player p) { return p.entityTags().contains("cb_fruit_rubber"); }
+    public static boolean unlocked(Player p) { return p.entityTags().contains("cb_fruit_rubber") && (!(p.level() instanceof ServerLevel) || FruitClaims.owns(p)); }
     public static boolean selected(Player p) { return unlocked(p) && p.entityTags().contains("cb_mode_fruit"); }
     public static boolean consume(Player p, ItemStack stack) {
         if (!Relics.kind(stack).equals("fruit:rubber") || stack.isEmpty() || unlocked(p) || p.isSpectator()) return false;
-        p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); stack.shrink(1); return true;
+        if(!FruitClaims.claim(p))return false;
+        grant(p,1); p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); stack.shrink(1); return true;
     }
     public static int uses(Player p) { return Mastery.get(p,"cb_rubber_uses_"); }
     public static int seconds(Player p) { return Mastery.get(p,"cb_rubber_time_"); }
@@ -224,6 +225,7 @@ public final class Rubber {
         return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) && source.getDirectEntity()!=null && source.getDirectEntity().isOnFire();
     }
     public static float damage(Player p, DamageSource source, float amount) {
+        if(Mastery.harmony(p)&&source.is(DamageTypeTags.IS_FIRE))return 0;
         if(!unlocked(p))return amount;
         if(source.typeHolder().equals(p.damageSources().fellOutOfWorld().typeHolder())||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
         if(source.typeHolder().equals(p.damageSources().drown().typeHolder()))return WaterRules.mastered(p)?0:amount;
@@ -241,4 +243,5 @@ public final class Rubber {
         return amount;
     }
 }
+
 

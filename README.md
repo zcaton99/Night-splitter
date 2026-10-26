@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.4
+# Creeperborn — 0.1.0-alpha.5
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -8,7 +8,7 @@ Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0
 
 - **2%** of unexamined vanilla creepers become a random Earth, Water, Fire, or Air creeper when loaded. Each creeper is checked only once; unloading/reloading does not reroll it. Existing unexamined creepers can also convert. Night Splitters' marked creepers are excluded.
 - Elemental creepers have visible names/particles and a short elemental attack every six seconds against their vanilla target within ten blocks. They retain normal creeper explosions. Hearts drop once only when a player kills one before it explodes.
-- Right-click a marked heart to consume it and permanently unlock that element's basic move. Duplicate hearts are not consumed, so they can be shared. Unlocks and mastery counters survive logout and player respawn.
+- Right-click a marked heart to consume it and permanently unlock that element's basic move. Duplicate hearts are not consumed, so they can be shared. Element unlocks and mastery counters survive logout and player respawn.
 - The first heart grants an **Elemental Focus** (named stick). Collecting all four grants one **Elemental Trident**. Vanilla items with matching names do not grant powers.
 - Right-click the focus to cast. Sneak-right-click it or the trident to cycle unlocked elements. `/creeperborn element earth|water|fire|air` selects directly. `/creeperborn move 1|2|3` selects a move. `/creeperborn cast` is an alternative to focus use.
 - All player attacks target hostile mobs only. No PvP, friendly fire, terrain removal, placed fire, or permanent barriers in this alpha.
@@ -88,7 +88,7 @@ GitHub Actions builds with Java 25, runs a real Fabric dedicated-server test mod
 
 ## Rubber core — alpha.3
 
-Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% (1 in 500)** before the elemental roll, with at most one naturally converted loaded Fruitborn within 128 blocks. Each eligible creeper is checked once. Existing elemental/checked creepers and Night Splitters creepers are excluded. Player kills before explosion drop a marked Rubber Fruit; right-click to consume. Duplicates remain shareable. Unlocks and progression persist through saves and respawn.
+Rubber is independent of bending. Rare Rubber Fruitborn creepers roll at **0.2% (1 in 500)** before the elemental roll, with at most one naturally converted loaded Fruitborn within 128 blocks. Each eligible creeper is checked once. Existing elemental/checked creepers and Night Splitters creepers are excluded. Player kills before explosion drop a marked Rubber Fruit; right-click to consume. Only one living owner can claim Rubber per world. Fruit ownership and progression persist through saves/logout, but reset on death; element progression survives death. Spare fruit items cannot be eaten while the fruit is claimed.
 
 **B** toggles combat, **R / Shift+R** select elements, **G** selects Rubber (the first fruit; future fruits will cycle here). **Z/X/C** operate the selected category. Only one fruit input can be held at a time. Releasing or switching categories, disabling combat, opening a menu, death, disconnect, or losing input heartbeat ends held defense. Keys remain rebindable; V and F are unused.
 
@@ -133,8 +133,21 @@ Air depletes through the normal drowning system. Water Breathing effects do not 
 
 GitHub Actions runs the existing element/Rubber tests plus a real water pool, native upward travel, native air depletion (including a breathing potion), drowning during Gear 5, mastery transitions, shallow-water exclusions, and water-state packet encoding. Client movement feel and multiplayer synchronization still need in-game testing.
 
+## Ownership and lava immunity — alpha.5
+
+**Mastery tier 3 in all four elements** grants lava/fire damage immunity and extinguishes residual burning, with or without a fruit. Three mastered elements or merely owning all four hearts are insufficient. This does not grant immunity to physical arrow hits or the direct impact of Fire bending. Downgrading an element immediately removes the lava immunity.
+
+**One living Rubber owner per world.** Consuming a genuine fruit claims it and consumes the item. No further natural Rubber Fruitborn conversions or fruit drops occur while claimed. Spare/debug fruit items may still exist, but no other player can eat them. Offline owners retain their claim through logout and server restart. Claims are atomically persisted in the world's `creeperborn-fruits.json` file. Claim release requires the owner's actual death, including with `keepInventory` enabled; dimension travel/logout are not death.
+
+Death removes the fruit power, its mastery/use/time counters, active transformation and fruit cooldown state. It releases the world claim so Rubber can naturally appear again; it does not drop a guaranteed fruit at the death location. The next eater starts fruit mastery at tier 1. **Element unlocks, mastery and selected element remain unchanged through respawn.** Original vanilla inventory loss follows the world's own settings. This system governs the Rubber fruit currently implemented; future fruits will each need an independent claim.
+
+On upgrading older alphas, a joining legacy Rubber owner claims the fruit if available. If an older save has multiple owners, the first reconciled owner keeps it and other legacy fruit progress is cleared, preserving their bending progress.
+
+Test lava in Survival before/after mastering all four, then test residual burning after climbing out. On a two-player test server, have one player eat Rubber and verify that the other cannot eat a spare. Log out/restart and verify it stays claimed. Kill the owner, respawn, and confirm that bending progress remains, Rubber is lost, and the second player can eat their spare at fruit tier 1. `/creeperborn status` reports availability and lava immunity. Existing alpha.4 water and Rubber control tests still apply.
+
 ## Later milestones
 
 Custom models/UI, richer villager patrol behavior, faction banners, terrain-based earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.
+
 
 

@@ -39,6 +39,8 @@ public final class Creeperborn implements ModInitializer {
     public static Config config() { return config; }
     @Override public void onInitialize() {
         CombatNetwork.init();
+        ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> FruitClaims.reconcile(handler.player));
         Path path = FabricLoader.getInstance().getConfigDir().resolve("creeperborn.json");
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
@@ -49,7 +51,7 @@ public final class Creeperborn implements ModInitializer {
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server);
             if (server.getTickCount() % 20 == 0) Mastery.tick(server);
@@ -58,7 +60,7 @@ public final class Creeperborn implements ModInitializer {
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
         ServerLivingEntityEvents.AFTER_DEATH.register(FruitCreepers::died);
-        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) { Rubber.forget(p); WaterRules.forget(p); } });
+        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) FruitClaims.releaseOnDeath(p); });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Rubber.forget(handler.player); WaterRules.forget(handler.player); });
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);
@@ -70,7 +72,7 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if (kind.equals("fruit:rubber")) {
-                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "You already know Rubber. Share the fruit!");
+                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "Rubber is already claimed. Its living owner must die before another player can eat it.");
             } else if (kind.startsWith("heart:")) {
                 say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
                     : "You already know this element. Keep the heart for a friend.");
@@ -102,11 +104,12 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                say(p, "Creeperborn 0.1.0-alpha.4 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
+                say(p, "Creeperborn 0.1.0-alpha.5 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
                     + " | move: " + (ABILITIES.move(p) + 1)
                     + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
                     + " | mastery: " + (selected == null ? "none" : Mastery.tier(p, selected) + "/3, " + Mastery.uses(p, selected) + " uses, " + Mastery.seconds(p, selected) + " active seconds")
-                    + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%)" : "locked")
+                    + " | Elemental Harmony: " + (Mastery.harmony(p) ? "ON (+15%, lava immunity)" : "locked")
+                    + " | Rubber fruit: " + (FruitClaims.available()?"available":FruitClaims.owns(p)?"claimed by you":"claimed by another living player")
                     + " | natural creeper chance: " + config.elementalChance + " | " + Rubber.status(p)
                     + " | fruit water: " + (!WaterRules.fruitOwner(p)?"not applicable":WaterRules.mastered(p)?"mastery immunity + underwater breathing":WaterRules.suppressed(p)?"SUBMERGED — sinking, powers disabled":"vulnerable"));
                 return 1;
@@ -197,5 +200,6 @@ public final class Creeperborn implements ModInitializer {
     }
     public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
 }
+
 
 

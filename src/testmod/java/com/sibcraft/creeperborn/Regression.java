@@ -52,8 +52,9 @@ public final class Regression implements ModInitializer {
             catch (Throwable error) { error.printStackTrace(); server=null; s.halt(false); }
         });
     }
-    private Player player(ServerLevel level) {
-        Player p = new Player(level, new GameProfile(UUID.randomUUID(), "BenderTest")) {
+    private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
+    private Player player(ServerLevel level,UUID id) {
+        Player p = new Player(level, new GameProfile(id, "BenderTest")) {
             @Override public GameType gameMode() { return GameType.SURVIVAL; }
         };
         p.snapTo(.5, y, .5); p.setHealth(20); p.setYRot(0); p.setXRot(0); return p;
@@ -258,6 +259,16 @@ public final class Regression implements ModInitializer {
         checkHarmony(level);
         checkRubber(level);
         checkFruitWater(level);
+        Player lavaMaster=player(level);
+        for(Element e:Element.values())Mastery.grant(lavaMaster,e,3);
+        check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
+            "All-four mastery grants lava immunity without any fruit");
+        float lavaBefore=lavaMaster.getHealth();lavaMaster.hurtServer(level,lavaMaster.damageSources().lava(),4);
+        check(lavaMaster.getHealth()==lavaBefore,"Native lava damage respects elemental mastery immunity");
+        lavaMaster.setRemainingFireTicks(100);WaterRules.apply(lavaMaster);
+        check(!lavaMaster.isOnFire(),"Mastery clears residual burning after lava");
+        Mastery.grant(lavaMaster,Element.AIR,2);
+        check(Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==10,"Three mastered elements are insufficient for lava immunity");
         Player budget = player(level);
         for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
@@ -306,12 +317,12 @@ public final class Regression implements ModInitializer {
         check(!Creeperborn.ABILITIES.cast(fruit).contains("disabled"),"Mastered player can cast underwater");
         Mastery.grant(fruit,Element.AIR,2);
         check(WaterRules.suppressed(fruit)&&!fruit.canBreatheUnderwater(),"Losing one mastery immediately restores the weakness");
-        Player restored=player(level);for(String tag:fruit.entityTags())restored.addTag(tag);restored.snapTo(8.5,y,-8.5);
+        Player restored=player(level,fruit.getUUID());for(String tag:fruit.entityTags())restored.addTag(tag);restored.snapTo(8.5,y,-8.5);
         check(WaterRules.suppressed(restored),"Restored fruit ownership still applies water weakness");
         var buffer=new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(),level.registryAccess());
         WaterStatePayload.CODEC.encode(buffer,new WaterStatePayload(3));
         check(WaterStatePayload.CODEC.decode(buffer).flags()==3,"Water-state packet round trip");buffer.release();
-        Rubber.clear();Creeperborn.ABILITIES.clear();
+        FruitClaims.releaseOnDeath(fruit);Rubber.clear();Creeperborn.ABILITIES.clear();
         for(int x=6;x<=10;x++)for(int z=-10;z<=-6;z++)for(int dy=0;dy<4;dy++)
             level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),Blocks.AIR.defaultBlockState());
     }
@@ -359,7 +370,7 @@ public final class Regression implements ModInitializer {
             check(!Rubber.gear(rubberLive)&&rubberLive.getFoodData().getFoodLevel()==6,"Food drain ends Gear at three icons");
             rubberLive.getFoodData().setFoodLevel(20);
             check(Rubber.cast(rubberLive,2,0).contains("recovering"),"Food cannot bypass post-Gear cooldown");
-            rubberTarget.discard();Rubber.clear();return true;
+            rubberTarget.discard();FruitClaims.releaseOnDeath(rubberLive);Rubber.clear();return true;
         }
         return false;
     }
@@ -408,8 +419,25 @@ public final class Regression implements ModInitializer {
         Rubber.forget(p);check(!Rubber.gear(p)&&Rubber.cast(p,2,0).contains("recovering"),"Logout ends Gear and preserves recovery");
         check(Rubber.damage(p,p.damageSources().lava(),10)==15,"Normal Rubber remains vulnerable to heat");
         Progress.consume(p,Relics.heart(Element.EARTH));check(!Rubber.selected(p)&&Rubber.unlocked(p),"Element selection preserves fruit unlock");
-        Player restored=player(level);for(String tag:p.entityTags())restored.addTag(tag);
+        Player restored=player(level,p.getUUID());for(String tag:p.entityTags())restored.addTag(tag);
         check(Rubber.unlocked(restored)&&Rubber.tier(restored)==3,"Rubber mastery survives persistent-tag restoration");
+        Player challenger=player(level);ItemStack spare=Relics.fruit();
+        check(!FruitClaims.available()&&FruitClaims.owns(p)&&!Rubber.consume(challenger,spare)&&spare.getCount()==1,
+            "A second player cannot consume the same fruit while owner lives");
+        FruitClaims.load(level.getServer());
+        check(FruitClaims.owns(p)&&!FruitClaims.available(),"Fruit claim survives world-file reload, including offline owner");
+        Creeperborn.config().naturalCreepers=true;Creeperborn.config().fruitChance=1;
+        Creeper blocked=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);FruitCreepers.track(blocked);
+        check(!FruitCreepers.fruit(blocked),"Claimed fruit suppresses natural fruit creepers");
+        Mastery.grant(p,Element.EARTH,3);Progress.select(p,Element.EARTH);
+        FruitClaims.releaseOnDeath(p);
+        check(FruitClaims.available()&&!Rubber.unlocked(p)&&Rubber.uses(p)==0&&Rubber.seconds(p)==0,
+            "Owner death releases fruit and clears fruit mastery");
+        check(Progress.unlocked(p,Element.EARTH)&&Mastery.tier(p,Element.EARTH)==3&&Progress.selected(p)==Element.EARTH,
+            "Death preserves elemental unlock, mastery and selection");
+        check(Rubber.consume(challenger,spare)&&Rubber.tier(challenger)==1&&spare.isEmpty(),
+            "New owner can eat after death and starts at tier one");
+        FruitClaims.releaseOnDeath(challenger);
         Creeperborn.config().fruitChance=1;Creeperborn.config().naturalCreepers=true;
         Creeper first=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);first.snapTo(-8,y,-8);FruitCreepers.track(first);
         check(FruitCreepers.fruit(first),"Configured fruit conversion");
@@ -488,5 +516,6 @@ public final class Regression implements ModInitializer {
     }
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 }
+
 
 
