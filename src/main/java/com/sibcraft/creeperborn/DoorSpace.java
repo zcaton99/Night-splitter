@@ -31,6 +31,8 @@ public final class DoorSpace {
         List<Display.BlockDisplay> entranceVisuals=new ArrayList<>(),exitVisuals=new ArrayList<>();
         Set<UUID> travelers=new HashSet<>(); boolean entered;
     }
+    private record Closing(ServerLevel level,Vec3 point,List<Display.BlockDisplay> visuals,long expires){}
+    private static final List<Closing> closing=new ArrayList<>();
     private static final Map<UUID,Session> sessions=new HashMap<>();
     private static final Map<UUID,Traveler> travelers=new HashMap<>();
     private static final Gson GSON=new Gson();
@@ -147,7 +149,11 @@ public final class DoorSpace {
             if(destination&&s.exit!=null)leave(t,s.exit,s.level);
             else leave(t,new Vec3(t.saved.x(),t.saved.y(),t.saved.z()),savedLevel(t.player,t.saved));
         }
-        close(s.level,s.entrance,s.entranceVisuals);if(s.exit!=null)close(s.level,s.exit,s.exitVisuals);
+        close(s.level,s.entrance,s.entranceVisuals);if(s.exit!=null){
+            if(destination&&!s.exitVisuals.isEmpty()){
+                closing.add(new Closing(s.level,s.exit,List.copyOf(s.exitVisuals),s.level.getGameTime()+100));s.exitVisuals.clear();
+            }else close(s.level,s.exit,s.exitVisuals);
+        }
         sessions.remove(s.owner.getUUID());DoorFruit.ended(s.owner,s.mode);
     }
     public static String exit(Player player){
@@ -168,6 +174,8 @@ public final class DoorSpace {
         return "Exit opened! Remaining passengers have five seconds to leave before automatic arrival.";
     }
     public static void tick(MinecraftServer server){
+        closing.removeIf(c->{if(c.level().getGameTime()<c.expires())return false;
+            c.visuals().forEach(Entity::discard);puff(c.level(),c.point());return true;});
         for(Session s:List.copyOf(sessions.values())){
             long now=s.level.getGameTime();
             if(!s.owner.isAlive()||s.owner.isRemoved()||s.owner.level()!=s.level){finish(s,false);continue;}
@@ -207,5 +215,5 @@ public final class DoorSpace {
         Session s=sessions.get(p.getUUID());if(s!=null)finish(s,false);
         Traveler t=travelers.get(p.getUUID());if(t!=null)leave(t,new Vec3(t.saved.x(),t.saved.y(),t.saved.z()),savedLevel(t.player,t.saved));
     }
-    public static void clear(){for(Session s:List.copyOf(sessions.values()))finish(s,false);sessions.clear();travelers.clear();}
+    public static void clear(){for(Session s:List.copyOf(sessions.values()))finish(s,false);sessions.clear();travelers.clear();closing.forEach(c->c.visuals().forEach(Entity::discard));closing.clear();}
 }

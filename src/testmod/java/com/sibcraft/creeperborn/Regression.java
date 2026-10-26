@@ -222,6 +222,21 @@ public final class Regression implements ModInitializer {
         DoorFruit.cast(owner,1);check(DoorSpace.active(owner),"Recovery fixture enters rescue");
         DoorSpace.recover(owner);DoorSpace.forget(owner);
         check(owner.gameMode()==GameType.SURVIVAL&&!DoorSpace.active(owner),"Recovery snapshot restores Survival and safe return");
+        ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+601);
+        owner.snapTo(-10.5,y+20,22.5);var timeoutStart=owner.position();
+        DoorFruit.cast(owner,1);owner.snapTo(-8.5,y+21,26.5);
+        ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+121);
+        DoorSpace.tick(server);
+        check(!DoorSpace.active(owner)&&owner.gameMode()==GameType.SURVIVAL&&owner.position().distanceTo(timeoutStart)<.01,
+            "Rescue timer expiry returns safely to saved entrance, not current indoor position");
+        ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+901);
+        owner.snapTo(-10.5,y+20,22.5);DoorFruit.cast(owner,2);owner.snapTo(-10.5,y+20,24.2);DoorSpace.tryEnter(owner);
+        friend.snapTo(-10.5,y+20,24.2);DoorSpace.tryEnter(friend);
+        owner.snapTo(-8.5,y+21,26.5);friend.snapTo(-7.5,y+21,27.5);
+        ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+601);
+        DoorSpace.tick(server);
+        check(!DoorSpace.active(owner)&&!DoorSpace.active(friend)&&owner.gameMode()==GameType.SURVIVAL&&friend.gameMode()==GameType.SURVIVAL,
+            "Shared timer expiry restores both owner and guest without stranding either");
         FruitClaims.releaseOnDeath(owner);
         check(FruitClaims.doorAvailable()&&!DoorFruit.unlocked(owner),"Death releases Door and clears only its fruit progression");
         check(Rubber.consume(friend,Relics.fruit())&&!DoorFruit.consume(friend,Relics.doorFruit()),"Rubber owner also cannot eat Door");
