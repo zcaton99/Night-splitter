@@ -1,8 +1,0 @@
-{
-  "required": true,
-  "package": "com.rdt.nightsplitters.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": ["CreativeDamageMixin", "MobGoalsAccessor", "SwarmHitMixin", "CreeperAccess", "CreeperSplitMixin"],
-  "injectors": { "defaultRequire": 1 }
-}
-

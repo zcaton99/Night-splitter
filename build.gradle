@@ -78,16 +78,17 @@ sourceSets {
 
 loom {
     mods {
-        night_splitters { sourceSet sourceSets.main }
-        night_splitters_tests { sourceSet sourceSets.testmod }
+        creeperborn { sourceSet sourceSets.main }
+        creeperborn_tests { sourceSet sourceSets.testmod }
     }
     runs {
         regression {
             server()
-            name "Night Splitters damage regression"
+            name "Creeperborn regression"
             source sourceSets.testmod
             runDir "build/regression-run"
             programArg "nogui"
         }
     }
 }
+

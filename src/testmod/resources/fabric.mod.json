@@ -1,14 +1,16 @@
 {
   "schemaVersion": 1,
-  "id": "night_splitters_tests",
+  "id": "creeperborn_tests",
   "version": "1.0.0",
+  "name": "Creeperborn Tests",
   "environment": "server",
   "entrypoints": {
     "main": [
-      "com.rdt.nightsplitters.test.DamageRegression"
+      "com.sibcraft.creeperborn.Regression"
     ]
   },
   "depends": {
-    "night_splitters": "*"
+    "creeperborn": "*"
   }
 }
+

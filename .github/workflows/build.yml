@@ -1,8 +1,8 @@
-name: Build Night Splitters Development
+name: Build Creeperborn
 
 on:
   push:
-    branches: ['development/**']
+    branches: [main, 'development/**', 'creeperborn/**']
   workflow_dispatch:
 
 jobs:
@@ -34,23 +34,23 @@ jobs:
           echo 'eula=true' > build/regression-run/eula.txt
           printf 'online-mode=false\nview-distance=2\nsimulation-distance=2\n' > build/regression-run/server.properties
           set -o pipefail
-          bash gradlew runRegression --stacktrace 2>&1 | tee build/damage-regression.log
-          grep -q NIGHT_SPLITTERS_DAMAGE_REGRESSION_PASSED build/damage-regression.log
-          grep -q NIGHT_SPLITTERS_NEXT_UPDATE_REGRESSION_PASSED build/damage-regression.log
+          bash gradlew runRegression --stacktrace 2>&1 | tee build/creeperborn-regression.log
+          grep -q CREEPERBORN_REGRESSION_PASSED build/creeperborn-regression.log
 
       - name: Upload regression log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: damage-regression-log
-          path: build/damage-regression.log
+          name: creeperborn-regression-log
+          path: build/creeperborn-regression.log
 
       - name: Upload test JAR
         uses: actions/upload-artifact@v4
         with:
-          name: Night-Splitters-0.2.0-Alpha
+          name: Creeperborn-0.1.0-Alpha
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar
           if-no-files-found: error
+
 

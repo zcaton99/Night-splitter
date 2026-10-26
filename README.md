@@ -1,49 +1,69 @@
-# Night Splitters — 0.2.0-alpha.4
+# Creeperborn — 0.1.0-alpha.1
 
-Private next-update build on `development/0.2.0`. The submitted Modrinth 0.1.5 build and `main` branch are unchanged.
+An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
-Requires Minecraft 26.3, Java 25, Fabric Loader 0.19.5+, and Fabric API 0.161.0+26.3. Install just one Night Splitters JAR at a time. For this alpha, use a separate test world or a copy of your server world.
+## First alpha scope
 
-## New settings
+Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0+26.3**. Install the JAR on the server or in singleplayer. The first alpha uses named vanilla items and particles, so vanilla clients can connect without a resource pack. Test in a copied world. This prototype is not yet published to Modrinth.
 
-All new modes are OFF by default. Existing configuration files keep the previous behavior. Configuration is saved in `config/night-splitters.json`.
+- **2%** of unexamined vanilla creepers become a random Earth, Water, Fire, or Air creeper when loaded. Each creeper is checked only once; unloading/reloading does not reroll it. Existing unexamined creepers can also convert. Night Splitters' marked creepers are excluded.
+- Elemental creepers have visible names/particles and a short elemental attack every six seconds against their vanilla target within ten blocks. They retain normal creeper explosions. Hearts drop once only when a player kills one before it explodes.
+- Right-click a marked heart to consume it and permanently unlock that element. Duplicate hearts are not consumed, so they can be shared. Unlocks survive logout and player respawn.
+- The first heart grants an **Elemental Focus** (named blaze rod). Collecting all four grants one **Elemental Trident**. Vanilla items with matching names do not grant powers.
+- Right-click the focus to cast. Sneak-right-click it or the trident to cycle unlocked elements. `/creeperborn element earth|water|fire|air` selects directly. `/creeperborn move 1|2|3` selects a move. `/creeperborn cast` is an alternative to focus use.
+- All player attacks target hostile mobs only. No PvP, friendly fire, terrain removal, placed fire, or permanent barriers in this alpha.
 
-| Command | Behavior |
-| --- | --- |
-| `/nightsplitters wave multiplier 1` | Normal 2–3-parent waves. |
-| `/nightsplitters wave multiplier 4` | 8–12 parents. Valid range 1–16; global/local slot budgets scale too, with an absolute 1,536-slot ceiling. |
-| `/nightsplitters darkness on` / `off` | About 20% of spawned swarm spiders can add 4 seconds of Darkness to successful melee hits. |
-| `/nightsplitters darknesschance 0.20` | Set the chance for newly spawned spiders (0–1). Existing configs keep their saved value; run this command to double the previous 10% setting, then clear the wave. |
-| `/nightsplitters darknessonly on` / `off` | Every swarm spider hit applies Darkness instead of direct damage or poison, regardless of the 20% selection. Turning it off restores normal spider damage; the separate Darkness toggle still controls the 20% effect. |
-| `/nightsplitters babyhorde on` / `off` | 15% chance for a spider wave to be exactly six small offspring instead of parents. These never split. The multiplier does not enlarge baby-only hordes. |
-| `/nightsplitters creeper on` / `off` | Enable rare intermission creepers: one encounter after a randomly chosen 3–5 completed spider waves. |
-| `/nightsplitters creeperblockdamage on` / `off` | Parent explosion terrain damage. Default ON, still subject to vanilla mob-griefing rules. |
-| `/nightsplitters babycreeperblockdamage on` / `off` | Baby explosion terrain damage. Default OFF. |
-| `/nightsplitters testcreeper` | Replace the current loaded wave with a creeper encounter for testing. Requires a player, open loaded outdoor terrain, nighttime, non-Peaceful difficulty, enabled mob spawning, and both swarms and creepers enabled. |
-| `/nightsplitters clear` | Remove tracked loaded spiders/creepers and cancel pending births. |
-| `/nightsplitters disable` | Disable all encounters, remove tracked loaded swarm entities, and cancel pending births. |
-| `/nightsplitters status` | Show modes, multiplier, budgets, active creepers, and pending broods. |
+## Moves
 
-Commands require operator permissions. The global `enable`, `disable`, `clear`, and `reload` controls remain available.
+Cooldowns are independent per player, element and move; switching elements does not reset them. One damage point is half a heart.
 
-## Creeper encounter
+| Element | Move 1 | Move 2 | Move 3 |
+| --- | --- | --- | --- |
+| Earth | **Earth Bolt:** 16-block aimed strike, 6 damage and brief Slowness; 2s cooldown. | **Stone Guard:** Resistance II for 5s; 10s cooldown. | **Quake:** 5-block hostile-only pulse, 5 damage, Slowness and knockback; 8s cooldown. |
+| Water | **Water Whip:** 16-block aimed strike, 6 damage and brief Slowness; 2s cooldown. | **Tidal Guard:** Resistance I for 4s and a 4-block push/slow pulse; 8s cooldown. | **Mending Flow:** restores 4 health and extinguishes the caster; 12s cooldown. |
+| Fire | **Fire Lance:** 16-block aimed strike, 6 damage and 2s burning; 2s cooldown. | **Flame Ring:** 4-block hostile-only pulse, 5 damage and 2s burning; 8s cooldown. | **Heat Shield:** Fire Resistance for 8s and Resistance I for 4s; 10s cooldown. |
+| Air | **Air Gust:** 16-block aimed strike, 2 damage and strong knockback; 2s cooldown. | **Air Step:** forward/upward impulse with native protection for the added jump height; 5s cooldown. | **Vortex:** 6-block hostile-only pulse, 2 damage and inward pull; 8s cooldown. |
 
-The rare parent uses a normal 3-block explosion radius. If it explodes, two half-size, faster baby creepers emerge **40 game ticks (2 seconds at 20 TPS)** later. Babies spawn on opposite sides of the blast, about five blocks apart, using loaded, collision-free positions with solid footing. If no safe pair fits, spawning retries for up to ten extra seconds before cancellation. Babies have 10 health and weaker radius-1 explosions. Killing a parent before it explodes does not produce babies. Babies never split. The next wave waits for the parent, delayed births, and babies to finish, then uses the existing 5–30 second cooldown. Each interval randomly selects 3, 4, or 5 completed spider waves (including baby hordes). Creeper completion never counts as a spider wave. If no valid spawn is found, the encounter stays due for the next completed wave. Clear, restart, dawn cleanup, toggling creepers, and testcreeper reset the interval. The old creeperChance config field is ignored.
+Water moves require a water bucket in the player's inventory or water within four blocks horizontally and two vertically. The bucket is not consumed and water blocks are not removed. Targeted moves stop at solid blocks; pulses require line of sight. Air Step does not make the player immune to later falls below their launch elevation.
 
-Both parent and babies hunt nearby non-Spectator players, including Creative players, but use vanilla explosion damage/immunity. The existing Creative half-damage exception applies only to swarm **spider melee**. Darkness-only mode also applies only to spiders; creepers still explode normally.
+## Villager factions and guard posts
 
-Creeper-off, global disable/clear, Peaceful difficulty, configured dawn cleanup, and lifetime expiry clean up the encounter. Offspring spawning never force-loads chunks: if terrain is unloaded, births wait up to 10 extra seconds, then cancel. Pending 2-second births are cancelled on server restart rather than saved.
+With all four elements unlocked, use the Elemental Trident on an **adult villager** to assign the selected Earth/Water/Fire/Air faction. A villager's trades, profession, home, and work memories remain intact. Different factions are allies. The first player to empower a villager owns it; another player cannot reassign it.
 
-## Suggested testing sessions
+Guardians use a ranged elemental strike (4 damage, 3s cooldown, line of sight, 12-block detection). Earth/Water slow, Fire burns, Air pushes. Their colored effects identify their element. They defend while keeping vanilla home/work/bed routines. When idle and over 16 blocks from their post, they periodically navigate back toward it. Brain schedules still run: this is an initial guard-post tether, not a guaranteed patrol or a replacement for beds/workstations. Put homes and jobs near the area you want defended.
 
-1. **Baseline:** leave all new modes off. Confirm the existing 0.1.5 waves, split children, Creative damage, pounces, and dawn cleanup.
-2. **Darkness:** enable `darkness`; then test `darknessonly` separately in Survival and Creative. Darkness-only should not remove health or apply poison. Turn both off to restore baseline.
-3. **Baby hordes:** enable `babyhorde`. For a quick deterministic check, set `babyHordeChance` to `1.0` in the config and reload. Count six babies and verify none split. Restore the default `0.15` afterward.
-4. **Multiplier:** start at `2`, then `4`; confirm wave size, one-wave-at-a-time behavior, and server performance. Reset to `1` between sessions.
-5. **Creeper:** enable `creeper`, turn parent block damage off if you want the test terrain preserved, then use `testcreeper`. Let it explode and time the babies. Test killing the parent before explosion, killing both babies, and using clear/disable during the 2-second delay. Finally test rare intermissions naturally.
+- `/creeperborn guardpost`: stand within six blocks of your guardian to set its post at your current position; the nearest visible owned guardian is selected.
+- `/creeperborn release`: release the nearest visible owned guardian within six blocks.
+- Reuse the trident to change your guardian's element. Reassignment resets its post to its current position.
+- Ownership, element, and post are stored on the villager and survive normal saves/reloads. No chunk forcing or offline simulation.
 
-Do not overwrite the public 0.1.5 JAR or upload this alpha to Modrinth until the gradual playtesting is complete.
+## Commands and testing
 
-## Automated checks
+Ordinary players can use status, element, move, cast, focus, guardpost and release. Test item/mob commands require operator permission.
 
-GitHub Actions uses Java 25 and a real Fabric dedicated server. The suite retains the Creative-damage and actual pounce-physics checks, and adds command/config validation, Darkness-only damage/poison suppression, delayed real creeper explosions and births, one-generation-only splitting, terrain protection, and cancellation by disable. The test mod is excluded from the distributed JAR.
+```
+/creeperborn status
+/creeperborn testcreeper earth
+/creeperborn testcreeper water
+/creeperborn testcreeper fire
+/creeperborn testcreeper air
+/creeperborn testheart earth
+/creeperborn testheart water
+/creeperborn testheart fire
+/creeperborn testheart air
+/creeperborn move 1
+/creeperborn cast
+/creeperborn focus
+```
+
+Test creepers spawn five blocks east if there is collision-free space. Their explosions can damage terrain: use a disposable test area. `/focus` replaces a lost focus if an element is unlocked and no focus is already in your inventory. The progression trident is granted once; protect it like other valuable gear.
+
+Configuration: `config/creeperborn.json`, `naturalCreepers` (true/false) and `elementalChance` (0–1, default 0.02). Restart after editing. Names/particle visuals use vanilla assets. The public Minecraft display is English for this first prototype.
+
+## Validation plan
+
+GitHub Actions builds with Java 25, runs a real Fabric dedicated-server test mod, and uploads a JAR only if the regression marker passes. The test mod is excluded from the distributed JAR. Automated checks cover genuine/duplicate hearts, all-four progression, source requirements and cooldowns, several elemental moves, wall blocking, villager ownership/trades/defense, and one-time heart drops. In-game testing is still needed for every move's feel, first-person input, particles, save/rejoin/respawn, villager schedules, and multiplayer performance.
+
+## Later milestones
+
+Custom models/UI, richer villager patrol behavior, faction banners, temporary earth walls, water projectiles, and original fruit-inspired abilities are later work. Avatar and One Piece are inspirations only; Creeperborn is not affiliated with their owners. No external mod code/assets are bundled.

@@ -1,18 +1,17 @@
 {
   "schemaVersion": 1,
-  "id": "night_splitters",
+  "id": "creeperborn",
   "version": "${version}",
-  "name": "Night Splitters",
-  "description": "Fast nighttime cave spider swarms that split once into two smaller spiders.",
+  "name": "Creeperborn",
+  "description": "Rare elemental creepers, hearts, abilities and villager guardians.",
   "authors": [
     "Zach Caton"
   ],
   "license": "MIT",
   "environment": "*",
-  "mixins": ["night_splitters.mixins.json"],
   "entrypoints": {
     "main": [
-      "com.rdt.nightsplitters.NightSplitters"
+      "com.sibcraft.creeperborn.Creeperborn"
     ]
   },
   "depends": {
@@ -22,3 +21,4 @@
     "fabric-api": ">=0.161.0"
   }
 }
+
