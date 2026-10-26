@@ -3,20 +3,6 @@ plugins {
 	id 'maven-publish'
 }
 
-tasks.register('dumpApi') {
-    doLast {
-        def output = layout.buildDirectory.dir('api').get().asFile
-        output.mkdirs()
-        def cp = sourceSets.main.compileClasspath.asPath
-        ['com.mojang.blaze3d.platform.InputConstants', 'com.mojang.blaze3d.platform.InputConstants$Type',
-         'net.minecraft.client.Minecraft', 'net.minecraft.client.KeyMapping'].each { name ->
-            def process = new ProcessBuilder('javap', '-p', '-classpath', cp, name).redirectErrorStream(true).start()
-            new File(output, name.tokenize('.').last() + '.txt').text = process.inputStream.text
-            process.waitFor()
-        }
-    }
-}
-
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because

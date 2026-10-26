@@ -198,9 +198,9 @@ public final class Regression implements ModInitializer {
         Creeperborn.ABILITIES.clear(); Player tidal = player(level); Mastery.grant(tidal,Element.WATER,3);
         tidal.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(tidal, Element.WATER);
         // Keep all four directions inside the same fully loaded entity chunk.
-        for (int x = 5; x <= 12; x++) for (int z = 5; z <= 12; z++) {
-            level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
-            for (int dy = 0; dy <= 4; dy++) level.setBlockAndUpdate(new BlockPos(x, (int)y + dy, z), Blocks.AIR.defaultBlockState());
+        for (int x = 5; x <= 12; x++) for (int gridZ = 5; gridZ <= 12; gridZ++) {
+            level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, gridZ), Blocks.STONE.defaultBlockState());
+            for (int dy = 0; dy <= 4; dy++) level.setBlockAndUpdate(new BlockPos(x, (int)y + dy, gridZ), Blocks.AIR.defaultBlockState());
         }
         tidal.snapTo(8.5, y, 8.5);
         java.util.List<Zombie> surrounding = new java.util.ArrayList<>();
