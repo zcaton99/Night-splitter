@@ -22,7 +22,7 @@ import net.minecraft.world.phys.*;
 /** Bounded spectator-backed travel, with persistent recovery snapshots and a shared owner session. */
 public final class DoorSpace {
     private static final String RETURN="cb_door_return_";
-    private record Saved(String dimension,double x,double y,double z,float yaw,float pitch,String mode,float speed,boolean mayfly,boolean flying){}
+    private record Saved(String dimension,double x,double y,double z,float yaw,float pitch,String mode,float speed,boolean mayfly,boolean flying,int move,boolean owner){}
     private static final class Traveler {
         ServerPlayer player; Saved saved; Session session; Vec3 last;
     }
@@ -74,7 +74,8 @@ public final class DoorSpace {
             if(d==null)continue;d.addTag("cb_temporary_rock");
             d.setBlockState(Blocks.WARPED_DOOR.defaultBlockState().setValue(BlockStateProperties.DOUBLE_BLOCK_HALF,i==0?DoubleBlockHalf.LOWER:DoubleBlockHalf.UPPER));
             d.snapTo(at.x,at.y+i,at.z);
-            d.setTransformation(new Transformation(new Vector3f(-.5f,0,-.5f),new Quaternionf().rotationY((float)Math.toRadians(-yaw)),new Vector3f(1),new Quaternionf()));
+            Quaternionf rotation=new Quaternionf().rotationY((float)Math.toRadians(-yaw));
+            d.setTransformation(new Transformation(new Vector3f(-.5f,0,-.5f).rotate(rotation),rotation,new Vector3f(1),new Quaternionf()));
             level.addFreshEntity(d);list.add(d);
         }
         puff(level,at);return list;
@@ -98,11 +99,11 @@ public final class DoorSpace {
         if(mode==1)enter(owner,s,returnPoint);
         return mode==1?"Rescue Door! Z places a safe exit.":"Door opened — walk through. "+(mode==2?"Others may follow for "+(admission(mastered)/20)+"s.":"Z cancels before entering.");
     }
-    private static Saved snapshot(ServerPlayer p,Vec3 point){return new Saved(p.level().dimension().identifier().toString(),point.x,point.y,point.z,p.getYRot(),p.getXRot(),p.gameMode().getName(),p.getAbilities().getFlyingSpeed(),p.getAbilities().mayfly,p.getAbilities().flying);}
+    private static Saved snapshot(ServerPlayer p,Vec3 point,Session s){return new Saved(p.level().dimension().identifier().toString(),point.x,point.y,point.z,p.getYRot(),p.getXRot(),p.gameMode().getName(),p.getAbilities().getFlyingSpeed(),p.getAbilities().mayfly,p.getAbilities().flying,s.mode,p==s.owner);}
     private static void enter(ServerPlayer p,Session s,Vec3 safeReturn){
         if(active(p)||p.isSpectator()||!p.isAlive()||WaterRules.suppressed(p))return;
         Rubber.forget(p); // End temporary Gear flight/guard before recording baseline abilities.
-        Saved saved=snapshot(p,safeReturn);p.addTag(RETURN+Base64.getUrlEncoder().withoutPadding().encodeToString(GSON.toJson(saved).getBytes(StandardCharsets.UTF_8)));
+        Saved saved=snapshot(p,safeReturn,s);p.addTag(RETURN+Base64.getUrlEncoder().withoutPadding().encodeToString(GSON.toJson(saved).getBytes(StandardCharsets.UTF_8)));
         Traveler t=new Traveler();t.player=p;t.saved=saved;t.session=s;t.last=p.position();travelers.put(p.getUUID(),t);s.travelers.add(p.getUUID());
         Rubber.cancelInput(p);p.stopRiding();p.setGameMode(GameType.SPECTATOR);p.getAbilities().flying=true;
         p.getAbilities().setFlyingSpeed(s.mode==1?.07f:s.mode==2?.045f:.05f);p.onUpdateAbilities();p.setDeltaMovement(Vec3.ZERO);
@@ -209,6 +210,7 @@ public final class DoorSpace {
         for(String tag:Set.copyOf(p.entityTags()))if(tag.startsWith(RETURN)){
             try{Saved saved=GSON.fromJson(new String(Base64.getUrlDecoder().decode(tag.substring(RETURN.length())),StandardCharsets.UTF_8),Saved.class);
                 restore(p,saved,new Vec3(saved.x(),saved.y(),saved.z()),savedLevel(p,saved));
+                if(saved.owner())DoorFruit.ended(p,saved.move());
             }catch(Exception error){p.setGameMode(GameType.SURVIVAL);removeSnapshot(p);throw new IllegalStateException("Could not restore Door traveler",error);}
         }
     }
