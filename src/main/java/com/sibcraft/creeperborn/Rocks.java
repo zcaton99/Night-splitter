@@ -57,7 +57,11 @@ public final class Rocks {
     public void guard(Player p, int duration) {
         Guard previous = guards.remove(p.getUUID()); if (previous != null) previous.visuals().forEach(v -> v.discard());
         ServerLevel level = (ServerLevel)p.level(); List<Display.BlockDisplay> visuals = new ArrayList<>();
-        for (int i = 0; i < 3; i++) visuals.add(visual(level, p.getEyePosition(), .85f));
+        var material=Mastery.harmony(p)?Blocks.STONE_BRICKS:Blocks.MUD_BRICKS;
+        for (int i = 0; i < 3; i++) {
+            Display.BlockDisplay wall=visual(level,p.getEyePosition(),.85f);
+            wall.setBlockState(material.defaultBlockState());visuals.add(wall);
+        }
         guards.put(p.getUUID(), new Guard(p, level.getGameTime() + duration, visuals)); positionGuard(guards.get(p.getUUID()));
     }
     public boolean blocks(LivingEntity entity, DamageSource source) {

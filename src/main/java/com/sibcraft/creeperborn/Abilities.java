@@ -70,7 +70,7 @@ public final class Abilities {
         else if (move == 0) bolt(level, p, e, power);
         else switch (e) {
             case EARTH -> {
-                if (move == 1) rocks.guard(p, (int)Math.round(100 * power * harmony));
+                if (move == 1) rocks.guard(p, (int)Math.round((Mastery.harmony(p)?160:100) * power));
                 else {
                     int duration=Mastery.harmony(p)?180:80;
                     for(LivingEntity target:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(5)))

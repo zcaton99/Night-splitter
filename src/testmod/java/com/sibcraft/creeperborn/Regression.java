@@ -101,6 +101,29 @@ public final class Regression implements ModInitializer {
         Creeperborn.ABILITIES.clear();
     }
 
+
+    private void checkGuardMaterials(ServerLevel level){
+        Player p=player(level);p.snapTo(-10,y+14,22);
+        Rocks rocks=new Rocks();rocks.guard(p,100);
+        var area=p.getBoundingBox().inflate(4);
+        var walls=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,area);
+        check(walls.size()==3&&walls.stream().allMatch(d->d.getBlockState().is(Blocks.MUD_BRICKS)),
+            "Basic guard uses three mud-brick panels");
+        rocks.clear();
+        for(Element e:Element.values())Mastery.grant(p,e,3);
+        rocks.guard(p,160);
+        walls=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,area);
+        check(walls.size()==3&&walls.stream().allMatch(d->d.getBlockState().is(Blocks.STONE_BRICKS)),
+            "All-four mastered guard upgrades to stone bricks");
+        check(rocks.guardTicks(p)==160,"Mastered guard retains requested eight-second duration");
+        Zombie attacker=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        attacker.snapTo(-10,y+14,25);
+        check(rocks.blocks(p,attacker.damageSources().mobAttack(attacker)),"Mastered guard blocks frontal hit");
+        attacker.snapTo(-10,y+14,19);
+        check(!rocks.blocks(p,attacker.damageSources().mobAttack(attacker)),"Mastered guard still allows rear hits");
+        rocks.clear();attacker.discard();
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -113,6 +136,7 @@ public final class Regression implements ModInitializer {
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
         checkVortex(level);
+        checkGuardMaterials(level);
         checkAirSteps(level);
         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
             level.setBlockAndUpdate(new BlockPos(x, (int)y - 1, z), Blocks.STONE.defaultBlockState());
@@ -740,8 +764,8 @@ public final class Regression implements ModInitializer {
         for (Player caster : new Player[]{basic,master}) {
             Progress.select(caster,Element.EARTH); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
         }
-        check(Creeperborn.ABILITIES.rocks.guardTicks(basic) == 100 && Creeperborn.ABILITIES.rocks.guardTicks(master) == 115,
-            "Frontal rock shield duration gets fifteen percent");
+        check(Creeperborn.ABILITIES.rocks.guardTicks(basic) == 100 && Creeperborn.ABILITIES.rocks.guardTicks(master) == 160,
+            "Mastered brick guard lasts eight seconds at full environmental strength");
         for (Player caster : new Player[]{basic,master}) {
             Progress.select(caster,Element.FIRE); Creeperborn.ABILITIES.move(caster,2); Creeperborn.ABILITIES.cast(caster);
             int expected = (int)Math.round(160 * EnvironmentPower.strength(caster,Element.FIRE) * Mastery.multiplier(caster));
