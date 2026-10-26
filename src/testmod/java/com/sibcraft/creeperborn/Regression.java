@@ -215,6 +215,7 @@ public final class Regression implements ModInitializer {
             Creeperborn.ABILITIES.move(caster, slot);
             check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
             if (e == Element.EARTH && slot == 0) for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
+            if(e==Element.AIR&&slot==2)Creeperborn.ABILITIES.vortices.tick();
             if (slot == 0 || (slot == 2 && e == Element.AIR) || (slot == 1 && e == Element.FIRE))
                 check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);
             if (slot == 1 && e == Element.WATER)
