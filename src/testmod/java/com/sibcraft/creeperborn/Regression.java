@@ -159,6 +159,7 @@ public final class Regression implements ModInitializer {
             @Override public boolean setGameMode(GameType value){mode=value;getAbilities().mayfly=value==GameType.SPECTATOR;getAbilities().flying=value==GameType.SPECTATOR;return true;}
             @Override public void onUpdateAbilities(){}
             @Override public void sendOverlayMessage(Component message){}
+            @Override public void snapTo(double x,double yy,double z){setPos(x,yy,z);}
             @Override public void teleportTo(double x,double yy,double z){snapTo(x,yy,z);}
             @Override public boolean teleportTo(ServerLevel destination,double x,double yy,double z,java.util.Set<net.minecraft.world.entity.Relative> relative,float yaw,float pitch,boolean resetCamera){
                 if(destination!=level)throw new AssertionError("Unexpected test dimension");snapTo(x,yy,z);setYRot(yaw);setXRot(pitch);return true;
