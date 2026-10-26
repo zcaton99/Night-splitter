@@ -225,7 +225,7 @@ public final class Rubber {
         return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) && source.getDirectEntity()!=null && source.getDirectEntity().isOnFire();
     }
     public static float damage(Player p, DamageSource source, float amount) {
-        if(Mastery.harmony(p)&&source.is(DamageTypeTags.IS_FIRE))return 0;
+        if(Mastery.harmony(p)&&(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL)))return 0;
         if(!unlocked(p))return amount;
         if(source.typeHolder().equals(p.damageSources().fellOutOfWorld().typeHolder())||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
         if(source.typeHolder().equals(p.damageSources().drown().typeHolder()))return WaterRules.mastered(p)?0:amount;

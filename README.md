@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.5
+# Creeperborn — 0.1.0-alpha.6
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -144,6 +144,12 @@ Death removes the fruit power, its mastery/use/time counters, active transformat
 On upgrading older alphas, a joining legacy Rubber owner claims the fruit if available. If an older save has multiple owners, the first reconciled owner keeps it and other legacy fruit progress is cleared, preserving their bending progress.
 
 Test lava in Survival before/after mastering all four, then test residual burning after climbing out. On a two-player test server, have one player eat Rubber and verify that the other cannot eat a spare. Log out/restart and verify it stays claimed. Kill the owner, respawn, and confirm that bending progress remains, Rubber is lost, and the second player can eat their spare at fruit tier 1. `/creeperborn status` reports availability and lava immunity. Existing alpha.4 water and Rubber control tests still apply.
+
+## All-four fall immunity — alpha.6
+
+Mastering all four elements to tier 3 now also prevents fall damage, alongside lava/fire immunity. It works without any fruit, with combat OFF, and with any element selected. Air mastery alone does not grant this all-four reward. Ordinary damage and void damage remain unchanged. Dropping any element below tier 3 removes the immunity immediately; elemental progression remains preserved on death.
+
+Test in Survival with all four masteries at tier 3: fall from a safe test tower and verify no health loss. Then set Air to tier 2 and repeat a short, nonlethal fall to verify damage returns. Existing Gear 5 fall protection and Air Step's scoped jump protection remain separate. Automated tests exercise native fall damage before and after downgrading mastery.
 
 ## Later milestones
 
