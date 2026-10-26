@@ -72,7 +72,7 @@ public final class Regression implements ModInitializer {
         Progress.select(p, Element.WATER); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
         check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && p.getHealth() > 12 && p.getHealth() < 16,
             "Water still works at reduced strength without a source");
-        Creeperborn.ABILITIES.clear(); p.setHealth(12);
+        Creeperborn.ABILITIES.clear(); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
         ItemStack bucket = new ItemStack(Items.WATER_BUCKET);
         bucket.set(DataComponents.CUSTOM_NAME, Component.literal("Travel water")); p.addItem(bucket);
         check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && p.getHealth() == 16, "Bucket enables healing");
@@ -164,6 +164,33 @@ public final class Regression implements ModInitializer {
         check(ElementalCreepers.element(natural) == null, "Already examined creeper cannot reroll");
         Creeper split = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND); split.addTag("ns_creeper");
         Creeperborn.CREEPERS.track(split); check(ElementalCreepers.element(split) == null, "Night Splitters creepers excluded");
+        for (Element e : new Element[]{Element.EARTH, Element.WATER}) {
+            Creeperborn.ABILITIES.clear(); Player caster = player(level); caster.addTag("cb_unlock_" + e.key());
+            caster.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(caster, e);
+            Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+            target.snapTo(.5, y, 2.5); target.setNoAi(true); level.addFreshEntity(target);
+            Creeperborn.ABILITIES.move(caster, e == Element.EARTH ? 2 : 1); Creeperborn.ABILITIES.cast(caster);
+            double start = target.getZ(), expected = e == Element.EARTH ? 10 : 5;
+            for (int tick = 0; tick < 30; tick++) { target.travel(net.minecraft.world.phys.Vec3.ZERO); Creeperborn.ABILITIES.tick(); }
+            double travelled = target.getZ() - start;
+            check(travelled >= expected - 1 && travelled <= expected + 1,
+                e.title + " actual push distance: " + travelled + ", expected about " + expected);
+            target.discard();
+        }
+        Creeperborn.ABILITIES.clear(); Player tidal = player(level); tidal.addTag("cb_unlock_water");
+        tidal.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(tidal, Element.WATER);
+        java.util.List<Zombie> surrounding = new java.util.ArrayList<>();
+        for (int[] offset : new int[][]{{2,0},{-2,0},{0,2},{0,-2}}) {
+            Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
+            target.snapTo(.5 + offset[0], y, .5 + offset[1]); target.setNoAi(true); level.addFreshEntity(target); surrounding.add(target);
+        }
+        Creeperborn.ABILITIES.move(tidal, 1); Creeperborn.ABILITIES.cast(tidal);
+        for (Zombie target : surrounding) {
+            check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides"); target.discard();
+        }
+        check(level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
+            new AABB(-5, y - 2, -5, 6, y + 5, 12)).stream().allMatch(display -> !display.shouldBeSaved()),
+            "Temporary rock visuals are excluded from world saves");
     }
     private static int count(Player p, String kind) {
         int count = 0;
