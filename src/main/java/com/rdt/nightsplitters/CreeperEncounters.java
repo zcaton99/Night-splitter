@@ -122,8 +122,7 @@ public final class CreeperEncounters {
 
     private Creeper childAt(ServerLevel level, Vec3 position) {
         int x = (int)Math.floor(position.x), z = (int)Math.floor(position.z);
-        if (!level.hasChunksAt(x - 1, z - 1, x + 1, z + 1)
-                || !level.areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(x >> 4, z >> 4))) return null;
+        if (!level.hasChunksAt(x - 1, z - 1, x + 1, z + 1)) return null;
         Creeper child = make(level, false);
         for (int dy : new int[] {0, -1, 1, -2, 2, -3}) {
             BlockPos pos = BlockPos.containing(position.x, position.y + dy, position.z);
