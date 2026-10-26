@@ -34,10 +34,14 @@ public final class Regression implements ModInitializer {
             for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++) s.overworld().setChunkForced(x, z, true);
         });
         ServerTickEvents.END_SERVER_TICK.register(s -> {
-            if (server == null || ++ticks != 30) return;
+            if (server == null || ++ticks < 30) return;
+            boolean ready = true;
+            for (int x = -1; x <= 0; x++) for (int z = -1; z <= 0; z++)
+                ready &= s.overworld().areEntitiesActuallyLoadedAndTicking(new net.minecraft.world.level.ChunkPos(x,z));
+            if (!ready && ticks < 600) return;
             try { run(s.overworld()); System.out.println("CREEPERBORN_REGRESSION_PASSED"); }
             catch (Throwable error) { error.printStackTrace(); }
-            finally { s.halt(false); }
+            finally { server = null; s.halt(false); }
         });
     }
     private Player player(ServerLevel level) {
