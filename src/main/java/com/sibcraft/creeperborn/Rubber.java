@@ -6,7 +6,6 @@ import net.minecraft.server.level.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.item.*;
@@ -173,17 +172,17 @@ public final class Rubber {
     private static boolean fireBending;
     public static void fireBending(boolean value) { fireBending=value; }
     public static boolean heat(DamageSource source) {
-        return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.getDirectEntity() instanceof AbstractArrow a && a.isOnFire();
+        return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) && source.getDirectEntity()!=null && source.getDirectEntity().isOnFire();
     }
     public static float damage(Player p, DamageSource source, float amount) {
         if(!unlocked(p))return amount;
-        if(source.is(net.minecraft.world.damagesource.DamageTypes.OUT_OF_WORLD)||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
+        if(source.typeHolder().equals(p.damageSources().fellOutOfWorld().typeHolder())||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
         boolean heat=heat(source);
         if(gear(p)) {
             if(source.is(DamageTypeTags.IS_FALL))return 0;
             return heat||sharp(source) ? amount*.5f : 0;
         }
-        if(heat || source.getDirectEntity() instanceof AbstractArrow || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.SWORDS)
+        if(heat || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.SWORDS)
                 || source.getDirectEntity() instanceof LivingEntity a && a.getMainHandItem().is(net.minecraft.tags.ItemTags.AXES))amount*=1.5f;
         State s=state(p);
         if(s.guarding && source.getEntity() instanceof LivingEntity attacker) {
