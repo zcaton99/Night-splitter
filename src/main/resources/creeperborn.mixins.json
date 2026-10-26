@@ -10,7 +10,9 @@
     "FruitWaterBreathingMixin",
     "SlabShacklesMixin",
     "SlabShacklesMoveMixin",
-    "PunchDisplayAccessor"
+    "PunchDisplayAccessor",
+    "DoorCameraMixin",
+    "DoorSpectatorMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -829,7 +829,8 @@ public final class Regression implements ModInitializer {
         check(FruitClaims.owns(p)&&!FruitClaims.available(),"Fruit claim survives world-file reload, including offline owner");
         Creeperborn.config().naturalCreepers=true;Creeperborn.config().fruitChance=1;
         Creeper blocked=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);FruitCreepers.track(blocked);
-        check(!FruitCreepers.fruit(blocked),"Claimed fruit suppresses natural fruit creepers");
+        check(!blocked.entityTags().contains("cb_fruitborn_rubber")&&FruitCreepers.door(blocked),"Claimed Rubber is suppressed while unclaimed Door may still spawn");
+        FruitCreepers.unload(blocked);
         Mastery.grant(p,Element.EARTH,3);Progress.select(p,Element.EARTH);
         p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().genericKill(),1000);
         check(!p.isAlive(),"Native player death triggered");
