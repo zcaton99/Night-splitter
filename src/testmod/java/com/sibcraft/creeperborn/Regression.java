@@ -196,8 +196,9 @@ public final class Regression implements ModInitializer {
         check(DoorFruit.ready(owner,1)==0,"Cooldown does not begin while passage is active");
         owner.snapTo(15,y+20,22.5);DoorSpace.tick(server);
         check(owner.position().distanceTo(start)<.01,"Travel beyond Rescue range returns to last in-range point");
-        owner.snapTo(-10.5,y+20,26.5);
+        owner.snapTo(-10.5,y+20,26.5);owner.setYRot(123);owner.setXRot(-22);
         check(DoorSpace.exit(owner).startsWith("Exit opened")&&!DoorSpace.active(owner)&&owner.gameMode()==GameType.SURVIVAL,"Valid exit restores Survival");
+        check(owner.getYRot()==123&&owner.getXRot()==-22,"Door exit preserves owner current yaw and pitch");
         check(DoorFruit.ready(owner,1)==level.getGameTime()+600,"Rescue cooldown starts when passage ends");
         check(owner.entityTags().stream().noneMatch(t->t.startsWith("cb_door_return_")),"Exit removes recovery marker");
         check(DoorFruit.cast(owner,1).contains("recovering"),"Immediate rescue reuse is blocked");
@@ -218,8 +219,9 @@ public final class Regression implements ModInitializer {
         check(!Rubber.gear(friend),"Entering shared travel ends temporary Gear flight before snapshot");
         owner.snapTo(-10.5,y+20,28.5);check(DoorSpace.exit(owner).startsWith("Exit opened"),"Owner places group exit");
         check(!DoorSpace.active(owner)&&DoorSpace.active(friend),"Passenger may independently reach the exit");
-        friend.snapTo(-10.5,y+20,28.5);DoorSpace.tick(server);
+        friend.snapTo(-10.5,y+20,28.5);friend.setYRot(-75);friend.setXRot(18);DoorSpace.tick(server);
         check(!DoorSpace.active(friend)&&friend.gameMode()==GameType.SURVIVAL&&!friend.getAbilities().mayfly,"Passenger returns to Survival without retaining temporary Gear flight");
+        check(friend.getYRot()==-75&&friend.getXRot()==18,"Shared exit preserves each passenger current facing");
         FruitClaims.releaseOnDeath(friend);
         check(!DoorSpace.ownsSession(owner)&&DoorFruit.ready(owner,2)>level.getGameTime(),"Shared cooldown begins after final passenger exits");
         // Simulate a server restart: snapshot recovery must work without the in-memory session.
@@ -228,12 +230,13 @@ public final class Regression implements ModInitializer {
         DoorSpace.recover(owner);DoorSpace.forget(owner);
         check(owner.gameMode()==GameType.SURVIVAL&&!DoorSpace.active(owner),"Recovery snapshot restores Survival and safe return");
         ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+601);
-        owner.snapTo(-10.5,y+20,22.5);var timeoutStart=owner.position();
-        DoorFruit.cast(owner,1);owner.snapTo(-8.5,y+21,26.5);
+        owner.snapTo(-10.5,y+20,22.5);owner.setYRot(0);owner.setXRot(0);var timeoutStart=owner.position();
+        DoorFruit.cast(owner,1);owner.snapTo(-8.5,y+21,26.5);owner.setYRot(90);owner.setXRot(35);
         ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+121);
         DoorSpace.tick(server);
         check(!DoorSpace.active(owner)&&owner.gameMode()==GameType.SURVIVAL&&owner.position().distanceTo(timeoutStart)<.01,
             "Rescue timer expiry returns safely to saved entrance, not current indoor position");
+        check(owner.getYRot()==0&&owner.getXRot()==0,"Timeout return restores saved entrance facing");
         ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+901);
         owner.snapTo(-10.5,y+20,22.5);DoorFruit.cast(owner,2);owner.snapTo(-10.5,y+20,24.2);DoorSpace.tryEnter(owner);
         friend.snapTo(-10.5,y+20,24.2);DoorSpace.tryEnter(friend);

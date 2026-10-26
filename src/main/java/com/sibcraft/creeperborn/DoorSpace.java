@@ -129,9 +129,13 @@ public final class DoorSpace {
     }
     private static void removeSnapshot(Player p){for(String tag:Set.copyOf(p.entityTags()))if(tag.startsWith(RETURN))p.removeTag(tag);}
     private static void restore(ServerPlayer p,Saved saved,Vec3 requested,ServerLevel destination){
+        restore(p,saved,requested,destination,false);
+    }
+    private static void restore(ServerPlayer p,Saved saved,Vec3 requested,ServerLevel destination,boolean keepFacing){
+        float yaw=keepFacing?p.getYRot():saved.yaw(),pitch=keepFacing?p.getXRot():saved.pitch();
         if(p.isAlive()){
             Vec3 safe=nearbySafe(destination,p,requested);
-            if(safe!=null)p.teleportTo(destination,safe.x,safe.y,safe.z,Set.of(),saved.yaw(),saved.pitch(),true);
+            if(safe!=null)p.teleportTo(destination,safe.x,safe.y,safe.z,Set.of(),yaw,pitch,true);
             else p.teleport(p.findRespawnPositionAndUseSpawnBlock(false,net.minecraft.world.level.portal.TeleportTransition.DO_NOTHING));
         }
         p.setGameMode(GameType.byName(saved.mode(),GameType.SURVIVAL));
@@ -142,13 +146,14 @@ public final class DoorSpace {
         ServerLevel level=p.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION,Identifier.parse(saved.dimension())));
         return level==null?p.level().getServer().overworld():level;
     }
-    private static void leave(Traveler t,Vec3 destination,ServerLevel level){
-        travelers.remove(t.player.getUUID());t.session.travelers.remove(t.player.getUUID());restore(t.player,t.saved,destination,level);
+    private static void leave(Traveler t,Vec3 destination,ServerLevel level){leave(t,destination,level,false);}
+    private static void leave(Traveler t,Vec3 destination,ServerLevel level,boolean keepFacing){
+        travelers.remove(t.player.getUUID());t.session.travelers.remove(t.player.getUUID());restore(t.player,t.saved,destination,level,keepFacing);
     }
     private static void finish(Session s,boolean destination){
         for(UUID id:Set.copyOf(s.travelers)){
             Traveler t=travelers.get(id);if(t==null)continue;
-            if(destination&&s.exit!=null)leave(t,s.exit,s.level);
+            if(destination&&s.exit!=null)leave(t,s.exit,s.level,true);
             else leave(t,new Vec3(t.saved.x(),t.saved.y(),t.saved.z()),savedLevel(t.player,t.saved));
         }
         close(s.level,s.entrance,s.entranceVisuals);if(s.exit!=null){
@@ -162,7 +167,7 @@ public final class DoorSpace {
         Session s=sessions.get(player.getUUID());Traveler t=travelers.get(player.getUUID());
         if(s==null){
             if(t==null)return "No active passage.";
-            if(t.session.exit!=null){leave(t,t.session.exit,t.session.level);return "You left the shared passage.";}
+            if(t.session.exit!=null){leave(t,t.session.exit,t.session.level,true);return "You left the shared passage.";}
             leave(t,new Vec3(t.saved.x(),t.saved.y(),t.saved.z()),savedLevel(t.player,t.saved));return "Returned to your entrance.";
         }
         if(!active(player)){if(!s.entered)finish(s,false);return "Door closed.";}
@@ -171,7 +176,7 @@ public final class DoorSpace {
         s.exit=at;s.exitDeadline=s.level.getGameTime()+100;s.exitVisuals=door(s.level,at,player.getYRot());
         if(at.distanceToSqr(s.entrance)>=16)DoorFruit.credit(s.owner);
         close(s.level,s.entrance,s.entranceVisuals);s.admission=0;
-        leave(travelers.get(player.getUUID()),at,s.level);
+        leave(travelers.get(player.getUUID()),at,s.level,true);
         if(s.travelers.isEmpty())finish(s,true);
         return "Exit opened! Remaining passengers have five seconds to leave before automatic arrival.";
     }
