@@ -28,7 +28,7 @@ jobs:
         run: bash gradlew build --stacktrace
       - name: Inspect targeted APIs
         if: failure()
-        run: bash gradlew dumpApi
+        run: bash gradlew dumpApi --no-configuration-cache
       - name: Upload targeted APIs
         if: failure()
         uses: actions/upload-artifact@v4
