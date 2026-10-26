@@ -3,3 +3,4 @@ public interface PunchVisualState {
     PunchRenderer.SkinData creeperborn$punch();
     void creeperborn$punch(PunchRenderer.SkinData data);
 }
+

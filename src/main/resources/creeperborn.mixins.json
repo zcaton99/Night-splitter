@@ -17,6 +17,8 @@
   },
   "client": [
     "PunchRenderStateMixin",
-    "PunchDisplayRendererMixin"
+    "PunchDisplayRendererMixin",
+    "DoorHudMixin",
+    "DoorGhostMixin"
   ]
 }

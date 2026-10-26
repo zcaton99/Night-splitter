@@ -40,174 +40,22 @@ public final class Creeperborn implements ModInitializer {
     @Override public void onInitialize() {
         CombatNetwork.init();
         ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { Rubber.recoverFlight(handler.player); FruitClaims.reconcile(handler.player); });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { DoorSpace.recover(handler.player); Rubber.recoverFlight(handler.player); FruitClaims.reconcile(handler.player); });
         Path path = FabricLoader.getInstance().getConfigDir().resolve("creeperborn.json");
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try {
-            if (Files.exists(path)) config = gson.fromJson(Files.readString(path), Config.class);
-            if (config == null || !Double.isFinite(config.elementalChance) || config.elementalChance < 0 || config.elementalChance > 1 || !Double.isFinite(config.fruitChance) || config.fruitChance < 0 || config.fruitChance > 1)
-                throw new IllegalArgumentException("elementalChance must be 0–1");
-            Files.createDirectories(path.getParent()); Files.writeString(path, gson.toJson(config) + "\n");
-        } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
-        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
-        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server);
-            if (server.getTickCount() % 20 == 0) Mastery.tick(server);
-            if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
-        });
-        ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
-        ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
-        ServerLivingEntityEvents.AFTER_DEATH.register(FruitCreepers::died);
-        ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) FruitClaims.releaseOnDeath(p); });
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Rubber.forget(handler.player); WaterRules.forget(handler.player); CombatNetwork.forget(handler.player); });
-        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-            for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);
-            WaterRules.forget(newPlayer); CombatNetwork.forget(newPlayer);
-        });
-        UseItemCallback.EVENT.register((player, level, hand) -> {
-            ItemStack stack = player.getItemInHand(hand); String kind = Relics.kind(stack);
-            if (kind.isEmpty()) return InteractionResult.PASS;
-            if (player.isSpectator()) return InteractionResult.FAIL;
-            if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
-            if (kind.equals("fruit:rubber")) {
-                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "Rubber is already claimed. Its living owner must die before another player can eat it.");
-            } else if (kind.startsWith("heart:")) {
-                say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
-                    : "You already know this element. Keep the heart for a friend.");
-            } else if (kind.equals("focus") || kind.equals("trident")) {
-                if (player.isShiftKeyDown()) {
-                    Element e = Progress.cycle(player); say(player, e == null ? "No elements unlocked." : "Selected " + e.title);
-                } else if (kind.equals("focus")) say(player, ABILITIES.cast(player));
-                else say(player, "Use on an adult villager to grant the selected element. Sneak-use to change element.");
-            }
-            return InteractionResult.SUCCESS;
-        });
-        UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
-            if (!Relics.kind(player.getItemInHand(hand)).equals("trident") || !(entity instanceof Villager v)) return InteractionResult.PASS;
-            if (player.isSpectator()) return InteractionResult.FAIL;
-            if (level instanceof ServerLevel) {
-                Element e = Progress.selected(player);
-                say(player, e != null && GUARDIANS.assign(player, v, e)
-                    ? e.title + " guardian joined your faction. Trades and home/work routines are preserved."
-                    : "Requires all four elements, an adult villager, and ownership (or an unclaimed villager).");
-            }
-            return InteractionResult.SUCCESS;
-        });
-        CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> {
-            var root = Commands.literal("creeperborn").executes(ctx -> {
-                ctx.getSource().sendSuccess(() -> Component.literal("Creeperborn: /creeperborn element earth|water|fire|air; /creeperborn move 1|2|3; /creeperborn cast; /creeperborn status. Use your focus to cast; sneak-use to cycle elements."), false);
-                return 1;
-            });
-            root.then(Commands.literal("status").executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException();
-                String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
-                Element selected = Progress.selected(p);
-                String active=Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.20 | Active: "+active+" | Mode: "+p.gameMode());
-                chat(p,"Elements unlocked: "+known);
-                if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
-                    +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
-                chat(p,Rubber.status(p));
-                chat(p,"Rubber claim: "+(FruitClaims.available()?"available":FruitClaims.owns(p)?"yours":"another living player"));
-                chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall immunity":"not yet mastered"));
-                chat(p,"Water: "+(WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
-                    +" | Eyes submerged: "+WaterRules.submerged(p)+" | Air: "+p.getAirSupply()+"/"+p.getMaxAirSupply());
-                if(Progress.unlocked(p,Element.AIR)){
-                    long now=p.level().getGameTime();int steps=ABILITIES.airSteps.remaining(p,now);
-                    chat(p,steps<0?"Air Step: unlimited (all-four mastery)":"Air Step: "+steps+"/5 | Full refill 3s after last step");
-                }
-                chat(p,"Controls: R elements, Shift+R backward, G Rubber, Z/X/C moves, B combat.");
-                return 1;
-            }));
-            root.then(Commands.literal("cast").executes(ctx -> { ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, ABILITIES.cast(p)); return 1; }));
-            root.then(Commands.literal("move").then(Commands.argument("slot", IntegerArgumentType.integer(1, 3)).executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException(); int index = IntegerArgumentType.getInteger(ctx, "slot") - 1;
-                ABILITIES.move(p, index); Element e = Progress.selected(p); say(p, "Move " + (index + 1) + (e == null ? "" : ": " + e.moves[index])); return 1;
-            })));
-            var element = Commands.literal("element");
-            for (Element e : Element.values()) element.then(Commands.literal(e.key()).executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, Progress.select(p, e) ? "Selected " + e.title : "Consume this element's heart first."); return 1;
-            }));
-            root.then(element);
-            var use = Commands.literal("use");
-            var mastery = Commands.literal("mastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
-            for (Element e : Element.values()) {
-                use.then(Commands.literal(e.key()).then(Commands.argument("slot", IntegerArgumentType.integer(1, 3)).executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException();
-                    if (!Progress.select(p,e)) { say(p, "Consume the " + e.title + " heart first."); return 0; }
-                    ABILITIES.move(p, IntegerArgumentType.getInteger(ctx, "slot") - 1); say(p, ABILITIES.cast(p)); return 1;
-                })));
-                mastery.then(Commands.literal(e.key()).then(Commands.argument("tier", IntegerArgumentType.integer(1, 3)).executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException();
-                    if (!Progress.unlocked(p,e)) { say(p, "Consume this heart first."); return 0; }
-                    Mastery.grant(p, e, IntegerArgumentType.getInteger(ctx, "tier")); say(p, e.title + " testing mastery set to " + Mastery.tier(p,e)); return 1;
-                })));
-            }
-            root.then(use); root.then(mastery);
-            root.then(Commands.literal("focus").executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException();
-                if (Progress.selected(p) == null) { say(p, "Unlock an element first."); return 0; }
-                for (int i = 0; i < p.getInventory().getContainerSize(); i++)
-                    if (Relics.kind(p.getInventory().getItem(i)).equals("focus")) { say(p, "You already carry a focus."); return 0; }
-                for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
-                    ItemStack item = p.getInventory().getItem(i);
-                    if (item.is(net.minecraft.world.item.Items.STICK) && Relics.kind(item).isEmpty()) {
-                        item.shrink(1); Progress.give(p, Relics.focus()); return 1;
-                    }
-                }
-                say(p, "Carry one plain stick to replace your focus."); return 0;
-            }));
-            root.then(Commands.literal("guardpost").executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException(); Villager v = nearestOwned(p);
-                if (v == null) { say(p, "Stand within six blocks of one of your guardians."); return 0; }
-                GUARDIANS.post(v, p.blockPosition()); say(p, "Nearest guardian's post set to your position."); return 1;
-            }));
-            root.then(Commands.literal("release").executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException(); Villager v = nearestOwned(p);
-                if (v == null) return 0; GUARDIANS.release(p, v); say(p, "Guardian released; vanilla villager routines continue."); return 1;
-            }));
-            var test = Commands.literal("testcreeper").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
-            var hearts = Commands.literal("testheart").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER));
-            for (Element e : Element.values()) {
-                test.then(Commands.literal(e.key()).executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException(); ServerLevel level = (ServerLevel)p.level();
-                    Creeper c = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND); if (c == null) return 0;
-                    c.snapTo(p.getX() + 5, p.getY(), p.getZ()); CREEPERS.assign(c, e);
-                    if (!level.noCollision(c, c.getBoundingBox()) || !level.addFreshEntity(c)) { CREEPERS.unload(c); say(p, "No clear spawn space five blocks east."); return 0; }
-                    say(p, e.title + " test creeper spawned five blocks east. Kill it before it explodes to collect its heart."); return 1;
-                }));
-                hearts.then(Commands.literal(e.key()).executes(ctx -> { Progress.give(ctx.getSource().getPlayerOrException(), Relics.heart(e)); return 1; }));
-            }
-            root.then(Commands.literal("testfruit").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .executes(ctx -> { Progress.give(ctx.getSource().getPlayerOrException(),Relics.fruit()); return 1; }));
-            root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
-                    ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p))return 0;
-                    Rubber.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,Rubber.status(p));return 1;
-                })));
-            root.then(Commands.literal("fruit").executes(ctx -> {
-                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p))return 0;
-                p.addTag("cb_mode_fruit");say(p,Rubber.status(p));return 1;
-            }));
-            test.then(Commands.literal("rubber").executes(ctx -> {
-                ServerPlayer p=ctx.getSource().getPlayerOrException();ServerLevel level=(ServerLevel)p.level();
-                Creeper c=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);if(c==null)return 0;
-                c.snapTo(p.getX()+5,p.getY(),p.getZ());FruitCreepers.assign(c);
-                if(!level.noCollision(c,c.getBoundingBox())||!level.addFreshEntity(c)){FruitCreepers.unload(c);return 0;}return 1;
-            }));
-            root.then(test); root.then(hearts); dispatcher.register(root);
-        });
+        Gson gson = new GsonBuilder().setPrettyPrinting().create…8226 tokens truncated…uals("cb_mode_fruit")||tag.startsWith("cb_rubber_"))p.removeTag(tag);
     }
-    private static Villager nearestOwned(Player p) {
-        return p.level().getEntitiesOfClass(Villager.class, p.getBoundingBox().inflate(6)).stream()
-            .filter(v -> v.isAlive() && Guardians.owns(p, v) && p.hasLineOfSight(v))
-            .min(Comparator.comparingDouble(p::distanceToSqr)).orElse(null);
+    private static void resetDoorProgress(Player p){
+        for(String tag:Set.copyOf(p.entityTags()))if(tag.equals("cb_fruit_door")||tag.startsWith("cb_door_")||tag.equals("cb_mode_fruit"))p.removeTag(tag);
     }
-    private static void chat(Player p,String message){p.sendSystemMessage(Component.literal(message));}
-    public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
+    public static void releaseOnDeath(Player p){
+        DoorSpace.forget(p);DoorFruit.forget(p);
+        if(ownsDoor(p))save(rubberOwner,null);
+        resetDoorProgress(p);
+        Rubber.forget(p);
+        if(owns(p))save(null);
+        resetFruitProgress(p);
+        WaterRules.forget(p);
+    }
+    public static void clear(){rubberOwner=null;doorOwner=null;path=null;}
 }
-
-
 

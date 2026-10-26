@@ -12,3 +12,4 @@ public abstract class PunchRenderStateMixin implements PunchVisualState {
     public PunchRenderer.SkinData creeperborn$punch(){return creeperborn$punch;}
     public void creeperborn$punch(PunchRenderer.SkinData data){creeperborn$punch=data;}
 }
+

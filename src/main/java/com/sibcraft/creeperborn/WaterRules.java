@@ -17,11 +17,11 @@ public final class WaterRules {
     private static int clientFlags;
     private static final Map<UUID,Integer> sent=new HashMap<>();
     private WaterRules(){}
-    public static void clientState(UUID id,int flags){clientPlayer=id;clientFlags=flags&3;}
+    public static void clientState(UUID id,int flags){clientPlayer=id;clientFlags=flags&7;}
     public static void clearClient(){clientPlayer=null;clientFlags=0;}
     public static int flags(Player p){
         if(!(p.level() instanceof ServerLevel))return p.getUUID().equals(clientPlayer)?clientFlags:0;
-        return (Rubber.unlocked(p)?1:0)|(Mastery.harmony(p)?2:0);
+        return ((Rubber.unlocked(p)||DoorFruit.unlocked(p))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
     }
     public static boolean fruitOwner(Player p){return (flags(p)&1)!=0;}
     public static boolean mastered(Player p){return (flags(p)&2)!=0;}
@@ -63,4 +63,5 @@ public final class WaterRules {
         if(p instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(p));
     }
 }
+
 

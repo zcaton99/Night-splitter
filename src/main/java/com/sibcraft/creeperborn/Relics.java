@@ -15,6 +15,10 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME, Component.literal(element.title + " Creeper Heart — right-click to consume"));
         return item;
     }
+    public static ItemStack doorFruit(){
+        ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:door");
+        item.set(DataComponents.CUSTOM_NAME,Component.literal("Door-Door Fruit — right-click to consume"));return item;
+    }
     public static ItemStack fruit() {
         ItemStack item = new ItemStack(Items.CHORUS_FRUIT); mark(item,"fruit:rubber");
         item.set(DataComponents.CUSTOM_NAME, Component.literal("Rubber Fruit — right-click to consume")); return item;
@@ -40,4 +44,5 @@ public final class Relics {
         return data == null ? "" : data.copyTag().getString("creeperborn").orElse("");
     }
 }
+
 

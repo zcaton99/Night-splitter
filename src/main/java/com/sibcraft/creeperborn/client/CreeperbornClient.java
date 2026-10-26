@@ -29,7 +29,7 @@ public final class CreeperbornClient implements ClientModInitializer {
         KeyMapping toggle=key("toggle",InputConstants.KEY_B),cycle=key("cycle",InputConstants.KEY_R),fruits=key("fruit",InputConstants.KEY_G);
         KeyMapping[] moves={key("move1",InputConstants.KEY_Z),key("move2",InputConstants.KEY_X),key("move3",InputConstants.KEY_C)};
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
-            if(payload.action()==3){fruit=payload.value()==4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
+            if(payload.action()==3){fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
         });
         ClientPlayNetworking.registerGlobalReceiver(WaterStatePayload.TYPE,(payload,context)->{
             var player=net.minecraft.client.Minecraft.getInstance().player;
@@ -96,4 +96,5 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
     }
 }
+
 

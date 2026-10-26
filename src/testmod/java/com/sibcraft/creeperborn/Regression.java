@@ -151,6 +151,82 @@ public final class Regression implements ModInitializer {
         check(Element.EARTH.moves[0].equals("Boulder Smash"),"Earth first move uses Boulder Smash display name");
     }
 
+
+    private net.minecraft.server.level.ServerPlayer doorPlayer(ServerLevel level,String name){
+        var p=new net.minecraft.server.level.ServerPlayer(server,level,new GameProfile(UUID.randomUUID(),name),net.minecraft.server.level.ClientInformation.createDefault()){
+            private GameType mode=GameType.SURVIVAL;
+            @Override public GameType gameMode(){return mode==null?GameType.SURVIVAL:mode;}
+            @Override public boolean setGameMode(GameType value){mode=value;getAbilities().mayfly=value==GameType.SPECTATOR;getAbilities().flying=value==GameType.SPECTATOR;return true;}
+            @Override public void onUpdateAbilities(){}
+            @Override public void sendOverlayMessage(Component message){}
+            @Override public void teleportTo(double x,double yy,double z){snapTo(x,yy,z);}
+            @Override public boolean teleportTo(ServerLevel destination,double x,double yy,double z,java.util.Set<net.minecraft.world.entity.Relative> relative,float yaw,float pitch,boolean resetCamera){
+                if(destination!=level)throw new AssertionError("Unexpected test dimension");snapTo(x,yy,z);setYRot(yaw);setXRot(pitch);return true;
+            }
+        };
+        p.snapTo(-10.5,y+20,22.5);p.setHealth(20);p.setYRot(0);p.setXRot(0);return p;
+    }
+    private void checkDoorFruit(ServerLevel level){
+        DoorSpace.clear();DoorFruit.clear();
+        for(int x=-14;x<=-2;x++)for(int z=18;z<=35;z++){
+            level.setBlockAndUpdate(new BlockPos(x,(int)y+19,z),Blocks.STONE.defaultBlockState());
+            for(int dy=20;dy<=23;dy++)level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),Blocks.AIR.defaultBlockState());
+        }
+        var owner=doorPlayer(level,"DoorOwner");var friend=doorPlayer(level,"DoorFriend");friend.snapTo(-9.5,y+20,22.5);
+        check(DoorFruit.consume(owner,Relics.doorFruit()),"Door fruit claims and consumes");
+        check(DoorFruit.selected(owner)&&CombatNetwork.selection(owner)==5,"G selection distinguishes Door from Rubber");
+        check(!Rubber.consume(owner,Relics.fruit()),"Door owner cannot consume a second fruit");
+        check(!DoorFruit.consume(friend,Relics.doorFruit()),"A fruit has only one living owner per world");
+        check((WaterRules.flags(owner)&1)!=0&&WaterRules.vulnerable(owner),"Door fruit carries the existing water curse");
+        FruitClaims.load(server);check(FruitClaims.ownsDoor(owner),"Door ownership survives world claim reload");
+        check(DoorFruit.tier(owner)==1&&DoorFruit.cast(owner,1).contains("locked"),"Door progression starts at Passage only");
+        DoorFruit.grant(owner,2);check(DoorFruit.tier(owner)==2&&DoorFruit.seconds(owner)==300,"Door tier two uses five-minute progression");
+        DoorFruit.grant(owner,3);
+        check(DoorSpace.duration(0,false)==400&&DoorSpace.duration(1,false)==120&&DoorSpace.duration(2,false)==600,"Door travel timers match twenty, six and thirty seconds");
+        check(DoorSpace.range(0,true)==96&&DoorSpace.range(2,true)==144&&DoorSpace.duration(2,true)==900,"All-four mastery extends time and range by fifty percent");
+        check(DoorSpace.admission(false)==100&&DoorSpace.admission(true)==160,"Shared entrance window grows from five to eight seconds");
+        check(DoorFruit.cooldown(0)==200&&DoorFruit.cooldown(1)==600&&DoorFruit.cooldown(2)==900,"Door cooldowns are ten, thirty and forty-five seconds");
+        var start=owner.position();check(DoorSpace.safe(level,owner,start),"Clear floor is valid Door exit");
+        level.setBlockAndUpdate(owner.blockPosition().above(),Blocks.STONE.defaultBlockState());
+        check(!DoorSpace.safe(level,owner,start),"Solid head space rejects exit");level.setBlockAndUpdate(owner.blockPosition().above(),Blocks.AIR.defaultBlockState());
+        check(!DoorSpace.safe(level,owner,start.add(0,5,0)),"Unsupported midair exit rejected");
+        check(DoorFruit.cast(owner,1).startsWith("Rescue Door!")&&DoorSpace.active(owner)&&owner.isSpectator(),"Rescue immediately enters bounded spectator-backed travel");
+        check(owner.entityTags().stream().anyMatch(t->t.startsWith("cb_door_return_")),"Travel saves a persistent recovery snapshot");
+        check(DoorFruit.ready(owner,1)==0,"Cooldown does not begin while passage is active");
+        owner.snapTo(15,y+20,22.5);DoorSpace.tick(server);
+        check(owner.position().distanceTo(start)<.01,"Travel beyond Rescue range returns to last in-range point");
+        owner.snapTo(-10.5,y+20,26.5);
+        check(DoorSpace.exit(owner).startsWith("Exit opened")&&!DoorSpace.active(owner)&&owner.gameMode()==GameType.SURVIVAL,"Valid exit restores Survival");
+        check(DoorFruit.ready(owner,1)==level.getGameTime()+600,"Rescue cooldown starts when passage ends");
+        check(owner.entityTags().stream().noneMatch(t->t.startsWith("cb_door_return_")),"Exit removes recovery marker");
+        check(DoorFruit.cast(owner,1).contains("recovering"),"Immediate rescue reuse is blocked");
+        owner.snapTo(-10.5,y+20,22.5);
+        check(DoorFruit.cast(owner,0).startsWith("Door opened"),"Normal Passage creates a walk-through entrance");
+        check(!DoorSpace.active(owner),"Normal Passage does not enter before walking through");
+        owner.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(owner),"Walking into entrance starts travel");
+        owner.snapTo(12,y+20,24.2);DoorSpace.tick(server);
+        // Normal range is 64, so this location remains in range; unloaded-world bounds may restore the last position.
+        DoorSpace.forget(owner);check(!DoorSpace.active(owner)&&!DoorSpace.ownsSession(owner)&&owner.gameMode()==GameType.SURVIVAL,"Disconnect cleanup restores owner state");
+        owner.snapTo(-10.5,y+20,22.5);
+        check(DoorFruit.cast(owner,2).startsWith("Door opened"),"Shared Passage creates entrance");
+        owner.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(owner),"Shared owner enters first");
+        friend.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(friend)&&DoorSpace.active(friend),"Friend voluntarily joins shared entrance");
+        owner.snapTo(-10.5,y+20,28.5);check(DoorSpace.exit(owner).startsWith("Exit opened"),"Owner places group exit");
+        check(!DoorSpace.active(owner)&&DoorSpace.active(friend),"Passenger may independently reach the exit");
+        friend.snapTo(-10.5,y+20,28.5);DoorSpace.tick(server);
+        check(!DoorSpace.active(friend)&&friend.gameMode()==GameType.SURVIVAL,"Passenger walking through exit returns to Survival");
+        check(!DoorSpace.ownsSession(owner)&&DoorFruit.ready(owner,2)>level.getGameTime(),"Shared cooldown begins after final passenger exits");
+        // Simulate a server restart: snapshot recovery must work without the in-memory session.
+        ((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(level.getGameTime()+601);owner.snapTo(-10.5,y+20,22.5);
+        DoorFruit.cast(owner,1);check(DoorSpace.active(owner),"Recovery fixture enters rescue");
+        DoorSpace.recover(owner);DoorSpace.forget(owner);
+        check(owner.gameMode()==GameType.SURVIVAL&&!DoorSpace.active(owner),"Recovery snapshot restores Survival and safe return");
+        FruitClaims.releaseOnDeath(owner);
+        check(FruitClaims.doorAvailable()&&!DoorFruit.unlocked(owner),"Death releases Door and clears only its fruit progression");
+        check(Rubber.consume(friend,Relics.fruit())&&!DoorFruit.consume(friend,Relics.doorFruit()),"Rubber owner also cannot eat Door");
+        FruitClaims.releaseOnDeath(friend);DoorSpace.clear();DoorFruit.clear();
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -162,6 +238,7 @@ public final class Regression implements ModInitializer {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
+        checkDoorFruit(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
@@ -840,6 +917,7 @@ public final class Regression implements ModInitializer {
     }
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 }
+
 
 
 

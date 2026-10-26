@@ -19,7 +19,7 @@ public final class CombatNetwork {
     }
     public static void clear() { limits.clear();sentSelection.clear(); }
     public static int selection(Player p){
-        Element e=Progress.selected(p);return Rubber.selected(p)?4:e==null?-1:e.ordinal();
+        Element e=Progress.selected(p);return DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
     }
     public static void forget(Player p){limits.remove(p.getUUID());sentSelection.remove(p.getUUID());}
     public static void tick(net.minecraft.server.MinecraftServer server){
@@ -34,6 +34,7 @@ public final class CombatNetwork {
     public static String press(Player p,int packed){
         int move=packed&3;
         if(move>2)return "";
+        if(DoorSpace.active(p)||DoorFruit.selected(p))return DoorFruit.cast(p,move);
         if(Rubber.selected(p)){Rubber.press(p,move,packed>>>2);return "";}
         if(Progress.selected(p)==null)return "Select an unlocked element with R or Rubber with G.";
         Creeperborn.ABILITIES.move(p,move);return Creeperborn.ABILITIES.cast(p);
@@ -45,27 +46,32 @@ public final class CombatNetwork {
         PayloadTypeRegistry.clientboundPlay().register(WaterStatePayload.TYPE,WaterStatePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE, (payload, context) -> {
             Player p = context.player();
-            if (!payload.validRequest() || !p.isAlive() || p.isSpectator() || !allow(p)) return;
+            if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p) || !allow(p)) return;
+            if(DoorSpace.active(p)){
+                if(payload.action()==5){String result=DoorSpace.exit(p);Creeperborn.say(p,result);}
+                return;
+            }
             Element selected = Progress.selected(p);
             if (payload.action() == 1) {
                 selected = Progress.cycle(p, payload.value());
                 Creeperborn.say(p, selected == null ? "Consume an elemental heart first."
                     : selected.title + " — Z/X/C: " + String.join(" / ", selected.moves));
             }
-            if (payload.action() == 2 && !Rubber.selected(p)) {
+            if (payload.action() == 2 && !Rubber.selected(p)&&!DoorFruit.selected(p)) {
                 if (selected == null) Creeperborn.say(p, "Consume an elemental heart first.");
                 else { Creeperborn.ABILITIES.move(p, payload.value()); Creeperborn.say(p, Creeperborn.ABILITIES.cast(p)); }
             }
             if (payload.action() == 4) {
                 Rubber.cancelInput(p);
                 if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Directional dodge / hold Grapple | C: Gear 5 / hold Guard"); }
-                else Creeperborn.say(p,"Consume a Rubber Fruit first.");
+                else if(DoorFruit.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Door-Door — Z: Passage | X: Rescue | C: Shared Passage");}
+                else Creeperborn.say(p,"Consume a Devil Fruit first.");
             }
             if(payload.action()==5){String result=press(p,payload.value());if(!result.isEmpty())Creeperborn.say(p,result);}
             if(payload.action()==6)Rubber.release(p,payload.value());
             if(payload.action()==7)Rubber.heartbeat(p);
             if(payload.action()==8)Rubber.cancelInput(p);
-            ServerPlayNetworking.send(context.player(), new ControlPayload(3, Rubber.selected(p) ? 4 : selected == null ? -1 : selected.ordinal()));
+            ServerPlayNetworking.send(context.player(), new ControlPayload(3, selection(p)));
         });
         ServerPlayNetworking.registerGlobalReceiver(CastPayload.TYPE, (payload, context) -> {
             Player p = context.player();
@@ -76,5 +82,6 @@ public final class CombatNetwork {
         });
     }
 }
+
 
 
