@@ -82,7 +82,11 @@ public final class Regression implements ModInitializer {
         Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 0); String bolt = Creeperborn.ABILITIES.cast(p);
         check(z.getHealth() < 20, "Earth Bolt hits hostile in line of sight: result=" + bolt
             + ", health=" + z.getHealth() + ", eye=" + p.getEyePosition() + ", look=" + p.getLookAngle()
-            + ", target=" + z.getBoundingBox() + ", visible=" + p.hasLineOfSight(z) + ", alive=" + z.isAlive());
+            + ", target=" + z.getBoundingBox() + ", visible=" + p.hasLineOfSight(z) + ", alive=" + z.isAlive()
+            + ", enemy=" + (z instanceof net.minecraft.world.entity.monster.Enemy)
+            + ", queried=" + level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, p.getBoundingBox().inflate(17)).contains(z)
+            + ", intersection=" + z.getBoundingBox().inflate(.35).clip(p.getEyePosition(), p.getEyePosition().add(p.getLookAngle().scale(16)))
+            + ", directDamage=" + z.hurtServer(level, p.damageSources().playerAttack(p), 6));
         Zombie blocked = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
         blocked.snapTo(.5, y, 9.5); blocked.setNoAi(true); level.addFreshEntity(blocked);
         z.discard();
