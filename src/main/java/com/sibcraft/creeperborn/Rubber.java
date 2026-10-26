@@ -251,6 +251,10 @@ public final class Rubber {
     public static boolean heat(DamageSource source) {
         return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) && source.getDirectEntity()!=null && source.getDirectEntity().isOnFire();
     }
+    public static boolean masteryImmune(Player p,DamageSource source){
+        return Mastery.harmony(p)&&(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL)
+            ||source.typeHolder().equals(p.damageSources().drown().typeHolder()));
+    }
     public static float damage(Player p, DamageSource source, float amount) {
         if(Mastery.harmony(p)&&(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL)))return 0;
         if(WaterRules.mastered(p)&&source.typeHolder().equals(p.damageSources().drown().typeHolder()))return 0;

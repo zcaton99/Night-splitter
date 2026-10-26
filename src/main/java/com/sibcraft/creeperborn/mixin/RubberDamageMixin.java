@@ -7,8 +7,15 @@ import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingEntity.class)
 public abstract class RubberDamageMixin {
+    @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
+    private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
+        // Zero damage alone still enters vanilla's hurt sound, animation and knockback path.
+        if((Object)this instanceof Player p&&Rubber.masteryImmune(p,source))cir.setReturnValue(false);
+    }
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         return (Object)this instanceof Player p ? Rubber.damage(p,source,amount) : amount;

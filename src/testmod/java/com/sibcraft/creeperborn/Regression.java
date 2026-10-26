@@ -124,6 +124,33 @@ public final class Regression implements ModInitializer {
         rocks.clear();attacker.discard();
     }
 
+
+    private void checkQuietMastery(ServerLevel level){
+        int[] sounds={0};
+        Player p=new Player(level,new GameProfile(UUID.randomUUID(),"QuietMaster")){
+            @Override public GameType gameMode(){return GameType.SURVIVAL;}
+            @Override protected void playHurtSound(net.minecraft.world.damagesource.DamageSource source){sounds[0]++;}
+        };
+        p.snapTo(.5,y+10,.5);p.setHealth(20);
+        for(Element e:Element.values())Mastery.grant(p,e,3);
+        for(var source:new net.minecraft.world.damagesource.DamageSource[]{
+            p.damageSources().lava(),p.damageSources().onFire(),p.damageSources().fall(),p.damageSources().drown()
+        }){
+            p.damageCooldownTime=0;p.hurtTime=0;p.setDeltaMovement(.1,0,.2);
+            var before=p.getDeltaMovement();
+            check(!p.hurtServer(level,source,4),"Mastered environmental damage is rejected as an actual hit");
+            check(p.getHealth()==20&&p.hurtTime==0&&sounds[0]==0,"Immune hit has no health loss, flinch or hurt sound");
+            check(p.getDeltaMovement().equals(before),"Immune hit adds no knockback");
+        }
+        p.damageCooldownTime=0;
+        check(p.hurtServer(level,p.damageSources().generic(),4)&&p.getHealth()<20&&sounds[0]>0,
+            "Ordinary nonimmune damage still hurts and makes sound");
+        Mastery.grant(p,Element.AIR,2);p.damageCooldownTime=0;int previous=sounds[0];
+        check(p.hurtServer(level,p.damageSources().fall(),4)&&sounds[0]>previous,
+            "Losing mastery restores normal hurt feedback for fall damage");
+        check(Element.EARTH.moves[0].equals("Boulder Smash"),"Earth first move uses Boulder Smash display name");
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -136,6 +163,7 @@ public final class Regression implements ModInitializer {
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
         checkVortex(level);
+        checkQuietMastery(level);
         checkGuardMaterials(level);
         checkAirSteps(level);
         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 12; z++) {
