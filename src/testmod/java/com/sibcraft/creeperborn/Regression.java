@@ -278,8 +278,9 @@ public final class Regression implements ModInitializer {
             Rubber.press(rubberLive,1);
         }
         if(rubberTicks==16) {
+            check(rubberLive.getDeltaMovement().z>0,"Held grab pulls caster toward a nonplayer target");
             Rubber.release(rubberLive,1);
-            check(rubberTarget.getDeltaMovement().z<0,"Held grab pulls hostile toward player");
+            check(rubberLive.getDeltaMovement().equals(net.minecraft.world.phys.Vec3.ZERO),"Releasing X detaches grapple and stops its imposed motion");
             Rubber.press(rubberLive,2);
         }
         if(rubberTicks==24) {

@@ -24,7 +24,7 @@ public final class Rubber {
     private static final class State {
         long gearUntil, gearReady, punchReady, dodgeReady, grabReady, credit = -10000, recent = -10000;
         long press = -1, guardUntil; int held = -1, direction; ServerLevel level;
-        boolean guarding;
+        boolean guarding, grabAttempted; LivingEntity grabTarget; Vec3 anchor;
     }
     private static State state(Player p) { return states.computeIfAbsent(p.getUUID(), id -> new State()); }
     private static long now(Player p) { return p.level().getGameTime(); }
@@ -48,7 +48,16 @@ public final class Rubber {
         s.credit = s.recent = now; Mastery.set(p,"cb_rubber_uses_",uses(p)+1);
     }
     public static boolean gear(Player p) { State s = states.get(p.getUUID()); return s != null && p.isAlive() && s.gearUntil > now(p); }
-    public static void cancelInput(Player p) { State s=state(p); s.held=-1; s.press=-1; s.guarding=false; }
+    public static void cancelInput(Player p) {
+        State s=state(p);
+        if(s.grabTarget!=null||s.anchor!=null) {
+            LivingEntity moved=s.grabTarget instanceof Player ? s.grabTarget : p;
+            moved.setDeltaMovement(Vec3.ZERO);
+            if(moved instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(sp));
+            s.grabReady=now(p)+80;
+        }
+        s.grabTarget=null;s.anchor=null;s.grabAttempted=false;s.held=-1;s.press=-1;s.guarding=false;
+    }
     public static void forget(Player p) { State s=states.get(p.getUUID()); if(s!=null)end(p,s); states.remove(p.getUUID()); positions.remove(p.getUUID()); }
     public static void clear() { states.clear(); positions.clear(); }
     public static String status(Player p) {
@@ -85,14 +94,7 @@ public final class Rubber {
             return charged ? "Charged Stretch Punch!" : "Stretch Punch!";
         }
         if(move==1) {
-            if(charged) {
-                if(now<s.grabReady)return "Stretch Grab cooling down.";
-                LivingEntity target=target(p,14); if(target==null)return "Stretch Grab missed.";
-                s.grabReady=now+80;
-                Vec3 pull=p.position().subtract(target.position());
-                target.setDeltaMovement(pull.normalize().scale(Math.min(1.4,pull.length()/3)).add(0,.2,0));
-                credit(p); Abilities.particles(level,Element.AIR,target.getEyePosition(),12); return "Stretch Grab!";
-            }
+            if(charged)return ""; // Grapple runs while held; release only detaches.
             if(now<s.dodgeReady)return "Dodge cooling down.";s.dodgeReady=now+16;
             impulse(p,dodgeMotion(p.getLookAngle(),s.direction)); return "Rubber dodge!";
         }
@@ -103,6 +105,43 @@ public final class Rubber {
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to enter Gear 5.";
         s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
         return "Gear 5! Food fuels it, up to 10 minutes.";
+    }
+    public static boolean canGrabPlayer(Player p,Player target) {
+        return target!=p && target.isAlive() && !target.isCreative() && !target.isSpectator()
+            && p.level() instanceof ServerLevel level && level.isPvpAllowed() && p.canHarmPlayer(target);
+    }
+    private static void grapple(Player p,State s) {
+        if(!s.grabAttempted) {
+            s.grabAttempted=true;
+            if(now(p)<s.grabReady){Creeperborn.say(p,"Stretch Grab cooling down.");return;}
+            Vec3 from=p.getEyePosition(),end=from.add(p.getLookAngle().scale(14));
+            var block=p.level().clip(new ClipContext(from,end,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
+            if(block.getType()!=HitResult.Type.MISS)end=block.getLocation();
+            double nearest=from.distanceTo(end);
+            for(LivingEntity t:p.level().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(14))) {
+                if(t==p||!t.isAlive()||t.isSpectator()||!p.hasLineOfSight(t)||t instanceof Player other&&!canGrabPlayer(p,other))continue;
+                var intersection=t.getBoundingBox().inflate(.4).clip(from,end);
+                if(intersection.isPresent()&&from.distanceTo(intersection.get())<nearest){s.grabTarget=t;nearest=from.distanceTo(intersection.get());}
+            }
+            if(s.grabTarget==null&&block.getType()!=HitResult.Type.MISS)s.anchor=block.getLocation();
+            if(s.grabTarget!=null||s.anchor!=null){credit(p);Creeperborn.say(p,s.grabTarget instanceof Player?"Stretch Grab — pulling player!":"Stretch Grab — pulling you! Release X to let go.");}
+            else Creeperborn.say(p,"Stretch Grab missed.");
+        }
+        if(s.grabTarget==null&&s.anchor==null)return;
+        if(s.grabTarget!=null&&(!s.grabTarget.isAlive()||s.grabTarget.level()!=p.level()
+            ||!p.hasLineOfSight(s.grabTarget)||s.grabTarget instanceof Player other&&!canGrabPlayer(p,other))){cancelInput(p);return;}
+        Vec3 destination=s.grabTarget!=null?s.grabTarget.getEyePosition():s.anchor;
+        if(p.getEyePosition().distanceTo(destination)>20){cancelInput(p);return;}
+        if(s.anchor!=null) {
+            var block=p.level().clip(new ClipContext(p.getEyePosition(),destination,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
+            if(block.getType()!=HitResult.Type.MISS&&block.getLocation().distanceTo(destination)>.6){cancelInput(p);return;}
+        }
+        LivingEntity moved=s.grabTarget instanceof Player?s.grabTarget:p;
+        Vec3 delta=s.grabTarget instanceof Player?p.getEyePosition().subtract(s.grabTarget.getEyePosition()):destination.subtract(p.getEyePosition());
+        if(delta.length()<2){moved.setDeltaMovement(Vec3.ZERO);return;}
+        Vec3 motion=delta.normalize().scale(Math.min(.75,(delta.length()-2)*.25));
+        if(moved instanceof Player player)impulse(player,motion);else moved.setDeltaMovement(motion);
+        Abilities.particles((ServerLevel)p.level(),Element.AIR,p.getEyePosition().add(delta.scale(.5)),2);
     }
     public static Vec3 dodgeMotion(Vec3 look,int keys) {
         Vec3 forward=new Vec3(look.x,0,look.z).normalize();
@@ -142,6 +181,7 @@ public final class Rubber {
                 end(p,s);cancelInput(p);return;
             }
             if(s.held>=0 && (!selected(p)||now>s.guardUntil))cancelInput(p);
+            if(s.held==1 && now-s.press>=7 && tier(p)>=2)grapple(p,s);
             s.guarding=s.held==2 && now-s.press>=7 && !gear(p) && tier(p)>=3 && p.getFoodData().getFoodLevel()>6;
             if(s.gearUntil>0 && (now>=s.gearUntil || p.getFoodData().getFoodLevel()<=6))end(p,s);
             if(gear(p)) {
