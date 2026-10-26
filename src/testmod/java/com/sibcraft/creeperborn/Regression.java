@@ -475,6 +475,8 @@ public final class Regression implements ModInitializer {
             for(Zombie target:new Zombie[]{slabNormal,slabMaster}){
                 var before=target.position();target.setDeltaMovement(.5,.4,0);target.travel(new net.minecraft.world.phys.Vec3(0,0,1));
                 check(target.position().equals(before)&&target.getDeltaMovement().lengthSqr()==0,"Root blocks native travel and jump velocity");
+                target.move(net.minecraft.world.entity.MoverType.SELF,new net.minecraft.world.phys.Vec3(.5,0,0));
+                check(target.position().equals(before),"Root also blocks direct custom mob movement");
             }
         }
         if(rubberTicks==24) {

@@ -30,7 +30,7 @@ public final class Shackles {
         double radius=Math.max(.55,b.target().getBbWidth()/2+.2);
         for(int i=0;i<4;i++){
             double angle=i*Math.PI/2;
-            b.slabs().get(i).snapTo(b.target().getX()+Math.cos(angle)*radius,b.target().getY()+.18,b.target().getZ()+Math.sin(angle)*radius);
+            b.slabs().get(i).snapTo(b.target().getX()+Math.cos(angle)*radius,b.target().getY()+.5,b.target().getZ()+Math.sin(angle)*radius);
         }
     }
     public static void tick(){
