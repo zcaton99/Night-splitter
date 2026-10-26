@@ -31,6 +31,7 @@ public final class Regression implements ModInitializer {
     private Player rubberLive;
     private Zombie rubberTarget;
     private int rubberTicks;
+    private Zombie slabNormal,slabMaster;
     @Override public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register(s -> {
             server = s; Creeperborn.config().naturalCreepers = false;
@@ -188,13 +189,13 @@ public final class Regression implements ModInitializer {
             Creeperborn.ABILITIES.move(caster, slot);
             check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
             if (e == Element.EARTH && slot == 0) for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
-            if (slot == 0 || (slot == 2 && (e == Element.EARTH || e == Element.AIR)) || (slot == 1 && e == Element.FIRE))
+            if (slot == 0 || (slot == 2 && e == Element.AIR) || (slot == 1 && e == Element.FIRE))
                 check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);
             if (slot == 1 && e == Element.WATER)
                 check(caster.hasEffect(MobEffects.RESISTANCE), "Defensive move grants resistance");
             if (slot == 1 && e == Element.EARTH) check(Creeperborn.ABILITIES.rocks.guarded(caster), "Frontal rock guard created");
-            if (slot == 2 && e == Element.EARTH) check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Quake requests ten-block push");
-            if (slot == 1 && e == Element.WATER) check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard requests five-block push");
+            if (slot == 2 && e == Element.EARTH) check(Shackles.rooted(target)&&Shackles.remaining(target)==80, "Slab Shackles roots hostile for four seconds");
+            if (slot == 1 && e == Element.WATER) check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard requests ten-block push");
             if (slot == 2 && e == Element.WATER) check(caster.getHealth() == 16, "Mending Flow heals four health");
             if (slot == 2 && e == Element.FIRE) check(caster.hasEffect(MobEffects.FIRE_RESISTANCE), "Heat Shield protects");
             if (slot == 1 && e == Element.AIR) check(caster.getDeltaMovement().y > .6, "Air Step has upward impulse");
@@ -213,13 +214,13 @@ public final class Regression implements ModInitializer {
         check(ElementalCreepers.element(natural) == null, "Already examined creeper cannot reroll");
         Creeper split = EntityTypes.CREEPER.create(level, EntitySpawnReason.COMMAND); split.addTag("ns_creeper");
         Creeperborn.CREEPERS.track(split); check(ElementalCreepers.element(split) == null, "Night Splitters creepers excluded");
-        for (Element e : new Element[]{Element.EARTH, Element.WATER}) {
+        for (Element e : new Element[]{Element.WATER}) {
             Creeperborn.ABILITIES.clear(); Player caster = player(level); Mastery.grant(caster,e,3);
             caster.addItem(new ItemStack(Items.WATER_BUCKET)); Progress.select(caster, e);
             Zombie target = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
             target.snapTo(.5, y, 2.5); target.setNoAi(true); level.addFreshEntity(target);
             Creeperborn.ABILITIES.move(caster, e == Element.EARTH ? 2 : 1); Creeperborn.ABILITIES.cast(caster);
-            double start = target.getZ(), expected = e == Element.EARTH ? 10 : 5;
+            double start = target.getZ(), expected = 10;
             for (int tick = 0; tick < 30; tick++) { target.travel(net.minecraft.world.phys.Vec3.ZERO); Creeperborn.ABILITIES.tick(); }
             double travelled = target.getZ() - start;
             check(travelled >= expected - 1 && travelled <= expected + 1,
@@ -242,7 +243,7 @@ public final class Regression implements ModInitializer {
         }
         Creeperborn.ABILITIES.move(tidal, 1); Creeperborn.ABILITIES.cast(tidal);
         for (Zombie target : surrounding) {
-            check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides: pos="
+            check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard covers front, rear and both sides: pos="
                 + target.position() + ", remaining=" + Creeperborn.ABILITIES.pushRemaining(target) + ", visible=" + tidal.hasLineOfSight(target)); target.discard();
         }
         Mastery.grant(tidal,Element.EARTH,3); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
@@ -445,6 +446,16 @@ public final class Regression implements ModInitializer {
         rubberTarget.snapTo(-8,y,-3);rubberTarget.setNoAi(true);rubberTarget.setNoGravity(true);
         check(level.addFreshEntity(rubberTarget),"Rubber live hostile fixture added");
         Rubber.press(rubberLive,0);
+        for(boolean mastered:new boolean[]{false,true}){
+            Player caster=player(level);caster.snapTo(mastered?-8.5:8.5,y+5,6.5);
+            Mastery.grant(caster,Element.EARTH,3);if(mastered)for(Element e:Element.values())Mastery.grant(caster,e,3);
+            Progress.select(caster,Element.EARTH);
+            Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);target.snapTo(mastered?-8.5:8.5,y+5,9.5);
+            target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+            Creeperborn.ABILITIES.move(caster,2);Creeperborn.ABILITIES.cast(caster);
+            check(Shackles.remaining(target)==(mastered?180:80),"Shackles duration follows all-four mastery");
+            if(mastered)slabMaster=target;else slabNormal=target;
+        }
     }
     private boolean runRubberLive() {
         rubberTicks++;Rubber.tickPlayer(rubberLive);
@@ -459,6 +470,12 @@ public final class Regression implements ModInitializer {
             Rubber.release(rubberLive,1);
             check(rubberLive.getDeltaMovement().equals(net.minecraft.world.phys.Vec3.ZERO),"Releasing X detaches grapple and stops its imposed motion");
             Rubber.press(rubberLive,2);
+        }
+        if(rubberTicks==20){
+            for(Zombie target:new Zombie[]{slabNormal,slabMaster}){
+                var before=target.position();target.setDeltaMovement(.5,.4,0);target.travel(new net.minecraft.world.phys.Vec3(0,0,1));
+                check(target.position().equals(before)&&target.getDeltaMovement().lengthSqr()==0,"Root blocks native travel and jump velocity");
+            }
         }
         if(rubberTicks==24) {
             float modified=Rubber.damage(rubberLive,rubberTarget.damageSources().mobAttack(rubberTarget),10);
@@ -494,7 +511,16 @@ public final class Regression implements ModInitializer {
             check(!Rubber.gear(rubberLive)&&rubberLive.getFoodData().getFoodLevel()==6,"Food drain ends Gear at three icons");
             rubberLive.getFoodData().setFoodLevel(20);
             check(Rubber.cast(rubberLive,2,0).contains("recovering"),"Food cannot bypass post-Gear cooldown");
-            rubberTarget.discard();FruitClaims.releaseOnDeath(rubberLive);Rubber.clear();return true;
+            rubberTarget.discard();FruitClaims.releaseOnDeath(rubberLive);Rubber.clear();
+            Shackles.tick();check(!Shackles.rooted(slabNormal)&&Shackles.rooted(slabMaster),"Four-second root releases while mastered root remains");
+            var before=slabNormal.position();slabNormal.setDeltaMovement(.4,0,0);slabNormal.travel(net.minecraft.world.phys.Vec3.ZERO);
+            check(slabNormal.position().distanceToSqr(before)>0,"Native movement resumes after normal root expires");
+        }
+        if(rubberTicks==181){
+            Shackles.tick();check(!Shackles.rooted(slabMaster),"Nine-second mastered root expires");
+            var before=slabMaster.position();slabMaster.setDeltaMovement(.4,0,0);slabMaster.travel(net.minecraft.world.phys.Vec3.ZERO);
+            check(slabMaster.position().distanceToSqr(before)>0,"Mastered target resumes movement");
+            slabNormal.discard();slabMaster.discard();return true;
         }
         return false;
     }

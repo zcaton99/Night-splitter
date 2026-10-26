@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.11
+# Creeperborn — 0.1.0-alpha.12
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
@@ -190,6 +190,16 @@ Rubber Z punch cooldown is **0.5 seconds normally** and **0.3 seconds in Gear 5*
 Active Gear 5 grants vanilla-style flight permission: **double-tap Space** to start/stop flying, Space to rise, Sneak to descend. It grants no Creative inventory, building privilege or invulnerability. Hunger fuel, ten-minute cap, and recovery remain. Gear-granted flight is removed on transformation end, water suppression, death, disconnect or dimension change. Existing flight permission is preserved; Creative/Spectator flight is not revoked. A saved marker cleans up Gear flight on rejoin after an interrupted session. Flight speed remains vanilla.
 
 Test flight in Survival and verify it ends when hunger reaches three icons. Test logout/rejoin and a dimension change, as well as Creative flight remaining available. The native client double-tap gesture needs in-game testing; automated checks cover permission grant and cleanup.
+
+## Slab Shackles and stronger Tidal Guard — alpha.12
+
+Earth C / move 3 is now **Slab Shackles**, replacing Quake. It roots visible hostile mobs within **5 blocks** for **4 seconds**, or **9 seconds when all four elements are mastered**. Four temporary stone-slab displays rise around each target. It deals no direct damage and keeps the previous 8-second cooldown. The root duration is exactly 4/9 seconds, without an additional Harmony duration multiplier. Players, pets and villagers are excluded.
+
+Rooted enemies cannot travel, jump or use ordinary knockback velocity to move. No permanent blocks are placed, AI is not permanently disabled, and existing slab displays are excluded from world saves. Roots/visuals release on expiry, death/removal, caster death, dimension changes or server stop. Piston displacement and independent teleport abilities are not prevented.
+
+Tidal Guard remains a **360-degree, 5-block-radius** pulse, now pushing enemies **up to 10 blocks** at full environmental strength (previously 5). Environmental power still scales push distance; walls/collisions can shorten actual travel. Its resistance and cooldown remain.
+
+Test Earth C on a group, watch the slab visuals, and verify movement resumes after four seconds. Master all four and repeat for nine seconds. Check that Tidal Guard pushes enemies in front, behind and beside you roughly ten blocks in open space at full Water power.
 
 ## Later milestones
 

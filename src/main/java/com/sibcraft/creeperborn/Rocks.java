@@ -38,7 +38,7 @@ public final class Rocks {
         boulders.forEach(b -> b.visual.discard()); boulders.clear();
         guards.values().forEach(g -> g.visuals().forEach(v -> v.discard())); guards.clear();
     }
-    private static Display.BlockDisplay visual(ServerLevel level, Vec3 position, float size) {
+    static Display.BlockDisplay visual(ServerLevel level, Vec3 position, float size) {
         Display.BlockDisplay display = EntityTypes.BLOCK_DISPLAY.create(level, EntitySpawnReason.EVENT);
         if (display == null) throw new IllegalStateException("Block display unavailable");
         display.addTag("cb_temporary_rock");

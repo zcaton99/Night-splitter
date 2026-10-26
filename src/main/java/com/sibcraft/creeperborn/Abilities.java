@@ -29,9 +29,9 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
-    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); }
+    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); }
     public void tick() {
-        rocks.tick();
+        rocks.tick(); Shackles.tick();
         Iterator<Push> iterator = pushes.values().iterator();
         while (iterator.hasNext()) {
             Push push = iterator.next(); LivingEntity t = push.target;
@@ -67,11 +67,16 @@ public final class Abilities {
         else switch (e) {
             case EARTH -> {
                 if (move == 1) rocks.guard(p, (int)Math.round(100 * power * harmony));
-                else pulse(level, p, e, 5, (float)(5 * power), 10 * power);
+                else {
+                    int duration=Mastery.harmony(p)?180:80;
+                    for(LivingEntity target:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(5)))
+                        if(target instanceof Enemy&&target.isAlive()&&target.distanceToSqr(p)<=25&&p.hasLineOfSight(target))
+                            Shackles.bind(p,target,duration);
+                }
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, 0, 5 * power);
+                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, 0, 10 * power);
                 } else {
                     int foodBefore=p.getFoodData().getFoodLevel();
                     float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
