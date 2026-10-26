@@ -86,13 +86,18 @@ public final class Creeperborn implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> {
-            var root = Commands.literal("creeperborn");
+            var root = Commands.literal("creeperborn").executes(ctx -> {
+                ctx.getSource().sendSuccess(() -> Component.literal("Creeperborn: /creeperborn element earth|water|fire|air; /creeperborn move 1|2|3; /creeperborn cast; /creeperborn status. Use your focus to cast; sneak-use to cycle elements."), false);
+                return 1;
+            });
             root.then(Commands.literal("status").executes(ctx -> {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 say(p, "Creeperborn 0.1.0-alpha.1 | unlocked: " + known + " | selected: " + (selected == null ? "none" : selected.title)
-                    + " | move: " + (ABILITIES.move(p) + 1) + " | natural creeper chance: " + config.elementalChance);
+                    + " | move: " + (ABILITIES.move(p) + 1)
+                    + " | power: " + (selected == null ? 0 : Math.round(EnvironmentPower.strength(p, selected) * 100)) + "%"
+                    + " | natural creeper chance: " + config.elementalChance);
                 return 1;
             }));
             root.then(Commands.literal("cast").executes(ctx -> { ServerPlayer p = ctx.getSource().getPlayerOrException(); say(p, ABILITIES.cast(p)); return 1; }));

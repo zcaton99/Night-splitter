@@ -188,8 +188,11 @@ public final class Regression implements ModInitializer {
         for (Zombie target : surrounding) {
             check(Creeperborn.ABILITIES.pushRemaining(target) == 5, "Tidal Guard covers front, rear and both sides"); target.discard();
         }
-        check(level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
-            new AABB(-5, y - 2, -5, 6, y + 5, 12)).stream().allMatch(display -> !display.shouldBeSaved()),
+        tidal.addTag("cb_unlock_earth"); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
+        Creeperborn.ABILITIES.cast(tidal);
+        var rockVisuals = level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,
+            new AABB(-5, y - 2, -5, 6, y + 5, 12));
+        check(rockVisuals.size() == 3 && rockVisuals.stream().allMatch(display -> !display.shouldBeSaved()),
             "Temporary rock visuals are excluded from world saves");
     }
     private static int count(Player p, String kind) {
