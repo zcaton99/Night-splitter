@@ -82,6 +82,13 @@ loom {
         creeperborn_tests { sourceSet sourceSets.testmod }
     }
     runs {
+        clientSmoke {
+            client()
+            name "Creeperborn client model smoke"
+            source sourceSets.testmod
+            runDir "build/client-smoke"
+            vmArg "-Dcreeperborn.visualSmoke=true"
+        }
         regression {
             server()
             name "Creeperborn regression"

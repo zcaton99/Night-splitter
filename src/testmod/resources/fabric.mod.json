@@ -3,14 +3,16 @@
   "id": "creeperborn_tests",
   "version": "1.0.0",
   "name": "Creeperborn Tests",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "com.sibcraft.creeperborn.Regression"
+    ],
+    "client": [
+      "com.sibcraft.creeperborn.ClientSmoke"
     ]
   },
   "depends": {
     "creeperborn": "*"
   }
 }
-

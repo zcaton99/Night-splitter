@@ -82,11 +82,11 @@ public final class PhoenixRenderer{
         poseWings(WINGS,flap);poseWings(FEATHERS,flap);
         CREST.getChild("tail").xRot=(float)Math.sin(time*.18f)*.12f;
         poses.pushPose();
-        poses.mulPose(new Quaternionf().rotationY((float)Math.toRadians(-state.bodyRot)));
+        poses.rotate(new Quaternionf().rotationY((float)Math.toRadians(-state.bodyRot)));
         if(full){
             poses.translate(0,Math.sin(time*.15)*.06,0);
-            poses.mulPose(new Quaternionf().rotationX((float)Math.toRadians(state.xRot*.45f)));
-            if((flags&8)!=0)poses.mulPose(new Quaternionf().rotationX(.2f));
+            poses.rotate(new Quaternionf().rotationX((float)Math.toRadians(state.xRot*.45f)));
+            if((flags&8)!=0)poses.rotate(new Quaternionf().rotationX(.2f));
             part(BODY,BLUE,poses,nodes,false);part(CREST,CYAN,poses,nodes,true);
             part(GOLD_PARTS,GOLD,poses,nodes,false);part(EYES,WHITE,poses,nodes,true);
         }else poses.translate(0,.35,-.12);
