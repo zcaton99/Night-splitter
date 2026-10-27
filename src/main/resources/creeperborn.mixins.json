@@ -24,6 +24,8 @@
     "PunchRenderStateMixin",
     "PunchDisplayRendererMixin",
     "DoorHudMixin",
-    "DoorGhostMixin"
+    "DoorGhostMixin",
+    "PhoenixAvatarMixin",
+    "PhoenixHandsMixin"
   ]
 }

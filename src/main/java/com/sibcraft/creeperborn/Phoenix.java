@@ -67,7 +67,7 @@ public final class Phoenix {
     public static void heartbeat(Player p){State s=state(p);if(s.held>=0)s.heartbeat=now(p)+15;}
     public static void cancelInput(Player p){State s=state(p);s.held=-1;s.heldAt=-1;s.healing=false;}
     public static void release(Player p,int move){
-        State s=state(p);if(s.held!=move)return;long held=now(p)-s.heldAt;cancelInput(p);
+        State s=state(p);if(s.held!=move)return;long held=now(p)-s.heldAt;boolean healing=s.healing;cancelInput(p);s.healing=healing;
         if(!selected(p)||!p.isAlive()||p.isSpectator())return;
         String text=cast(p,move,held);if(!text.isEmpty())Creeperborn.say(p,text);
     }
@@ -93,9 +93,13 @@ public final class Phoenix {
             if(charged)s.formUntil=Mastery.harmony(p)?Long.MAX_VALUE:now(p)+FORM_TICKS;
             else s.wingUntil=now(p)+(Mastery.harmony(p)?900:WING_TICKS);
             grantFlight(p,s);s.flareUntil=now(p)+20;particles(p,30);
-            return charged?"Phoenix Form! Hold C to heal nearby players and villagers.":"Wing Flight! Tap X again to land.";
+            return charged?"Phoenix Form! Tap C to heal nearby players and villagers.":"Wing Flight! Tap X again to land.";
         }
-        return "Hold C to channel Healing Flames.";
+        if(tier(p)<3)return "Healing Flames needs 40 uses + one active hour.";
+        if(s.healing){s.healing=false;return "Healing Flames stopped.";}
+        if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to heal.";
+        s.healing=true;s.level=(ServerLevel)p.level();s.recent=now(p);
+        return "Healing Flames! Tap C again to stop.";
     }
     private static void grantFlight(Player p,State s){
         if(s.flight)return;s.flight=true;s.grantedFlight=!p.getAbilities().mayfly;
@@ -180,10 +184,17 @@ public final class Phoenix {
         }else if(wall.getType()!=HitResult.Type.MISS||--s.diveTicks<=0){s.diveTicks=0;p.setDeltaMovement(Vec3.ZERO);}
         else Rubber.impulse(p,s.diveDirection.scale(1.8));
     }
+    private static void ring(Player p){
+        ServerLevel level=(ServerLevel)p.level();Vec3 at=p.position();
+        for(int i=0;i<32;i++){double angle=i*Math.PI/16+now(p)*.04;
+            level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,at.x+Math.cos(angle)*10,at.y+.25,at.z+Math.sin(angle)*10,1,0,.1,0,.005);
+        }
+    }
     private static void particles(Player p,int count){
         if(p.level() instanceof ServerLevel level){
             Vec3 at=p.position().add(0,1,0);
             level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,at.x,at.y,at.z,count,.45,.5,.45,.025);
+            if(count>=25)level.sendParticles(new DustParticleOptions(0xFFD34D,1.3f),at.x,at.y,at.z,count/2,.6,.7,.6,.04);
         }
     }
     public static int visualFlags(Player p){
@@ -202,7 +213,8 @@ public final class Phoenix {
         }
         p.clearFire();
         if(s.held>=0&&(!selected(p)||now>s.heartbeat))cancelInput(p);
-        s.healing=s.held==2&&now-s.heldAt>=7&&tier(p)>=3&&p.getFoodData().getFoodLevel()>6;
+        if(!selected(p)||tier(p)<3||p.getFoodData().getFoodLevel()<=6)s.healing=false;
+        if(form(p)&&Mastery.harmony(p))s.formUntil=Long.MAX_VALUE;
         if(s.formUntil>0&&s.formUntil!=Long.MAX_VALUE&&now>=s.formUntil||s.wingUntil>0&&now>=s.wingUntil||p.getFoodData().getFoodLevel()<=6)end(p);
         if(s.formUntil==Long.MAX_VALUE&&!Mastery.harmony(p))s.formUntil=now+FORM_TICKS;
         if(s.diveTicks>0)dive(p,s);
@@ -235,6 +247,15 @@ public final class Phoenix {
             if(s.healing&&++s.healFuel>=10){s.healFuel=0;p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));}
         }
         if((form(p)||wing(p)||s.healing)&&now%5==0)particles(p,s.healing?10:4);
+        if(s.healing&&now%10==0)ring(p);
+        if((form(p)||wing(p))&&now%5==0){
+            Vec3 tail=p.position().subtract(p.getLookAngle().scale(.8)).add(0,.7,0);
+            ((ServerLevel)p.level()).sendParticles(ParticleTypes.SOUL_FIRE_FLAME,tail.x,tail.y,tail.z,3,.15,.15,.15,.01);
+        }
+        if((form(p)||wing(p)||s.healing)&&now%20==0){
+            String mode=form(p)?"Phoenix Form "+(Mastery.harmony(p)?"unlimited":((s.formUntil-now+19)/20)+"s"):wing(p)?"Wing Flight "+((s.wingUntil-now+19)/20)+"s":"Healing Flames";
+            Creeperborn.say(p,mode+" | Food "+p.getFoodData().getFoodLevel()+"/20 | Rebirth "+(spent(p)?"spent":"ready"));
+        }
         if(p.getFoodData().getFoodLevel()<=6){end(p);cancelInput(p);}
     }
     public static void tick(MinecraftServer server){
@@ -242,7 +263,8 @@ public final class Phoenix {
         for(var viewer:server.getPlayerList().getPlayers()){
             if(!ServerPlayNetworking.canSend(viewer,PhoenixVisualPayload.TYPE))continue;
             Map<UUID,View> cache=sent.computeIfAbsent(viewer.getUUID(),id->new HashMap<>());
-            cache.keySet().removeIf(id->server.getPlayerList().getPlayer(id)==null);
+            cache.entrySet().removeIf(e->{if(server.getPlayerList().getPlayer(e.getKey())!=null)return false;
+                ServerPlayNetworking.send(viewer,new PhoenixVisualPayload(e.getValue().entity(),0));return true;});
             for(var subject:server.getPlayerList().getPlayers()){
                 View next=new View(subject.getId(),subject.level()==viewer.level()?visualFlags(subject):0),old=cache.get(subject.getUUID());
                 if(!next.equals(old)){

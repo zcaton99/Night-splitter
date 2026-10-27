@@ -398,10 +398,12 @@ public final class Regression implements ModInitializer {
         check(Math.abs(p.getHealth()-11)<.001,"Phoenix Form passively heals half a heart every two seconds");
         Villager near=EntityTypes.VILLAGER.create(level,EntitySpawnReason.EVENT),far=EntityTypes.VILLAGER.create(level,EntitySpawnReason.EVENT);
         near.snapTo(-12.5,y+20,29);far.snapTo(-12.5,y+20,32);near.setNoAi(true);far.setNoAi(true);near.setHealth(10);far.setHealth(10);level.addFreshEntity(near);level.addFreshEntity(far);
-        p.setHealth(10);Phoenix.press(p,2);clock(level,level.getGameTime()+8);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
-        clock(level,(level.getGameTime()/40+1)*40);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
+        p.setHealth(10);Phoenix.press(p,2);clock(level,level.getGameTime()+1);Phoenix.release(p,2);
+        check(Phoenix.healing(p),"Tap C toggles Healing Flames on without holding");
+        clock(level,(level.getGameTime()/40+1)*40);Phoenix.tickPlayer(p);
         check(Phoenix.healing(p)&&Math.abs(p.getHealth()-12)<.001,"Channel healing replaces rather than stacks passive self healing");
         check(Math.abs(near.getHealth()-12)<.001&&far.getHealth()==10,"Healing Flames reaches ten-block radius only");
+        check(Phoenix.cast(p,2,0).contains("stopped")&&!Phoenix.healing(p),"Second C tap stops Healing Flames");
         Phoenix.cancelInput(p);near.discard();far.discard();
         Mastery.set(p,"cb_phoenix_fuel_",0);p.getFoodData().setFoodLevel(20);
         for(int i=0;i<60;i++){clock(level,(level.getGameTime()/20+1)*20);Phoenix.tickPlayer(p);}
