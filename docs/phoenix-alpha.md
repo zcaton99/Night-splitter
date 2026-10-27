@@ -1,4 +1,4 @@
-# Phoenix — alpha.29
+# Phoenix — alpha.30
 
 Phoenix is the third rare fruit in Creeperborn. It follows the existing one-fruit-per-player and one-living-owner-per-fruit rules, preserves ownership across logout/restart, and loses powers/progression on actual death. Elemental unlocks/mastery remain.
 
@@ -64,3 +64,9 @@ Phoenix Talon now reaches ten blocks (previously five). It still selects the nea
 ## Alpha.29 form-specific Talon reach
 
 Talon reaches 10 blocks normally, 15 during Wing Flight, and 20 during full Phoenix Form. The bonus follows the active form and ends with it, including after Rebirth. Damage, cooldown, forward targeting and line-of-sight rules remain unchanged. Dive remains separate.
+
+## Alpha.30 identity and counterplay
+
+Full Phoenix Form hides the overhead player name/score and the vanilla locator-bar marker. Wing Flight retains normal identity. Form transitions immediately refresh locator connections; ending form restores ordinary visibility. This does not remove players from the tab list or change scoreboard teams.
+
+Players with all four elements at mastery tier 3 can pierce full Phoenix Form's ordinary immunity with melee and attributed projectiles. Form still halves incoming damage. Unmastered attackers and mobs remain blocked when the Phoenix owner has all-four mastery. Environmental fire/lava/fall immunity remains; Rebirth's brief protection remains. A fatal qualifying player hit can trigger an unused Rebirth.

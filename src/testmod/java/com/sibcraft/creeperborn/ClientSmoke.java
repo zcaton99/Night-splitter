@@ -21,6 +21,14 @@ public final class ClientSmoke implements ClientModInitializer{
             done=true;
             try{
                 PhoenixRenderer.validate();
+                var identity=new AvatarRenderState();
+                identity.nameTag=net.minecraft.network.chat.Component.literal("Visible");
+                identity.scoreText=net.minecraft.network.chat.Component.literal("Score");
+                com.sibcraft.creeperborn.client.PhoenixVisuals.hideIdentity(identity,1);
+                if(identity.nameTag==null||identity.scoreText==null)throw new AssertionError("Wing Flight must preserve identity");
+                com.sibcraft.creeperborn.client.PhoenixVisuals.hideIdentity(identity,2);
+                if(identity.nameTag!=null||identity.scoreText!=null)throw new AssertionError("Full Phoenix must hide name and score");
+                if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.EntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$hidePhoenixName")))throw new AssertionError("Phoenix name mixin did not apply");
                 int[] parts={0};
                 SubmitNodeCollector nodes=(SubmitNodeCollector)Proxy.newProxyInstance(SubmitNodeCollector.class.getClassLoader(),new Class<?>[]{SubmitNodeCollector.class},(proxy,method,args)->{
                     if(method.getName().equals("submitModelPart"))parts[0]++;

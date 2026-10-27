@@ -99,7 +99,7 @@ public final class Phoenix {
             s.level=(ServerLevel)p.level();
             if(charged)s.formUntil=Mastery.harmony(p)?Long.MAX_VALUE:now(p)+FORM_TICKS;
             else s.wingUntil=now(p)+(Mastery.harmony(p)?900:WING_TICKS);
-            grantFlight(p,s);s.flareUntil=now(p)+20;particles(p,30);
+            grantFlight(p,s);if(charged)refreshMarker(p);s.flareUntil=now(p)+20;particles(p,30);
             return charged?"Phoenix Form! Tap C to heal nearby players and villagers.":"Wing Flight! Tap X again to land.";
         }
         if(charged)return bless(p);
@@ -153,8 +153,10 @@ public final class Phoenix {
     }
     public static void end(Player p){
         State s=states.get(p.getUUID());if(s==null)return;
+        boolean wasForm=s.formUntil>0;
         if(s.formUntil>0)cooldown(p,true);if(s.wingUntil>0)cooldown(p,false);
         s.formUntil=s.wingUntil=0;s.healing=false;s.diveTicks=0;
+        if(wasForm)refreshMarker(p);
         s.level=null;
         if(s.flight){
             if(s.grantedFlight&&!p.isCreative()&&!p.isSpectator()){p.getAbilities().mayfly=false;p.getAbilities().flying=false;}
@@ -175,10 +177,18 @@ public final class Phoenix {
         }
     }
     public static boolean bypass(DamageSource source){return source.is(DamageTypes.GENERIC_KILL)||source.is(DamageTypes.FELL_OUT_OF_WORLD);}
+    public static boolean masteredAttacker(DamageSource source){
+        return source.getEntity() instanceof Player attacker&&Mastery.harmony(attacker);
+    }
+    private static void refreshMarker(Player p){
+        if(p.level() instanceof ServerLevel level)level.getWaypointManager().remakeConnections(p);
+    }
     public static boolean immune(Player p,DamageSource source){
         if(!unlocked(p)||bypass(source))return false;
-        if(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL))return true;
         State s=states.get(p.getUUID());
+        if(s!=null&&now(p)<s.shieldUntil)return true;
+        if(form(p)&&masteredAttacker(source))return false;
+        if(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL))return true;
         if(source.is(DamageTypes.DROWN)&&!Mastery.harmony(p))return false;
         return s!=null&&(now(p)<s.shieldUntil||form(p)&&Mastery.harmony(p));
     }

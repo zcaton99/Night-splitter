@@ -252,6 +252,7 @@ public final class Rubber {
         return fireBending || source.is(DamageTypeTags.IS_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.ARROW) && source.getDirectEntity()!=null && source.getDirectEntity().isOnFire();
     }
     public static boolean masteryImmune(Player p,DamageSource source){
+        if(Phoenix.form(p)&&Phoenix.masteredAttacker(source))return false;
         return Mastery.harmony(p)&&(source.is(DamageTypeTags.IS_FIRE)||source.is(DamageTypeTags.IS_FALL)||source.is(DamageTypeTags.IS_FREEZING)
             ||source.typeHolder().equals(p.damageSources().drown().typeHolder()));
     }

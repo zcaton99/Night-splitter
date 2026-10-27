@@ -382,6 +382,15 @@ public final class Regression implements ModInitializer {
         check(target.getHealth()==20,"Transformed Talon cannot exceed its own range cap");
         target.discard();
     }
+    private void checkPhoenixMarker(ServerLevel level,Player p,boolean hidden){
+        try{
+            var field=net.minecraft.world.entity.Entity.class.getDeclaredField("firstTick");field.setAccessible(true);field.setBoolean(p,false);
+        }catch(ReflectiveOperationException error){throw new AssertionError(error);}
+        var viewer=doorPlayer(level,"PhoenixViewer");viewer.snapTo(p.getX()+2,p.getY(),p.getZ());
+        p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.WAYPOINT_TRANSMIT_RANGE).setBaseValue(128);
+        viewer.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.WAYPOINT_RECEIVE_RANGE).setBaseValue(128);
+        check(p.makeWaypointConnectionWith(viewer).isEmpty()==hidden,"Locator marker follows full Phoenix form only");
+    }
     private void checkPhoenix(ServerLevel level){
         Phoenix.clear();FruitCreepers.clear();
         Player p=player(level);p.snapTo(-12.5,y+20,20.5);p.setYRot(0);p.setXRot(0);
@@ -416,6 +425,7 @@ public final class Regression implements ModInitializer {
         for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,22),Blocks.AIR.defaultBlockState());
         target.discard();p.snapTo(-12.5,y+20,20.5);
         Phoenix.grant(p,2);check(Phoenix.cast(p,1,0).startsWith("Wing Flight!")&&Phoenix.wing(p)&&p.getAbilities().flying,"Tap X grants wing flight at tier two");
+        checkPhoenixMarker(level,p,false);
         checkPhoenixTalonForm(level,p,15);
         clock(level,level.getGameTime()+601);Phoenix.tickPlayer(p);
         check(!Phoenix.wing(p)&&!p.getAbilities().mayfly&&!p.getAbilities().flying,"Thirty-second flight expires and restores permissions");
@@ -423,6 +433,7 @@ public final class Regression implements ModInitializer {
         check(Phoenix.cast(p,1,0).contains("recovering"),"Wing Flight has five-second recovery");
         Phoenix.grant(p,3);p.getFoodData().setFoodLevel(20);
         check(Phoenix.cast(p,1,8).startsWith("Phoenix Form!")&&Phoenix.form(p),"Hold X activates full Phoenix form at tier three");
+        checkPhoenixMarker(level,p,true);
         checkPhoenixTalonForm(level,p,20);
         check(Phoenix.damage(p,p.damageSources().generic(),10)==5,"Normal form reduces ordinary damage by half");
         p.damageCooldownTime=0;p.setHealth(20);p.hurtServer(level,p.damageSources().generic(),4);
@@ -461,11 +472,25 @@ public final class Regression implements ModInitializer {
         p.setHealth(20);p.damageCooldownTime=0;p.hurtTime=0;
         check(!p.hurtServer(level,p.damageSources().generic(),100)&&p.getHealth()==20&&p.hurtTime==0,"Attacks pass through all-four mastered Phoenix Form without hurt feedback");
         check(!Phoenix.immune(p,p.damageSources().genericKill()),"Even mastered Phoenix does not block kill command");
-        Mastery.grant(p,Element.EARTH,2);p.damageCooldownTime=0;
-        p.hurtServer(level,p.damageSources().generic(),100);
+        Player attacker=player(level);p.damageCooldownTime=0;p.setHealth(20);
+        check(!p.hurtServer(level,p.damageSources().playerAttack(attacker),4)&&p.getHealth()==20,"Unmastered player cannot pierce mastered Phoenix immunity");
+        for(Element e:Element.values())Mastery.grant(attacker,e,3);
+        p.damageCooldownTime=0;
+        check(p.hurtServer(level,p.damageSources().playerAttack(attacker),4)&&Math.abs(p.getHealth()-18)<.001,"All-four master melee pierces full Phoenix immunity at half damage");
+        var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.setOwner(attacker);
+        p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4);
+        check(Math.abs(p.getHealth()-16)<.001,"Projectile inherits its owner's all-four mastery");
+        Mastery.grant(attacker,Element.EARTH,2);p.damageCooldownTime=0;
+        check(!p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4)&&Math.abs(p.getHealth()-16)<.001,"Losing a mastery immediately removes projectile bypass");
+        arrow.discard();
+
+        Mastery.grant(attacker,Element.EARTH,3);p.damageCooldownTime=0;
+        p.hurtServer(level,p.damageSources().playerAttack(attacker),100);
         check(p.isAlive()&&Math.abs(p.getHealth()-10)<.001&&Phoenix.spent(p)&&Phoenix.unlocked(p),"Native fatal hit triggers one resurrection at half health without losing fruit");
         check(!Phoenix.form(p)&&!p.getAbilities().mayfly&&Phoenix.recovery(p)==300&&Phoenix.strength(p)==.5,"Rebirth ends form and starts five active minutes at half strength");
         check(Phoenix.immune(p,p.damageSources().generic()),"Rebirth grants three-second protection");
+        checkPhoenixMarker(level,p,false);
+        Mastery.grant(p,Element.EARTH,2);
         Phoenix.forget(p);FruitClaims.load(server);
         check(Phoenix.spent(p)&&Phoenix.recovery(p)==300&&Phoenix.strength(p)==.5,"Logout/reload cannot reset revival or skip recovery");
         for(int i=0;i<6;i++){p.snapTo(p.getX()+.3,p.getY(),p.getZ());clock(level,(level.getGameTime()/20+1)*20);Phoenix.tickPlayer(p);}

@@ -15,7 +15,8 @@
     "DoorSpectatorMenuMixin",
     "ZombieVillagerCureAccessor",
     "MasteredFreezingMixin",
-    "PhoenixRevivalMixin"
+    "PhoenixRevivalMixin",
+    "PhoenixWaypointMixin"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -26,6 +27,7 @@
     "DoorHudMixin",
     "DoorGhostMixin",
     "PhoenixAvatarMixin",
-    "PhoenixHandsMixin"
+    "PhoenixHandsMixin",
+    "PhoenixNameMixin"
   ]
 }

@@ -4,5 +4,8 @@ public final class PhoenixVisuals{
     private static final Map<Integer,Integer> flags=new HashMap<>();
     public static void update(int entity,int value){if((value&15)==0)flags.remove(entity);else flags.put(entity,value&15);}
     public static int flags(int entity){return flags.getOrDefault(entity,0);}
+    public static void hideIdentity(net.minecraft.client.renderer.entity.state.EntityRenderState state,int flags){
+        if((flags&2)!=0){state.nameTag=null;state.scoreText=null;state.nameTagAttachment=null;}
+    }
     public static void clear(){flags.clear();}
 }
