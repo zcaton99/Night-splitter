@@ -14,4 +14,6 @@ public abstract class StringTeleportMixin {
         ServerPlayer p=(ServerPlayer)(Object)this;Vec3 to=new Vec3(relative.contains(Relative.X)?p.getX()+x:x,relative.contains(Relative.Y)?p.getY()+y:y,relative.contains(Relative.Z)?p.getZ()+z:z);
         if(!StringFruit.canTeleport(p,level,to))cir.setReturnValue(false);
     }
+    @Inject(method="teleport",at=@At("HEAD"),cancellable=true)
+    private void creeperborn$stringDimension(CallbackInfoReturnable<ServerPlayer> cir){if(StringFruit.insideCage((ServerPlayer)(Object)this))cir.setReturnValue(null);}
 }

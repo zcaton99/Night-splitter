@@ -20,7 +20,7 @@ import net.minecraft.world.phys.*;
 /** Server-owned String state. Temporary geometry never changes blocks or flight permissions. */
 public final class StringFruit {
     private static final class State {
-        Player owner; ServerLevel level; int held=-1;long press,heartbeat,recent=-1000,lastDamage,heal,guard,cloneEnds,glideEnds,landing,controlEnds,inputUntil,attackReady;
+        Player owner; ServerLevel level; int held=-1;long press,heartbeat,recent=-1000,lastDamage,heal,guard,cloneEnds,glideEnds,landing,controlEnds,inputUntil,attackReady,inputAt=-1;
         final long[] ready=new long[6]; boolean gliding; Vec3 last,anchor,route; Zombie knight; Display.BlockDisplay knightVisual,web; LivingEntity puppet; boolean oldNoAi;
         int flags;float yaw,pitch; final List<Display.BlockDisplay> strings=new ArrayList<>();
     }
@@ -121,7 +121,7 @@ public final class StringFruit {
     private static void sync(State s){if(s.owner instanceof ServerPlayer p&&ServerPlayNetworking.canSend(p,StringControlPayload.TYPE))ServerPlayNetworking.send(p,new StringControlPayload(s.puppet==null?-1:s.puppet.getId(),s.gliding&&tier(s.owner)>=3?64:0,s.yaw,s.pitch));}
     private static void releaseControl(State s){if(s.puppet==null)return;LivingEntity target=s.puppet;s.puppet=null;
         if(target instanceof Mob mob)mob.setNoAi(s.oldNoAi);target.setDeltaMovement(Vec3.ZERO);s.flags=0;s.strings.forEach(Entity::discard);s.strings.clear();sync(s);}
-    public static void input(ServerPlayer p,StringControlPayload packet){State s=states.get(p.getUUID());if(s==null)return;if(s.puppet==null){if(packet.entity()==-1&&s.gliding&&packet.valid())s.flags=packet.flags();return;}if(packet.entity()!=s.puppet.getId()||!packet.valid())return;s.flags=packet.flags();s.yaw=packet.yaw();s.pitch=Math.max(-90,Math.min(90,packet.pitch()));s.inputUntil=now(p)+15;}
+    public static void input(ServerPlayer p,StringControlPayload packet){State s=states.get(p.getUUID());if(s==null)return;if(s.puppet==null){if(packet.entity()==-1&&s.gliding&&packet.valid())s.flags=packet.flags();return;}if(packet.entity()!=s.puppet.getId()||!packet.valid()||s.inputAt==now(p))return;s.inputAt=now(p);s.flags=packet.flags();s.yaw=packet.yaw();s.pitch=Math.max(-90,Math.min(90,packet.pitch()));s.inputUntil=now(p)+15;}
     private static void drive(State s){
         LivingEntity t=s.puppet;Player p=s.owner;if(t==null)return;
         if(!t.isAlive()||t.isRemoved()||t.level()!=p.level()||now(p)>=s.controlEnds||now(p)>s.inputUntil||p.distanceToSqr(t)>Math.pow(range(p)*1.5,2)||t instanceof Player tp&&(Dark.suppressed(tp)||WaterRules.suppressed(tp))){releaseControl(s);return;}

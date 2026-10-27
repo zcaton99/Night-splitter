@@ -6,7 +6,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 /** All string geometry is white, except the black knight silhouette and purple puppet outlines. */
 public final class StringRenderer {
     private static final Identifier WHITE=Identifier.withDefaultNamespace("textures/block/white_concrete.png"),BLACK=Identifier.withDefaultNamespace("textures/block/black_concrete.png"),PURPLE=Identifier.withDefaultNamespace("textures/block/purple_concrete.png");
