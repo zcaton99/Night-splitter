@@ -111,8 +111,12 @@ public final class Hearts {
         if(l==null||l.crushed){entity.setItem(new ItemStack(Items.GLASS));return false;}
         if(l.ground<0){l.ground=clock();save();}
         if(clock()-l.ground<6000)return false;
-        l.pending=true;l.ground=-1;save();
+        returnHeart(l);
         entity.setItem(ItemStack.EMPTY);entity.discard();return true;
+    }
+    private static void returnHeart(Link link){
+        // Rotate the token so a cube in an unloaded chunk cannot duplicate the returned live heart.
+        links.remove(link.token);link.token=UUID.randomUUID().toString();link.pending=true;link.ground=-1;links.put(link.token,link);save();
     }
     /** Called by Entity.remove only for destructive reasons, never on chunk unload. */
     public static void removed(ItemEntity entity,Entity.RemovalReason reason){
@@ -120,7 +124,7 @@ public final class Hearts {
     }
     public static void died(LivingEntity entity){
         String id=entity.getUUID().toString();
-        if(links.values().removeIf(l->l.victim.equals(id)||l.owner.equals(id)))save();
+        if(links.values().removeIf(l->l.victim.equals(id)||l.owner.equals(id)&&!l.crushed))save();
         crushing.remove(entity.getUUID());squeezeReady.remove(entity.getUUID());
     }
     public static void join(Player p){
@@ -130,7 +134,7 @@ public final class Hearts {
         }
     }
     public static void tick(MinecraftServer s){
-        for(Link l:List.copyOf(links.values()))if(l.crushed)kill(l);
+        for(Link l:List.copyOf(links.values())){if(l.crushed)kill(l);else if(l.ground>=0&&clock()-l.ground>=6000)returnHeart(l);}
         for(var p:s.getPlayerList().getPlayers()){
             if(s.getTickCount()%20==0)for(Link l:List.copyOf(links.values()))if(l.owner.equals(p.getUUID().toString()))deliver(p,l);
             Crush c=crushing.get(p.getUUID());if(c==null)continue;

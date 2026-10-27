@@ -845,7 +845,7 @@ public final class Regression implements ModInitializer {
         check(Hearts.giveBack(p,target,cube)&&!Hearts.squeeze(p,duplicate).contains("one heart"),"Returning heart invalidates copied token");
         java.util.List<Zombie> victims=new java.util.ArrayList<>();
         for(int i=0;i<6;i++){
-            Zombie z=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);z.snapTo(-7+i,y+15,11);z.setNoAi(true);level.addFreshEntity(z);victims.add(z);
+            Zombie z=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);z.snapTo(-7+i,y+15,11);z.setCustomName(Component.literal("HeartTarget"+i));z.setNoAi(true);level.addFreshEntity(z);victims.add(z);
             check(Hearts.extract(p,z),"Collection allows six distinct named hearts without a cap");
         }
         check(Hearts.count(p)==6,"Heart collection has no five-heart cap");
@@ -856,7 +856,7 @@ public final class Regression implements ModInitializer {
         clock(level,level.getGameTime()+5999);check(!Hearts.groundTick(dropped),"No premature five-minute return");
         clock(level,level.getGameTime()+1);check(Hearts.groundTick(dropped)&&z.isAlive(),"Five-minute return removes cube without killing victim");
         Hearts.load(server);Hearts.join(p);
-        ItemStack returned=ItemStack.EMPTY;for(int i=0;i<p.getInventory().getContainerSize();i++)if(Hearts.token(p.getInventory().getItem(i)).equals(Hearts.token(killCube))){returned=p.getInventory().getItem(i);break;}
+        ItemStack returned=ItemStack.EMPTY;for(int i=0;i<p.getInventory().getContainerSize();i++)if(!Hearts.token(p.getInventory().getItem(i)).isEmpty()&&p.getInventory().getItem(i).getHoverName().getString().equals(killCube.getHoverName().getString())){returned=p.getInventory().getItem(i);break;}
         check(!returned.isEmpty(),"Pending return survives registry reload and delivers to owner");
         ItemEntity burn=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),returned.copy());returned.shrink(1);level.addFreshEntity(burn);
         burn.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);

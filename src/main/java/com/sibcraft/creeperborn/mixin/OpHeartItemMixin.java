@@ -18,6 +18,13 @@ public abstract class OpHeartItemMixin{
             if(self.level() instanceof ServerLevel&&Hearts.groundTick(self))ci.cancel();
         }
     }
+    @Inject(method="setItem",at=@At("HEAD"))
+    private void creeperborn$emptyHeart(net.minecraft.world.item.ItemStack next,CallbackInfo ci){
+        ItemEntity self=(ItemEntity)(Object)this;
+        if(self.level() instanceof ServerLevel&&next.isEmpty()){
+            String token=Hearts.token(self.getItem());if(!token.isEmpty())Hearts.picked(token);
+        }
+    }
     @Inject(method="playerTouch",at=@At("HEAD"))
     private void creeperborn$beforePickup(Player p,CallbackInfo ci){creeperborn$pickupHeart=Hearts.token(((ItemEntity)(Object)this).getItem());}
     @Inject(method="playerTouch",at=@At("TAIL"))
