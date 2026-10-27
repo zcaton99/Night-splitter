@@ -672,6 +672,9 @@ public final class Regression implements ModInitializer {
     private void checkDarkMoves(ServerLevel level){
         Dark.clear();Player p=player(level);p.snapTo(-12.5,y+30,8.5);p.setYRot(0);p.setXRot(0);
         check(Dark.consume(p,Relics.darkFruit())&&Dark.tier(p)==1&&CombatNetwork.selection(p)==8,"Dark fruit unlocks with authoritative control selection");
+        Player blinded=player(level);Dark.blind(p,blinded);
+        check(blinded.hasEffect(MobEffects.DARKNESS)&&blinded.getEffect(MobEffects.DARKNESS).getDuration()==60,"Dark pull applies three-second Darkness to an enemy player");
+        Dark.blind(p,p);check(!p.hasEffect(MobEffects.DARKNESS),"Caster is not blinded by own pull");
         check(!Dark.consume(player(level),Relics.darkFruit()),"Dark enforces its unique owner limit");
         check(Dark.cast(p,1,0).contains("locked")&&Dark.cast(p,2,0).contains("locked"),"X and C are gated at tiers two and three");
         Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+30,16.5);target.setNoAi(true);
@@ -920,6 +923,62 @@ public final class Regression implements ModInitializer {
         Op.clear();
     }
 
+
+    private void checkGravity(ServerLevel level){
+        Gravity.clear();Player p=player(level);p.snapTo(-8,y+18,8);p.setYRot(0);p.setXRot(0);
+        check(Gravity.consume(p,Relics.gravityFruit())&&Gravity.tier(p)==1&&CombatNetwork.selection(p)==10,"Gravity unlocks with authoritative fruit controls");
+        check(WaterRules.vulnerable(p)&&!Gravity.consume(player(level),Relics.gravityFruit())&&!Op.consume(p,Relics.opFruit()),"Gravity inherits water curse and unique/personal ownership limits");
+        check(Gravity.cast(p,1,0).contains("locked")&&Gravity.cast(p,2,0).contains("locked"),"Gravity X/C require tiers two and three");
+        Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(true);
+        t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
+        check(Gravity.cast(p,0,0).equals("Gravity Press!")&&t.getHealth()==94&&t.getDeltaMovement().y<0&&t.hasEffect(MobEffects.SLOWNESS),"Gravity Press damages, weighs down and slows aimed target");
+        check(Gravity.cast(p,0,0).contains("recovering"),"Gravity Press cooldown enforced");
+        t.damageCooldownTime=0;
+        check(Gravity.cast(p,0,7).equals("Repulsion Wave!")&&t.getDeltaMovement().z>0,"Held Z repels enemies in front");
+        Gravity.grant(p,2);p.getFoodData().setFoodLevel(20);t.damageCooldownTime=0;
+        check(Gravity.cast(p,1,0).equals("Levitate!"),"Tap X starts targeted levitation");
+        Gravity.tickEffects();check(t.getDeltaMovement().y>0,"Levitation repeatedly lifts target");
+        clock(level,level.getGameTime()+60);t.setDeltaMovement(0,0,0);Gravity.tickEffects();
+        check(t.getDeltaMovement().lengthSqr()==0,"Levitation stops applying force after three seconds");
+        boolean couldFly=p.getAbilities().mayfly;
+        Gravity.press(p,1);clock(level,level.getGameTime()+7);Gravity.heartbeat(p);Gravity.tickPlayer(p);
+        check(Gravity.riding(p)&&p.getDeltaMovement().z>0&&p.getAbilities().mayfly==couldFly,"Held X steers a temporary rock without granting vanilla flight");
+        check(Gravity.immune(p,p.damageSources().fall()),"Rock ride protects its caster from fall damage");
+        Gravity.release(p,1);check(!Gravity.riding(p)&&p.getAbilities().mayfly==couldFly,"Releasing X ends ride and preserves flight permissions");
+        Gravity.grant(p,3);p.getFoodData().setFoodLevel(20);
+        check(Gravity.cast(p,2,0).equals("Orbit Guard!")&&Gravity.guarding(p),"Tier-three tap C starts orbiting defense");
+        Player attacker=player(level);var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.setOwner(attacker);arrow.snapTo(p.getX()+1,p.getY()+1,p.getZ());level.addFreshEntity(arrow);
+        p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4);
+        check(Math.abs(p.getHealth()-19.2)<.001,"Orbit Guard reduces projectile damage by eighty percent");
+        check(Gravity.damage(p,p.damageSources().playerAttack(attacker),4)==2&&Gravity.damage(p,p.damageSources().generic(),4)==4,"Orbit Guard halves melee while environmental damage remains normal");
+        Gravity.tickPlayer(p);check(arrow.isRemoved(),"Orbiting rocks intercept nearby hostile projectiles");
+        Dark.suppress(p,20,false);Gravity.tickPlayer(p);
+        check(!Gravity.guarding(p)&&Gravity.cast(p,0,0).contains("darkness"),"Darkness suppression ends guard and blocks gravity input");
+        clock(level,level.getGameTime()+21);p.getFoodData().setFoodLevel(20);
+        check(Gravity.cast(p,2,59).contains("cancelled")&&Gravity.meteorCount()==0,"Meteor requires full three-second charge");
+        t.setHealth(100);t.damageCooldownTime=0;t.snapTo(-8,y+18,14);
+        BlockPos floor=new BlockPos(-8,(int)y+17,14);level.setBlockAndUpdate(floor,Blocks.STONE.defaultBlockState());
+        Gravity.press(p,2);clock(level,level.getGameTime()+60);Gravity.heartbeat(p);Gravity.tickPlayer(p);Gravity.release(p,2);
+        check(Gravity.meteorCount()==1,"Held C release launches a charged meteor");
+        var meteor=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(40)).stream()
+            .filter(d->d.getCustomName()!=null&&d.getCustomName().getString().equals("cb_gravity_meteor")).toList();
+        check(meteor.size()==1&&!meteor.getFirst().shouldBeSaved(),"Meteor uses a temporary original visual excluded from saves");
+        clock(level,level.getGameTime()+30);Gravity.tickEffects();
+        check(Gravity.meteorCount()==0&&meteor.getFirst().isRemoved()&&t.getHealth()<100,"Meteor impacts, damages and removes its visual");
+        check(level.getBlockState(floor).is(Blocks.STONE),"Meteor leaves terrain intact");
+        check(Gravity.range(p)==32&&Gravity.meteorRadius(p)==6,"Base Gravity targeting and blast radius");
+        for(Element element:Element.values())Mastery.grant(p,element,3);
+        check(Gravity.range(p)==50&&Gravity.meteorRadius(p)==8,"All-four mastery expands Gravity reach and meteor radius");
+        FruitClaims.load(server);check(Gravity.unlocked(p),"Gravity claim survives ownership reload");
+        check(Dark.consume(p,Relics.darkFruit()),"Dark can become Gravity owner's second fruit");
+        Dark.choose(p,"gravity");Dark.grantFruit(p,"gravity",2);check(Gravity.selected(p)&&Gravity.tier(p)==2&&CombatNetwork.selection(p)==10,"Dark selection and mastery dispatch support captured Gravity");
+        FruitClaims.releaseOnDeath(p);check(FruitClaims.owner("gravity")==null&&!Gravity.unlocked(p)&&!Gravity.riding(p)&&!Gravity.guarding(p),"Death releases Gravity and clears temporary forms");
+        var fruitCreeper=EntityTypes.CREEPER.create(level,EntitySpawnReason.EVENT);fruitCreeper.snapTo(-8,y+18,20);FruitCreepers.assignGravity(fruitCreeper);level.addFreshEntity(fruitCreeper);
+        fruitCreeper.hurtServer(level,p.damageSources().playerAttack(p),100);
+        check(level.getEntitiesOfClass(ItemEntity.class,fruitCreeper.getBoundingBox().inflate(3)).stream().anyMatch(item->Relics.kind(item.getItem()).equals("fruit:gravity")),"Gravity Fruitborn creeper drops its correctly marked fruit");
+        t.discard();Gravity.clear();FruitCreepers.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -936,6 +995,7 @@ public final class Regression implements ModInitializer {
         checkDarkCaptures(level);
         checkFoundSecondFruit(level);
         checkOp(level);
+        checkGravity(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

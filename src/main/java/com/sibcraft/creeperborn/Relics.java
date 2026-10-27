@@ -15,13 +15,14 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME, Component.literal(element.title + " Creeper Heart — right-click to consume"));
         return item;
     }
+    public static ItemStack gravityFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:gravity");item.set(DataComponents.CUSTOM_NAME,Component.literal("Gravity Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack opFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:op");item.set(DataComponents.CUSTOM_NAME,Component.literal("Op-Op Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack darkFruit(){
         ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:dark");
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Dark Creeper Fruit — right-click to consume"));return item;
     }
     public static ItemStack fruit(String type){
-        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();default->ItemStack.EMPTY;};
+        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();case "gravity"->gravityFruit();default->ItemStack.EMPTY;};
     }
     public static ItemStack captured(String type,String token,int tier){
         ItemStack item=fruit(type);if(item.isEmpty())return item;

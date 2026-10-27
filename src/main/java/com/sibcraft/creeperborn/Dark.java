@@ -15,7 +15,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.*;
 
 public final class Dark{
-    public static final List<String> FRUITS=List.of("rubber","door","phoenix","lightning","dark","op");
+    public static final List<String> FRUITS=List.of("rubber","door","phoenix","lightning","dark","op","gravity");
     private static final class State{Player owner;ServerLevel level;int held=-1,surge;long press,heartbeat,recent=-1000,mantleUntil,flare;Vec3 last,surgeDirection;}
     private record Void(Player owner,ServerLevel level,Vec3 center,long ends,Display.BlockDisplay visual,Display.BlockDisplay ground,int radius,float size){}
     private record Coil(Player owner,LivingEntity target,ServerLevel level,long ends){}
@@ -53,8 +53,8 @@ public final class Dark{
     public static int uses(Player p){return Mastery.get(p,"cb_dark_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_dark_time_");}
     public static int tier(Player p){return unlocked(p)?Rubber.progressTier(uses(p),seconds(p)):0;}
-    public static int fruitTier(Player p,String f){return switch(f){case "rubber"->Rubber.tier(p);case "door"->DoorFruit.tier(p);case "phoenix"->Phoenix.tier(p);case "lightning"->Lightning.tier(p);case "op"->Op.tier(p);case "dark"->tier(p);default->0;};}
-    public static void grantFruit(Player p,String f,int tier){switch(f){case "rubber"->Rubber.grant(p,tier);case "door"->DoorFruit.grant(p,tier);case "phoenix"->Phoenix.grant(p,tier);case "lightning"->Lightning.grant(p,tier);case "op"->Op.grant(p,tier);case "dark"->grant(p,tier);}}
+    public static int fruitTier(Player p,String f){return switch(f){case "rubber"->Rubber.tier(p);case "door"->DoorFruit.tier(p);case "phoenix"->Phoenix.tier(p);case "lightning"->Lightning.tier(p);case "gravity"->Gravity.tier(p);case "op"->Op.tier(p);case "dark"->tier(p);default->0;};}
+    public static void grantFruit(Player p,String f,int tier){switch(f){case "rubber"->Rubber.grant(p,tier);case "door"->DoorFruit.grant(p,tier);case "phoenix"->Phoenix.grant(p,tier);case "lightning"->Lightning.grant(p,tier);case "gravity"->Gravity.grant(p,tier);case "op"->Op.grant(p,tier);case "dark"->grant(p,tier);}}
     public static void grant(Player p,int tier){
         Mastery.set(p,"cb_dark_uses_",tier==3?40:tier==2?10:0);Mastery.set(p,"cb_dark_time_",tier==3?3600:tier==2?300:0);
     }
@@ -72,10 +72,10 @@ public final class Dark{
     public static int graspTicks(Player p){return Mastery.harmony(p)?100:60;}
     public static void suppress(Player victim,int ticks,boolean strong){
         value(victim,"cb_fruit_suppressed_",Math.max(value(victim,"cb_fruit_suppressed_"),now(victim)+ticks));
-        Rubber.cancelInput(victim);Phoenix.cancelInput(victim);Lightning.cancelInput(victim);Op.cancelInput(victim);cancelInput(victim);
+        Rubber.cancelInput(victim);Phoenix.cancelInput(victim);Lightning.cancelInput(victim);Op.cancelInput(victim);Gravity.cancelInput(victim);cancelInput(victim);
         if(strong)stopForms(victim);
     }
-    private static void stopForms(Player p){Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
+    private static void stopForms(Player p){Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
     public static boolean rooted(LivingEntity target){
         Tether t=tethers.get(target.getUUID());return t!=null&&target.isAlive()&&t.owner().isAlive()&&target.level()==t.level()&&t.owner().level()==t.level()&&now(t.owner())<t.ends();
     }
@@ -99,6 +99,10 @@ public final class Dark{
     public static void release(Player p,int move){
         State s=states.get(p.getUUID());if(s==null||s.held!=move)return;long held=now(p)-s.press;cancelInput(p);
         Creeperborn.say(p,cast(p,move,held));
+    }
+    static void blind(Player owner,LivingEntity target){
+        if(enemy(owner,target)&&target instanceof Player victim)
+            victim.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DARKNESS,60,0,false,false,true));
     }
     private static boolean enemy(Player p,LivingEntity e){return e!=p&&e.isAlive()&&!e.isSpectator()&&!p.isAlliedTo(e)&&(e instanceof Enemy||e instanceof Player);}
     private static Vec3 aim(Player p,int range){
@@ -141,7 +145,7 @@ public final class Dark{
                 target.setDeltaMovement(Vec3.ZERO);if(target instanceof Mob mob)mob.getNavigation().stop();
                 chains(level,target);s.flare=now(p)+20;hurt(p,target,(float)(5*power),false);
             }else{
-                Vec3 pull=p.position().subtract(target.position()).normalize();
+                blind(p,target);Vec3 pull=p.position().subtract(target.position()).normalize();
                 if(target instanceof ServerPlayer sp)Rubber.impulse(sp,pull.scale(1.3).add(0,.15,0));
                 else target.setDeltaMovement(pull.scale(1.3).add(0,.15,0));
                 darkLine(level,LightningBolts.hand(p),target.getEyePosition(),24);
@@ -272,7 +276,7 @@ public final class Dark{
                 if(!v.owner().isAlive()||!voids.contains(v))break;
                 if(!enemy(v.owner(),target)||target.position().distanceToSqr(v.center())>v.radius()*v.radius()
                     ||v.level().clip(new ClipContext(v.center(),target.getEyePosition(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,v.owner())).getType()!=HitResult.Type.MISS)continue;
-                Vec3 pull=v.center().subtract(target.position()).normalize().scale(.28);
+                blind(v.owner(),target);Vec3 pull=v.center().subtract(target.position()).normalize().scale(.28);
                 if(target instanceof ServerPlayer sp)Rubber.impulse(sp,pull);else target.setDeltaMovement(target.getDeltaMovement().scale(.4).add(pull));
                 if(finish||now%20==0)hurt(v.owner(),target,(float)((finish?12:4)*Mastery.multiplier(v.owner())),true);
             }
