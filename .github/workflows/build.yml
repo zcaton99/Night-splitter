@@ -27,6 +27,9 @@ jobs:
       - name: Build mod
         run: bash gradlew build --stacktrace
 
+      - name: Inspect native ROOM mesh API
+        run: bash gradlew dumpRoomRenderApi --no-configuration-cache
+
       - name: Run server regression suite
         timeout-minutes: 5
         run: |

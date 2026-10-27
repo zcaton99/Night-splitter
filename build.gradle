@@ -99,3 +99,18 @@ loom {
     }
 }
 
+
+tasks.register('dumpRoomRenderApi', Exec) {
+    def apiClasspath = sourceSets.main.compileClasspath
+    doFirst {
+        commandLine 'javap', '-p', '-classpath', apiClasspath.asPath,
+            'net.minecraft.client.renderer.SubmitNodeCollector',
+            'net.minecraft.client.renderer.SubmitNodeCollector$CustomGeometryRenderer',
+            'net.minecraft.client.model.geom.ModelPart',
+            'net.minecraft.client.model.geom.ModelPart$Cube',
+            'net.minecraft.client.model.geom.ModelPart$Polygon',
+            'net.minecraft.client.model.geom.ModelPart$Vertex',
+            'com.mojang.blaze3d.vertex.VertexConsumer'
+    }
+    ignoreExitValue true
+}
