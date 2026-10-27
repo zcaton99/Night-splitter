@@ -12,7 +12,7 @@ Select with G; toggle combat with B. All attacks need the caster and target insi
 | 2, X | Counter Shock | Heart Extraction (acquire target, keep holding for 3 seconds) |
 | 3, C | Shambles | Takt (lift, release to throw) |
 
-ROOM is a closed, connected, noncolliding light-blue translucent sphere fixed at its creation point. Diameter is 30 / 50 / 70 blocks; duration 30 / 60 / 90 seconds. Opening and abilities cost hunger, with one food point per five active seconds. Ends at low food, death, logout, dimension change, fruit suppression or switching to another fruit. Leaving ROOM prevents casting but does not move its center. Closing has a five-second recovery.
+ROOM is a closed, connected, noncolliding light-blue translucent sphere fixed at its creation point. Diameter is 30 / 70 / 120 blocks; duration 30 / 60 / 90 seconds. Opening and abilities cost hunger, with one food point per five active seconds. Ends at low food, death, logout, dimension change, fruit suppression or switching to another fruit. Leaving ROOM prevents casting but does not move its center. Closing has a five-second recovery.
 
 Tier 2 requires 10 uses and five active minutes; tier 3 requires 40 uses and one active hour. Mastered Shambles has five charges (three otherwise), refilling five seconds after the last successful swap. Swaps check both bodies against terrain, loaded destinations and world border, then dismount participants. Takt also dismounts its target. Spatial attacks can reach every target inside ROOM through terrain. Gamma Knife recovers in one second.
 

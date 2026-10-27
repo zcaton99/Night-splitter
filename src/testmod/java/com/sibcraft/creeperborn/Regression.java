@@ -825,11 +825,11 @@ public final class Regression implements ModInitializer {
         check(Op.inside(p,target),"Enemy inside spherical ROOM");
         check(Op.cast(p,0,7).equals("Gamma Knife!")&&target.getHealth()<100,"Tier one hold Z damages target with Gamma Knife");
         target.snapTo(-8,y+15,25);check(!Op.inside(p,target),"Targets outside ROOM excluded");
-        Op.grant(p,2);check(Op.diameter(p)==50&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
+        Op.grant(p,2);check(Op.diameter(p)==70&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
         target.snapTo(-8,y+15,12);target.damageCooldownTime=0;
         check(Op.cast(p,1,0).equals("Counter Shock!")&&Op.rooted(target),"Tier two tap X shocks and stuns");
         clock(level,level.getGameTime()+21);check(!Op.rooted(target),"Shock stun expires");
-        Op.grant(p,3);check(Op.diameter(p)==70&&Op.duration(p)==1800&&Op.charges(p)==5,"Mastery ROOM 70 diameter 90 seconds and five Shambles");
+        Op.grant(p,3);check(Op.diameter(p)==120&&Op.duration(p)==1800&&Op.charges(p)==5,"Mastery ROOM 120 diameter 90 seconds and five Shambles");
         p.snapTo(-8,y+15,-15);target.snapTo(-8,y+15,40);
         BlockPos roomWall=new BlockPos(-8,(int)y+16,0);level.setBlockAndUpdate(roomWall,Blocks.STONE.defaultBlockState());
         target.damageCooldownTime=0;

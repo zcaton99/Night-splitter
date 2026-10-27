@@ -34,7 +34,7 @@ public final class Op {
         p.addTag("cb_fruit_op");grant(p,Relics.captureTier(item));p.addTag("cb_mode_fruit");
         if(Dark.unlocked(p))Dark.selectConsumed(p,"op");item.shrink(1);return true;
     }
-    public static double diameter(Player p){return tier(p)>=3?70:tier(p)==2?50:30;}
+    public static double diameter(Player p){return tier(p)>=3?120:tier(p)==2?70:30;}
     public static int duration(Player p){return tier(p)>=3?1800:tier(p)==2?1200:600;}
     public static int charges(Player p){return tier(p)>=3?5:3;}
     public static boolean room(Player p){State s=states.get(p.getUUID());return s!=null&&s.center!=null&&s.level==p.level()&&p.isAlive()&&now(p)<s.ends;}
@@ -54,7 +54,7 @@ public final class Op {
         if(s.shell!=null){
             s.shell.addTag("cb_temporary_rock");s.shell.setCustomName(Component.literal("cb_op_room"));s.shell.setCustomNameVisible(false);
             s.shell.setBlockState(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
-            var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)s.shell;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(80);a.creeperborn$height(80);a.creeperborn$view(2);
+            var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)s.shell;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(128);a.creeperborn$height(128);a.creeperborn$view(2);
             s.shell.snapTo(s.center.x,s.center.y,s.center.z);s.level.addFreshEntity(s.shell);scale(s,diameter(p)/2);
         }
         credit(p);return "ROOM! "+(int)diameter(p)+" block diameter.";
