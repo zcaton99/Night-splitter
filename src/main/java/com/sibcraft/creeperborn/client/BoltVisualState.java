@@ -1,5 +1,7 @@
 package com.sibcraft.creeperborn.client;
 public interface BoltVisualState{
+    boolean creeperborn$opRoom();
+    void creeperborn$opRoom(boolean value);
     String creeperborn$darkGround();
     void creeperborn$darkGround(String data);
     boolean creeperborn$darkVoid();

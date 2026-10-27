@@ -23,6 +23,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 com.sibcraft.creeperborn.client.BoltRenderer.validate();
                 com.sibcraft.creeperborn.client.DarkGroundRenderer.validate();
                 com.sibcraft.creeperborn.client.ShadowRenderer.validate();com.sibcraft.creeperborn.client.VoidRenderer.validate();
+                com.sibcraft.creeperborn.client.RoomRenderer.validate();
                 PhoenixRenderer.validate();com.sibcraft.creeperborn.client.StormRenderer.validate();
                 var identity=new AvatarRenderState();
                 identity.nameTag=net.minecraft.network.chat.Component.literal("Visible");
@@ -58,7 +59,10 @@ public final class ClientSmoke implements ClientModInitializer{
                 com.sibcraft.creeperborn.client.DarkGroundRenderer.submit("cb_dark_ground|0,-1,0;1,-.5,0;",new PoseStack(),nodes);
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$darkGround("cb_dark_ground|0,-1,0;");
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$darkGround().isEmpty())throw new AssertionError("Ground shadow state mixin missing");
-                if(parts[0]!=120)throw new AssertionError("Expected 120 model submissions, got "+parts[0]);
+                com.sibcraft.creeperborn.client.RoomRenderer.submit(new PoseStack(),nodes);
+                ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$opRoom(true);
+                if(!((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$opRoom())throw new AssertionError("ROOM render state missing");
+                if(parts[0]!=121)throw new AssertionError("Expected 121 model submissions, got "+parts[0]);
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");

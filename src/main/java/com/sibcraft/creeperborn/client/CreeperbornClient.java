@@ -60,6 +60,7 @@ public final class CreeperbornClient implements ClientModInitializer {
                     client.player.sendSystemMessage(Component.literal("Creeperborn updated old controls: R elements, G fruits, Z/X/C moves. Custom bindings remain available in Controls."));
                 }
             }
+            if(ticks%4==0)send(9,client.gui.screen()==null&&!client.isPaused()&&client.options.keyUse.isDown()&&client.options.keyShift.isDown()?1:0);
             if(WaterRules.suppressed(client.player))cancel();
             if(client.gui.screen()!=null||client.isPaused()){
                 cancel();while(toggle.consumeClick()){}while(cycle.consumeClick()){}while(fruits.consumeClick()){}

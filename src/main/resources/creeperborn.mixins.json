@@ -17,7 +17,8 @@
     "MasteredFreezingMixin",
     "PhoenixRevivalMixin",
     "PhoenixWaypointMixin",
-    "CapturedFruitCleanupMixin"
+    "CapturedFruitCleanupMixin",
+    "OpHeartItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

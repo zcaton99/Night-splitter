@@ -10,6 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class CapturedFruitCleanupMixin{
     @Inject(method="remove",at=@At("HEAD"))
     private void creeperborn$releaseDestroyedCapture(Entity.RemovalReason reason,CallbackInfo ci){
-        if((Object)this instanceof ItemEntity item&&item.level() instanceof ServerLevel&&reason.shouldDestroy()&&!item.getItem().isEmpty())FruitClaims.releaseItem(item.getItem());
+        if((Object)this instanceof ItemEntity item&&item.level() instanceof ServerLevel&&reason.shouldDestroy()&&!item.getItem().isEmpty()){FruitClaims.releaseItem(item.getItem());com.sibcraft.creeperborn.Hearts.removed(item,reason);}
     }
 }

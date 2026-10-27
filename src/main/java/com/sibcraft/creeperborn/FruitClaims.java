@@ -10,14 +10,14 @@ import net.minecraft.world.entity.player.Player;
 
 /** One living owner per fruit in this world, including offline owners. Written before claims succeed. */
 public final class FruitClaims {
-    private record Data(String rubberOwner,String doorOwner,String phoenixOwner,String lightningOwner,String darkOwner){}
-    private static UUID rubberOwner,doorOwner,phoenixOwner,lightningOwner,darkOwner;
+    private record Data(String rubberOwner,String doorOwner,String phoenixOwner,String lightningOwner,String darkOwner,String opOwner){}
+    private static UUID rubberOwner,doorOwner,phoenixOwner,lightningOwner,darkOwner,opOwner;
     private static Path path;
     private FruitClaims(){}
     public static void load(MinecraftServer server){
         path=server.getWorldPath(LevelResource.ROOT).resolve("creeperborn-fruits.json");
         try {
-            rubberOwner=null;doorOwner=null;phoenixOwner=null;lightningOwner=null;darkOwner=null;
+            rubberOwner=null;doorOwner=null;phoenixOwner=null;lightningOwner=null;darkOwner=null;opOwner=null;
             if(Files.exists(path)){
                 Data data=new Gson().fromJson(Files.readString(path),Data.class);
                 if(data!=null&&data.rubberOwner()!=null)rubberOwner=UUID.fromString(data.rubberOwner());
@@ -25,6 +25,7 @@ public final class FruitClaims {
                 if(data!=null&&data.phoenixOwner()!=null)phoenixOwner=UUID.fromString(data.phoenixOwner());
                 if(data!=null&&data.lightningOwner()!=null)lightningOwner=UUID.fromString(data.lightningOwner());
                 if(data!=null&&data.darkOwner()!=null)darkOwner=UUID.fromString(data.darkOwner());
+                if(data!=null&&data.opOwner()!=null)opOwner=UUID.fromString(data.opOwner());
             }
         }catch(Exception error){throw new IllegalStateException("Cannot read Creeperborn fruit ownership",error);}
     }
@@ -32,15 +33,16 @@ public final class FruitClaims {
     private static void save(UUID next,UUID nextDoor){save(next,nextDoor,phoenixOwner);}
     private static void save(UUID next,UUID nextDoor,UUID nextPhoenix){save(next,nextDoor,nextPhoenix,lightningOwner);}
     private static void save(UUID next,UUID nextDoor,UUID nextPhoenix,UUID nextLightning){save(next,nextDoor,nextPhoenix,nextLightning,darkOwner);}
-    private static void save(UUID next,UUID nextDoor,UUID nextPhoenix,UUID nextLightning,UUID nextDark){
+    private static void save(UUID next,UUID nextDoor,UUID nextPhoenix,UUID nextLightning,UUID nextDark){save(next,nextDoor,nextPhoenix,nextLightning,nextDark,opOwner);}
+    private static void save(UUID next,UUID nextDoor,UUID nextPhoenix,UUID nextLightning,UUID nextDark,UUID nextOp){
         if(path==null)throw new IllegalStateException("Fruit ownership world has not loaded");
         try {
             Files.createDirectories(path.getParent());
             Path temporary=path.resolveSibling(path.getFileName()+".tmp");
-            Files.writeString(temporary,new Gson().toJson(new Data(next==null?null:next.toString(),nextDoor==null?null:nextDoor.toString(),nextPhoenix==null?null:nextPhoenix.toString(),nextLightning==null?null:nextLightning.toString(),nextDark==null?null:nextDark.toString()))+"\n");
+            Files.writeString(temporary,new Gson().toJson(new Data(next==null?null:next.toString(),nextDoor==null?null:nextDoor.toString(),nextPhoenix==null?null:nextPhoenix.toString(),nextLightning==null?null:nextLightning.toString(),nextDark==null?null:nextDark.toString(),nextOp==null?null:nextOp.toString()))+"\n");
             try{Files.move(temporary,path,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);}
             catch(AtomicMoveNotSupportedException ignored){Files.move(temporary,path,StandardCopyOption.REPLACE_EXISTING);}
-            rubberOwner=next;doorOwner=nextDoor;phoenixOwner=nextPhoenix;lightningOwner=nextLightning;darkOwner=nextDark;
+            rubberOwner=next;doorOwner=nextDoor;phoenixOwner=nextPhoenix;lightningOwner=nextLightning;darkOwner=nextDark;opOwner=nextOp;
         }catch(Exception error){throw new IllegalStateException("Cannot save Creeperborn fruit ownership",error);}
     }
     public static boolean darkAvailable(){return darkOwner==null;}
@@ -50,7 +52,7 @@ public final class FruitClaims {
         setOwner("dark",p.getUUID());return true;
     }
     public static UUID owner(String fruit){
-        return switch(fruit){case "rubber"->rubberOwner;case "door"->doorOwner;case "phoenix"->phoenixOwner;case "lightning"->lightningOwner;case "dark"->darkOwner;default->null;};
+        return switch(fruit){case "rubber"->rubberOwner;case "door"->doorOwner;case "phoenix"->phoenixOwner;case "lightning"->lightningOwner;case "dark"->darkOwner;case "op"->opOwner;default->null;};
     }
     public static void setOwner(String fruit,UUID id){
         switch(fruit){
@@ -59,6 +61,7 @@ public final class FruitClaims {
             case "phoenix"->save(rubberOwner,doorOwner,id,lightningOwner,darkOwner);
             case "lightning"->save(rubberOwner,doorOwner,phoenixOwner,id,darkOwner);
             case "dark"->save(rubberOwner,doorOwner,phoenixOwner,lightningOwner,id);
+            case "op"->save(rubberOwner,doorOwner,phoenixOwner,lightningOwner,darkOwner,id);
             default->throw new IllegalArgumentException("Unknown fruit");
         }
     }
@@ -102,7 +105,7 @@ public final class FruitClaims {
         if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!phoenixAvailable()||hasFruit(p))return false;
         save(rubberOwner,doorOwner,p.getUUID());return true;
     }
-    public static boolean hasFruit(Player p){return ownsDark(p)||p.entityTags().contains("cb_fruit_dark")||ownsLightning(p)||p.entityTags().contains("cb_fruit_lightning")||ownsPhoenix(p)||p.entityTags().contains("cb_fruit_phoenix")||owns(p)||ownsDoor(p)||p.entityTags().contains("cb_fruit_rubber")||p.entityTags().contains("cb_fruit_door");}
+    public static boolean hasFruit(Player p){return p.getUUID().equals(opOwner)||p.entityTags().contains("cb_fruit_op")|| ownsDark(p)||p.entityTags().contains("cb_fruit_dark")||ownsLightning(p)||p.entityTags().contains("cb_fruit_lightning")||ownsPhoenix(p)||p.entityTags().contains("cb_fruit_phoenix")||owns(p)||ownsDoor(p)||p.entityTags().contains("cb_fruit_rubber")||p.entityTags().contains("cb_fruit_door");}
     public static boolean claimDoor(Player p){
         if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!doorAvailable()||hasFruit(p))return false;
         save(rubberOwner,p.getUUID());return true;
@@ -113,6 +116,10 @@ public final class FruitClaims {
     }
     /** Upgrade old alpha saves on join. Disconnects and dimension changes never release a claim. */
     public static void reconcile(Player p){
+        if(p.entityTags().contains("cb_fruit_op")){
+            if(opOwner==null)setOwner("op",p.getUUID());
+            else if(!p.getUUID().equals(opOwner))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_op")||t.startsWith("cb_op_"))p.removeTag(t);
+        }
         if(p.entityTags().contains("cb_fruit_dark")){
             if(darkAvailable())setOwner("dark",p.getUUID());
             else if(!ownsDark(p))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_dark")||t.startsWith("cb_dark_"))p.removeTag(t);
@@ -157,6 +164,8 @@ public final class FruitClaims {
         for(String tag:Set.copyOf(p.entityTags()))if(tag.equals("cb_fruit_lightning")||tag.startsWith("cb_lightning_"))p.removeTag(tag);
     }
     public static void releaseOnDeath(Player p){
+        Op.forget(p);if(p.getUUID().equals(opOwner))setOwner("op",null);
+        for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_op")||t.startsWith("cb_op_"))p.removeTag(t);
         for(String t:Set.copyOf(p.entityTags()))if(t.startsWith("cb_fruit_suppressed_"))p.removeTag(t);
         Dark.ownerDied(p);Dark.forget(p);if(ownsDark(p))setOwner("dark",null);
         for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_dark")||t.startsWith("cb_dark_")&&!t.startsWith("cb_dark_capture|"))p.removeTag(t);
@@ -170,6 +179,6 @@ public final class FruitClaims {
         resetFruitProgress(p);
         WaterRules.forget(p);
     }
-    public static void clear(){rubberOwner=null;doorOwner=null;phoenixOwner=null;lightningOwner=null;darkOwner=null;path=null;}
+    public static void clear(){rubberOwner=null;doorOwner=null;phoenixOwner=null;lightningOwner=null;darkOwner=null;opOwner=null;path=null;}
 }
 

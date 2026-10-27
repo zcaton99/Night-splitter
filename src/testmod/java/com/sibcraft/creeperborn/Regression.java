@@ -812,6 +812,64 @@ public final class Regression implements ModInitializer {
         FruitClaims.releaseOnDeath(ordinary);Dark.clear();Rubber.clear();
     }
 
+
+    private void checkOp(ServerLevel level){
+        Op.clear();var p=player(level);p.snapTo(-8,y+15,8);p.setYRot(0);p.setXRot(0);
+        check(Op.consume(p,Relics.opFruit())&&Op.tier(p)==1&&CombatNetwork.selection(p)==9,"Op fruit selects authoritative Z/X/C controls");
+        check(WaterRules.vulnerable(p)&&!Op.consume(player(level),Relics.opFruit()),"Op water curse and unique owner");
+        check(Op.diameter(p)==25&&Op.duration(p)==600,"Base ROOM is 25 diameter and 30 seconds");
+        check(Op.cast(p,1,0).contains("locked")&&Op.cast(p,2,0).contains("locked"),"X tier two and C tier three");
+        check(Op.cast(p,0,0).startsWith("ROOM!")&&Op.room(p),"Tier one tap Z opens ROOM");
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        target.snapTo(-8,y+15,12);target.setNoAi(true);target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
+        check(Op.inside(p,target),"Enemy inside spherical ROOM");
+        check(Op.cast(p,0,7).equals("Gamma Knife!")&&target.getHealth()<100,"Tier one hold Z damages target with Gamma Knife");
+        target.snapTo(-8,y+15,23);check(!Op.inside(p,target),"Targets outside ROOM excluded");
+        Op.grant(p,2);check(Op.diameter(p)==32&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
+        target.snapTo(-8,y+15,12);target.damageCooldownTime=0;
+        check(Op.cast(p,1,0).equals("Counter Shock!")&&Op.rooted(target),"Tier two tap X shocks and stuns");
+        clock(level,level.getGameTime()+21);check(!Op.rooted(target),"Shock stun expires");
+        Op.grant(p,3);check(Op.diameter(p)==40&&Op.duration(p)==1800&&Op.charges(p)==5,"Mastery ROOM 40 diameter 90 seconds and five Shambles");
+        for(int i=0;i<5;i++)check(Op.swap(p,target).startsWith("Shambles!"),"Five consecutive Shambles at mastery");
+        check(Op.swap(p,target).contains("recharging"),"Sixth swap blocked until recharge");
+        clock(level,level.getGameTime()+100);check(Op.remaining(p)==5,"Swap charges fully refill after five seconds");
+        p.getFoodData().setFoodLevel(20);
+        check(Hearts.extract(p,target),"Heart extraction reserves live target");
+        ItemStack cube=ItemStack.EMPTY;
+        for(int i=0;i<p.getInventory().getContainerSize();i++)if(!Hearts.token(p.getInventory().getItem(i)).isEmpty()){cube=p.getInventory().getItem(i);break;}
+        check(!cube.isEmpty()&&cube.getHoverName().getString().contains("Zombie")&&cube.getHoverName().getString().contains("BenderTest"),"Heart name identifies victim and extractor");
+        float health=target.getHealth();check(Hearts.squeeze(p,cube).contains("one heart")&&target.getHealth()==health-2,"Squeeze deals exactly one heart");
+        check(Hearts.squeeze(p,cube).contains("Wait"),"Squeeze cooldown");
+        clock(level,level.getGameTime()+20);Hearts.squeeze(p,cube);check(target.getHealth()==health-4,"Repeated squeeze damages same linked victim");
+        ItemStack duplicate=cube.copy();
+        check(Hearts.giveBack(p,target,cube)&&!Hearts.squeeze(p,duplicate).contains("one heart"),"Returning heart invalidates copied token");
+        java.util.List<Zombie> victims=new java.util.ArrayList<>();
+        for(int i=0;i<6;i++){
+            Zombie z=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);z.snapTo(-7+i,y+15,11);z.setNoAi(true);level.addFreshEntity(z);victims.add(z);
+            check(Hearts.extract(p,z)==(i<5),"Up to five different hearts, sixth rejected");
+        }
+        check(Hearts.hasHeart(p),"Five-heart limit enforced");
+        var z=victims.getFirst();ItemStack killCube=ItemStack.EMPTY;
+        for(int i=0;i<p.getInventory().getContainerSize();i++){var candidate=p.getInventory().getItem(i);if(!Hearts.token(candidate).isEmpty()){killCube=candidate.copy();candidate.shrink(1);break;}}
+        ItemEntity dropped=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),killCube);level.addFreshEntity(dropped);
+        check(!Hearts.groundTick(dropped),"Heart starts ground return timer");
+        clock(level,level.getGameTime()+5999);check(!Hearts.groundTick(dropped),"No premature five-minute return");
+        clock(level,level.getGameTime()+1);check(Hearts.groundTick(dropped)&&z.isAlive(),"Five-minute return removes cube without killing victim");
+        Hearts.load(server);Hearts.join(p);
+        ItemStack returned=ItemStack.EMPTY;for(int i=0;i<p.getInventory().getContainerSize();i++)if(Hearts.token(p.getInventory().getItem(i)).equals(Hearts.token(killCube))){returned=p.getInventory().getItem(i);break;}
+        check(!returned.isEmpty(),"Pending return survives registry reload and delivers to owner");
+        ItemEntity burn=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),returned.copy());returned.shrink(1);level.addFreshEntity(burn);
+        burn.remove(net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+        check(!z.isAlive(),"Physical heart destruction kills linked target");
+        Hearts.died(p);for(var v:victims)if(v.isAlive())v.discard();target.discard();
+        FruitClaims.load(server);check(Op.unlocked(p),"Op ownership survives save reload");
+        check(Dark.consume(p,Relics.darkFruit()),"Op can be Dark second fruit");
+        Dark.choose(p,"op");check(CombatNetwork.selection(p)==9,"G can select stored Op power");
+        Dark.grantFruit(p,"op",2);check(Op.tier(p)==2,"Captured Op mastery dispatch");
+        FruitClaims.releaseOnDeath(p);check(!Op.unlocked(p)&&FruitClaims.owner("op")==null&&!Op.room(p),"Actual death clears Op claim and ROOM");
+        Op.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -827,6 +885,7 @@ public final class Regression implements ModInitializer {
         checkDarkMoves(level);
         checkDarkCaptures(level);
         checkFoundSecondFruit(level);
+        checkOp(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
