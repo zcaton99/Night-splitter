@@ -62,18 +62,23 @@ public final class FruitClaims {
             default->throw new IllegalArgumentException("Unknown fruit");
         }
     }
+    private static long ownedCount(Player p){return Dark.FRUITS.stream().filter(f->p.getUUID().equals(owner(f))).count();}
+    private static boolean room(Player p,String fruit){
+        long count=ownedCount(p);
+        return count==0&&!hasFruit(p)||count==1&&(fruit.equals("dark")&&!ownsDark(p)||Dark.unlocked(p)&&!fruit.equals("dark"));
+    }
     public static boolean claimItem(Player p,net.minecraft.world.item.ItemStack item,String fruit){
+        if(!(p.level() instanceof ServerLevel)||!p.isAlive()||p.isSpectator()||!Dark.FRUITS.contains(fruit)||!room(p,fruit))return false;
         String token=Relics.captureToken(item);
-        if(!token.isEmpty()){
-            UUID id;try{id=UUID.fromString(token);}catch(IllegalArgumentException error){return false;}
-            boolean room=!hasFruit(p)||Dark.unlocked(p)&&Dark.extra(p)==null&&!fruit.equals("dark");
-            if(!room||!id.equals(owner(fruit))||!p.isAlive()||p.isSpectator())return false;
-            setOwner(fruit,p.getUUID());return true;
+        if(token.isEmpty()){
+            if(owner(fruit)!=null)return false;
+        }else{
+            try{if(!UUID.fromString(token).equals(owner(fruit)))return false;}catch(IllegalArgumentException error){return false;}
         }
-        return switch(fruit){case "rubber"->claim(p);case "door"->claimDoor(p);case "phoenix"->claimPhoenix(p);case "lightning"->claimLightning(p);case "dark"->claimDark(p);default->false;};
+        setOwner(fruit,p.getUUID());return true;
     }
     public static boolean eatCapture(Player p,String fruit,UUID token){
-        if(!Dark.unlocked(p)||Dark.extra(p)!=null||fruit.equals("dark")||!token.equals(owner(fruit))||!p.isAlive()||p.isSpectator())return false;
+        if(!Dark.unlocked(p)||ownedCount(p)!=1||fruit.equals("dark")||!token.equals(owner(fruit))||!p.isAlive()||p.isSpectator())return false;
         setOwner(fruit,p.getUUID());return true;
     }
     public static void releaseItem(net.minecraft.world.item.ItemStack item){

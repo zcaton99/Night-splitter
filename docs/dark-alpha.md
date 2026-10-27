@@ -1,15 +1,15 @@
-# Dark Creeper Fruit — alpha.34
+# Dark Creeper Fruit — alpha.35
 
-Dark is the fifth rare fruit. The total Fruitborn chance is unchanged. One living owner per fruit remains; Dark has a special allowance for one additional captured power.
+Dark is the fifth rare fruit. The total Fruitborn chance is unchanged. One living owner per fruit remains; Dark has a special allowance for one additional power.
 
 | Input | Move | Initial balance |
 | --- | --- | --- |
 | Tap Z | Black Vortex | 24-block aimed pull, 5 damage, 2s recovery |
 | Hold Z .35s, release | Nullifying Grasp | 6-block aim; ends fruit transformations, roots target and suppresses fruit powers for 3s / 5s with all-four mastery; 5 damage; 8s recovery |
-| Tap X | Dark Mantle | 8s shadow-player model; incoming projectiles deal 55% damage and charge up to six darkness charges; half a food icon activation cost; 12s recovery |
+| Tap X | Dark Mantle | 8s shadow-player model; melee attacks deal 50% damage, projectiles deal 25% damage and charge up to six darkness charges; half a food icon activation cost; 12s recovery |
 | Hold X .35s, release | Liberation | Spend stored charges on an 8-block shockwave; 4 + 2 damage per charge, pushback; 8s recovery |
 | Tap C | Shadow Surge | Roughly 16-block grounded shadow rush, stops at obstacles; 6s recovery |
-| Hold C 3s, release | Void Collapse | 32-block placement; pulls enemies within 6 blocks for 4s, 4-damage pulses and 12-damage collapse; 20s recovery; actual player kills capture fruits |
+| Hold C 3s, release | Void Collapse | centered three blocks ahead; pulls enemies within 6 blocks / 9 with all-four mastery for 4s, 4-damage pulses and 12-damage collapse; 20s recovery; actual player kills capture fruits |
 
 Tier 1 unlocks Z, tier 2 X (10 uses + 300 active seconds), tier 3 C (40 uses + 3600 active seconds). Ordinary offensive hits suppress fruit moves for one second, refreshing without stacking. Element casts stay available. Grasp ends Rubber Gear/Guard, Phoenix/Lightning forms, Door sessions and Dark Mantle; temporary flight is restored correctly. All-four mastery strengthens Dark damage by the normal Harmony multiplier and extends Grasp to five seconds.
 
@@ -32,3 +32,13 @@ Actual death clears both equipped fruits while retaining elemental progression. 
 Use a fresh test world/player to preserve existing powers. PvP capture needs a second fruit-owning player. Test Grasp against forms, normal one-second suppression while elements still work, Mantle projectile absorption and six-charge cap, Liberation spending, Surge collision, Void kills/Rebirth, Eat tier cap/G switching, Materialize/full inventory/chest trade, and logout/death restoration.
 
 All models are original code-built meshes. Dark Mantle replaces the visible avatar with a black shadow and violet eyes, Surge flattens into a shadow pool, and Void Collapse has a temporary black sphere with a rotating violet rim. Effects do not remove terrain blocks.
+
+## Alpha.35 playtest changes
+
+Black Vortex has a thicker black envelope around its violet tendril and a rotating three-turn coil that follows the target for one second.
+
+Void Collapse originates from the casting hand, centers three blocks in front of the caster (walls limit placement), and has a larger orb. Its 6-block radius grows to 9 with all-four mastery, including its actual pull/damage area. Temporary meshes coat the sampled tops of nearby blocks in black. Terrain blocks and collision stay intact, and both the sphere and ground shadow clean up on collapse, logout, death and dimension changes.
+
+Dark owners with an empty second slot can consume any unclaimed, marked Creeper Fruit item they find, including normal Fruitborn drops. Obtaining Dark after one ordinary fruit also establishes a two-power pair. A third power is rejected, and ordinary players still need Dark to own two. Normal found fruits start at tier 1; captured items retain their capped tier. Consuming the new fruit ends any previous transformation before switching selection.
+
+Dark Mantle now halves melee attack damage and reduces incoming projectile damage by 75%. Projectile absorption still charges Liberation. It does not reduce environmental hazards, void or kill damage.

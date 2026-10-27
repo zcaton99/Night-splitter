@@ -14,7 +14,7 @@ public final class DoorFruit {
     public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,"door");}
     public static boolean consume(Player p,ItemStack item){
         if(!Relics.kind(item).equals("fruit:door")||item.isEmpty()||!FruitClaims.claimItem(p,item,"door"))return false;
-        p.addTag("cb_fruit_door");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"door");item.shrink(1);return true;
+        p.addTag("cb_fruit_door");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.selectConsumed(p,"door");item.shrink(1);return true;
     }
     public static int uses(Player p){return Mastery.get(p,"cb_door_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_door_time_");}

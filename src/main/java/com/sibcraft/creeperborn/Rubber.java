@@ -47,7 +47,7 @@ public final class Rubber {
     public static boolean consume(Player p, ItemStack stack) {
         if (!Relics.kind(stack).equals("fruit:rubber") || stack.isEmpty() || unlocked(p) || p.isSpectator()) return false;
         if(!FruitClaims.claimItem(p,stack,"rubber"))return false;
-        grant(p,Relics.captureTier(stack)); p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); if(Dark.unlocked(p))Dark.choose(p,"rubber"); stack.shrink(1); return true;
+        grant(p,Relics.captureTier(stack)); p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); if(Dark.unlocked(p))Dark.selectConsumed(p,"rubber"); stack.shrink(1); return true;
     }
     public static int uses(Player p) { return Mastery.get(p,"cb_rubber_uses_"); }
     public static int seconds(Player p) { return Mastery.get(p,"cb_rubber_time_"); }

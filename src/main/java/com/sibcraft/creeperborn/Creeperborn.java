@@ -75,15 +75,15 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if(kind.equals("fruit:dark")){
-                say(player,Dark.consume(player,stack)?"Dark unlocked! G selects fruit; Z Vortex/Grasp; X Mantle/Liberation; C Surge/Void Collapse.":"Dark may already be claimed, or you already own a fruit.");
+                say(player,Dark.consume(player,stack)?"Dark unlocked! G selects fruit; Z Vortex/Grasp; X Mantle/Liberation; C Surge/Void Collapse.":"Dark may already be claimed, or both fruit slots are full.");
             }else if(kind.equals("fruit:lightning")){
-                say(player,Lightning.consume(player,stack)?"Lightning unlocked! G selects fruit; tap Z bolt, hold Z eight seconds Judgment; X electric movement, C Storm Form.":"One Creeper Fruit per player; Lightning may already have an owner.");
+                say(player,Lightning.consume(player,stack)?"Lightning unlocked! G selects fruit; tap Z bolt, hold Z eight seconds Judgment; X electric movement, C Storm Form.":"Fruit slot full, or Lightning is already claimed.");
             }else if(kind.equals("fruit:phoenix")){
-                say(player,Phoenix.consume(player,stack)?"Phoenix unlocked! G selects fruit; Z attacks, X wings, hold X form, tap C healing circle; hold C ally blessing.":"One fruit per player; Phoenix may already have a living owner.");
+                say(player,Phoenix.consume(player,stack)?"Phoenix unlocked! G selects fruit; Z attacks, X wings, hold X form, tap C healing circle; hold C ally blessing.":"Fruit slot full, or Phoenix is already claimed.");
             }else if(kind.equals("fruit:door")){
-                say(player,DoorFruit.consume(player,stack)?"Door-Door unlocked! G selects fruit, Z opens a passage.":"One fruit per player. This fruit may also be claimed by another living owner.");
+                say(player,DoorFruit.consume(player,stack)?"Door-Door unlocked! G selects fruit, Z opens a passage.":"Fruit slot full, or this fruit is already claimed.");
             } else if (kind.equals("fruit:rubber")) {
-                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "One fruit per player. Rubber may also be claimed by another living owner.");
+                say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "Fruit slot full, or Rubber is already claimed.");
             } else if (kind.startsWith("heart:")) {
                 say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
                     : "You already know this element. Keep the heart for a friend.");
@@ -124,7 +124,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.34 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.35 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");

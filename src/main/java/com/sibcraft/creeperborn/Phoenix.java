@@ -43,7 +43,7 @@ public final class Phoenix {
     }
     public static boolean consume(Player p,ItemStack item){
         if(item.isEmpty()||!Relics.kind(item).equals("fruit:phoenix")||!FruitClaims.claimItem(p,item,"phoenix"))return false;
-        p.addTag("cb_fruit_phoenix");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"phoenix");item.shrink(1);return true;
+        p.addTag("cb_fruit_phoenix");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.selectConsumed(p,"phoenix");item.shrink(1);return true;
     }
     public static boolean form(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.formUntil>now(p);}
     public static boolean wing(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.wingUntil>now(p);}

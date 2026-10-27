@@ -37,7 +37,7 @@ public final class Lightning {
     }
     public static boolean consume(Player p,ItemStack item){
         if(item.isEmpty()||!Relics.kind(item).equals("fruit:lightning")||!FruitClaims.claimItem(p,item,"lightning"))return false;
-        p.addTag("cb_fruit_lightning");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"lightning");item.shrink(1);return true;
+        p.addTag("cb_fruit_lightning");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.selectConsumed(p,"lightning");item.shrink(1);return true;
     }
     public static boolean storm(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.stormUntil>now(p);}
     public static int duration(Player p){return Mastery.harmony(p)?1800:1200;}

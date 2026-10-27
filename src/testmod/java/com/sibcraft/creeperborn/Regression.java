@@ -672,7 +672,7 @@ public final class Regression implements ModInitializer {
     private void checkDarkMoves(ServerLevel level){
         Dark.clear();Player p=player(level);p.snapTo(-12.5,y+30,8.5);p.setYRot(0);p.setXRot(0);
         check(Dark.consume(p,Relics.darkFruit())&&Dark.tier(p)==1&&CombatNetwork.selection(p)==8,"Dark fruit unlocks with authoritative control selection");
-        check(!Rubber.consume(p,Relics.fruit())&&!Dark.consume(player(level),Relics.darkFruit()),"Dark still enforces ordinary consumption and unique owner limits");
+        check(!Dark.consume(player(level),Relics.darkFruit()),"Dark enforces its unique owner limit");
         check(Dark.cast(p,1,0).contains("locked")&&Dark.cast(p,2,0).contains("locked"),"X and C are gated at tiers two and three");
         Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+30,16.5);target.setNoAi(true);
         target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
@@ -682,9 +682,11 @@ public final class Regression implements ModInitializer {
         target.snapTo(-12.5,y+30,12.5);target.damageCooldownTime=0;
         check(Dark.cast(p,0,7).equals("Nullifying Grasp!")&&Dark.rooted(target)&&Shackles.rooted(target),"Grasp roots a nearby aimed target using native movement guard");
         check(Dark.graspTicks(p)==60,"Ordinary Grasp lasts three seconds");
+        check(Dark.voidRadius(p)==6&&Dark.voidSize(p)==2.5f,"Base Void has six-block radius and enlarged orb");
         clock(level,level.getGameTime()+61);check(!Dark.rooted(target),"Grasp root expires");
         for(Element element:Element.values())Mastery.grant(p,element,3);
         check(Dark.graspTicks(p)==100,"All-four mastery extends Grasp to five seconds");
+        check(Dark.voidRadius(p)==9&&Dark.voidSize(p)==4,"All-four mastery expands Void pull radius and visible orb");
         Dark.suppress(p,20,false);check(Dark.cast(p,0,0).contains("suppressed"),"Fruit suppression blocks Dark casts");
         Progress.select(p,Element.EARTH);
         check(!CombatNetwork.press(p,0).contains("suppressed"),"Element controls remain usable while fruit suppressed");
@@ -692,7 +694,10 @@ public final class Regression implements ModInitializer {
         check(Dark.cast(p,1,0).equals("Dark Mantle!")&&Dark.mantle(p),"Tier-two Mantle activates shadow form");
         Player attacker=player(level);var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.setOwner(attacker);
         p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4);
-        check(Math.abs(p.getHealth()-17.8)<.001&&Dark.energy(p)==1,"Mantle reduces incoming projectile damage and stores a charge");
+        check(Math.abs(p.getHealth()-19)<.001&&Dark.energy(p)==1,"Mantle reduces projectile damage by seventy-five percent and stores a charge");
+        p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().playerAttack(attacker),4);
+        check(Math.abs(p.getHealth()-18)<.001,"Mantle halves incoming melee damage");
+        check(Dark.damage(p,p.damageSources().generic(),4)==4,"Mantle does not reduce environmental generic damage");
         for(int i=0;i<8;i++)Dark.damage(p,p.damageSources().arrow(arrow,attacker),4);
         check(Dark.energy(p)==6,"Mantle energy caps at six");
         target.setHealth(100);target.damageCooldownTime=0;
@@ -702,13 +707,21 @@ public final class Regression implements ModInitializer {
         check(Dark.cast(p,2,0).equals("Shadow Surge!"),"Tap C starts grounded Surge");
         Dark.tickPlayer(p);check(p.getDeltaMovement().z>0,"Shadow Surge drives forward motion");
         Dark.endMantle(p);p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        target.snapTo(-12.5,y+30,38.5);target.setHealth(100);target.damageCooldownTime=0;
+        target.snapTo(-12.5,y+30,13.5);target.setHealth(100);target.damageCooldownTime=0;
+        level.setBlockAndUpdate(new BlockPos(-13,(int)y+29,11),Blocks.STONE.defaultBlockState());
+        check(Math.abs(Dark.voidCenter(p).z-p.getZ()-3)<.001&&Math.abs(Dark.voidCenter(p).x-p.getX())<.001,"Void centers three blocks in front of caster");
         check(Dark.cast(p,2,60).equals("Void Collapse!"),"Hold C places a Void");
         var spheres=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(40)).stream()
             .filter(d->d.getCustomName()!=null&&d.getCustomName().getString().equals("cb_dark_void")).toList();
         check(spheres.size()==1&&!spheres.getFirst().shouldBeSaved(),"Void sphere is an original temporary display excluded from saves");
+        var ground=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(40)).stream()
+            .filter(d->d.getCustomName()!=null&&d.getCustomName().getString().startsWith("cb_dark_ground|")).toList();
+        check(ground.size()==1&&!ground.getFirst().shouldBeSaved()&&ground.getFirst().getCustomName().getString().contains(","),
+            "Void ground shadow samples block tops into a temporary mesh");
+
         for(int i=0;i<81;i++){clock(level,level.getGameTime()+1);Dark.tickEffects();}
         check(spheres.getFirst().isRemoved()&&target.getHealth()<100,"Void pulses damage and its sphere cleans up at collapse");
+        check(ground.getFirst().isRemoved()&&level.getBlockState(new BlockPos(-13,(int)y+29,11)).is(Blocks.STONE),"Ground shadow cleans up without changing terrain");
         FruitClaims.releaseOnDeath(p);target.discard();Dark.clear();Creeperborn.ABILITIES.clear();
     }
     private ItemStack capturedItem(Player p,String token){
@@ -771,6 +784,34 @@ public final class Regression implements ModInitializer {
         FruitClaims.releaseOnDeath(friend);FruitClaims.releaseOnDeath(doorFriend);Dark.clear();Phoenix.clear();Lightning.clear();
     }
 
+    private boolean consumeFound(Player p,String fruit,ItemStack item){
+        return switch(fruit){case "rubber"->Rubber.consume(p,item);case "door"->DoorFruit.consume(p,item);case "phoenix"->Phoenix.consume(p,item);case "lightning"->Lightning.consume(p,item);case "dark"->Dark.consume(p,item);default->false;};
+    }
+    private void checkFoundSecondFruit(ServerLevel level){
+        for(String fruit:java.util.List.of("rubber","door","phoenix","lightning")){
+            Player p=player(level);check(Dark.consume(p,Relics.darkFruit()),"Dark owner created for found-item test");
+            Dark.grant(p,2);p.getFoodData().setFoodLevel(20);Dark.cast(p,1,0);check(Dark.mantle(p),"Mantle active before consuming second fruit");
+            ItemStack found=Relics.fruit(fruit);
+            check(consumeFound(p,fruit,found)&&found.isEmpty()&&fruit.equals(Dark.extra(p)),"Dark consumes an ordinary found fruit into its empty second slot");
+            check(Dark.fruitTier(p,fruit)==1&&!Dark.mantle(p),"Found fruit starts at tier one and ends prior Dark form");
+            check(Dark.choice(p).equals(fruit)&&!Dark.selected(p),"Found fruit becomes selected");
+            String third=fruit.equals("rubber")?"door":"rubber";ItemStack rejected=Relics.fruit(third);
+            check(!consumeFound(p,third,rejected)&&rejected.getCount()==1,"Dark cannot eat a third power and rejection preserves item");
+            Dark.cycle(p);check(Dark.selected(p),"G cycles from found second fruit to Dark");
+            Dark.cycle(p);check(Dark.choice(p).equals(fruit),"G cycles back to found second fruit");
+            FruitClaims.load(server);FruitClaims.reconcile(p);check(Dark.unlocked(p)&&fruit.equals(Dark.extra(p)),"Found two-power pair survives claim reload");
+            FruitClaims.releaseOnDeath(p);
+        }
+        Player ordinary=player(level);check(Rubber.consume(ordinary,Relics.fruit()),"Ordinary player obtains first fruit");
+        check(!DoorFruit.consume(ordinary,Relics.doorFruit()),"Ordinary player still cannot eat two non-Dark fruits");
+        Rubber.grant(ordinary,3);ordinary.getFoodData().setFoodLevel(20);Rubber.cast(ordinary,2,0);
+        check(Rubber.gear(ordinary)&&ordinary.getAbilities().mayfly,"Existing power active before finding Dark");
+        check(Dark.consume(ordinary,Relics.darkFruit())&&Dark.unlocked(ordinary)&&Rubber.unlocked(ordinary),"Finding Dark after one ordinary fruit establishes a two-power pair");
+        check(!Rubber.gear(ordinary)&&!ordinary.getAbilities().mayfly&&Rubber.tier(ordinary)==3,"Adding Dark restores flight and preserves previously earned mastery");
+        check(!Phoenix.consume(ordinary,Relics.phoenixFruit()),"Reverse acquisition order still rejects third power");
+        FruitClaims.releaseOnDeath(ordinary);Dark.clear();Rubber.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -785,6 +826,7 @@ public final class Regression implements ModInitializer {
         checkRubberLightningCounter(level);
         checkDarkMoves(level);
         checkDarkCaptures(level);
+        checkFoundSecondFruit(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

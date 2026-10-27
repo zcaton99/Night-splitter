@@ -17,7 +17,9 @@ import net.minecraft.world.phys.*;
 public final class Dark{
     public static final List<String> FRUITS=List.of("rubber","door","phoenix","lightning","dark");
     private static final class State{Player owner;ServerLevel level;int held=-1,surge;long press,heartbeat,recent=-1000,mantleUntil,flare;Vec3 last,surgeDirection;}
-    private record Void(Player owner,ServerLevel level,Vec3 center,long ends,Display.BlockDisplay visual){}
+    private record Void(Player owner,ServerLevel level,Vec3 center,long ends,Display.BlockDisplay visual,Display.BlockDisplay ground,int radius,float size){}
+    private record Coil(Player owner,LivingEntity target,ServerLevel level,long ends){}
+    private static final List<Coil> coils=new ArrayList<>();
     private record Tether(Player owner,LivingEntity target,ServerLevel level,long ends){}
     public record Capture(String tag,UUID token,String fruit,int tier){}
     private record View(int entity,int flags){}
@@ -38,6 +40,7 @@ public final class Dark{
         }
         return "dark";
     }
+    public static void selectConsumed(Player p,String fruit){stopForms(p);choose(p,fruit);}
     public static void choose(Player p,String fruit){
         for(String t:Set.copyOf(p.entityTags()))if(t.startsWith("cb_dark_choice_"))p.removeTag(t);
         p.addTag("cb_dark_choice_"+fruit);p.addTag("cb_mode_fruit");
@@ -45,7 +48,7 @@ public final class Dark{
     public static String cycle(Player p){
         String current=choice(p),other=extra(p),next=!p.entityTags().contains("cb_mode_fruit")?current:current.equals("dark")&&other!=null?other:"dark";
         if(!next.equals(current)){stopForms(p);cancelInput(p);}
-        choose(p,next);return "Creeper Fruit: "+next+" | G switches Dark / captured power";
+        choose(p,next);return "Creeper Fruit: "+next+" | G switches Dark / second power";
     }
     public static int uses(Player p){return Mastery.get(p,"cb_dark_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_dark_time_");}
@@ -57,7 +60,7 @@ public final class Dark{
     }
     public static boolean consume(Player p,ItemStack item){
         if(item.isEmpty()||!Relics.kind(item).equals("fruit:dark")||!FruitClaims.claimItem(p,item,"dark"))return false;
-        p.addTag("cb_fruit_dark");grant(p,Relics.captureTier(item));choose(p,"dark");item.shrink(1);return true;
+        p.addTag("cb_fruit_dark");grant(p,Relics.captureTier(item));stopForms(p);choose(p,"dark");item.shrink(1);return true;
     }
     private static void credit(Player p){if(!p.isAlive()||!unlocked(p))return;State s=state(p);if(now(p)-s.recent>=20)Mastery.set(p,"cb_dark_uses_",uses(p)+1);s.recent=now(p);}
     private static long value(Player p,String prefix){
@@ -81,11 +84,11 @@ public final class Dark{
     public static float damage(Player p,DamageSource source,float amount){
         if(!mantle(p)||amount<=0||Phoenix.bypass(source))return amount;
         boolean projectile=source.getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile||Lightning.electrical(source);
-        if(!projectile)return amount;
+        if(!projectile)return source.getEntity() instanceof LivingEntity?amount*.5f:amount;
         Mastery.set(p,"cb_dark_energy_",Math.min(6,energy(p)+1));
         if(source.getEntity() instanceof Player attacker&&attacker!=p&&FruitClaims.hasFruit(attacker))suppress(attacker,20,false);
         if(source.getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile projectileEntity)projectileEntity.discard();
-        credit(p);return amount*.55f;
+        credit(p);return amount*.25f;
     }
     public static void press(Player p,int move){
         if(!selected(p)||suppressed(p)||!p.isAlive()||p.isSpectator()||WaterRules.suppressed(p)||move<0||move>2)return;
@@ -141,7 +144,8 @@ public final class Dark{
                 Vec3 pull=p.position().subtract(target.position()).normalize();
                 if(target instanceof ServerPlayer sp)Rubber.impulse(sp,pull.scale(1.3).add(0,.15,0));
                 else target.setDeltaMovement(pull.scale(1.3).add(0,.15,0));
-                darkLine(level,p.getEyePosition().add(0,-.3,0),target.getEyePosition(),24);
+                darkLine(level,LightningBolts.hand(p),target.getEyePosition(),24);
+                coils.add(new Coil(p,target,level,now(p)+20));coil(level,target,now(p));
                 hurt(p,target,(float)(5*power),false);
             }
             value(p,"cb_dark_ready_0_"+charged+"_",now(p)+(charged?160:40));return charged?"Nullifying Grasp!":"Black Vortex!";
@@ -164,25 +168,57 @@ public final class Dark{
             value(p,"cb_dark_ready_1_"+charged+"_",now(p)+(charged?160:240));return charged?"Liberation!":"Dark Mantle!";
         }
         if(charged){
-            Vec3 center=aim(p,32);voids.add(new Void(p,level,center,now(p)+80,orb(level,center)));credit(p);
+            Vec3 center=voidCenter(p);int radius=voidRadius(p);voids.add(new Void(p,level,center,now(p)+80,orb(level,center),ground(level,p,center,radius),radius,voidSize(p)));darkLine(level,LightningBolts.hand(p),center,28);credit(p);
             value(p,"cb_dark_ready_2_true_",now(p)+400);return "Void Collapse!";
         }
         if(p.isPassenger())return "Dismount before Shadow Surge.";
         double yaw=Math.toRadians(p.getYRot());s.surgeDirection=new Vec3(-Math.sin(yaw),0,Math.cos(yaw));
         s.surge=12;s.level=level;credit(p);value(p,"cb_dark_ready_2_false_",now(p)+120);return "Shadow Surge!";
     }
-    private static Display.BlockDisplay orb(ServerLevel level,Vec3 center){
+    public static int voidRadius(Player p){return Mastery.harmony(p)?9:6;}
+    public static float voidSize(Player p){return Mastery.harmony(p)?4:2.5f;}
+    public static Vec3 voidCenter(Player p){
+        double yaw=Math.toRadians(p.getYRot());Vec3 forward=new Vec3(-Math.sin(yaw),0,Math.cos(yaw));
+        Vec3 desired=p.position().add(forward.scale(3)).add(0,1,0);
+        var wall=p.level().clip(new ClipContext(p.getEyePosition(),desired,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
+        return wall.getType()==HitResult.Type.MISS?desired:wall.getLocation().subtract(forward.scale(.35));
+    }
+    private static Display.BlockDisplay ground(ServerLevel level,Player owner,Vec3 center,int radius){
+        Vec3 origin=new Vec3(Math.floor(center.x)+.5,center.y,Math.floor(center.z)+.5);
+        StringBuilder name=new StringBuilder("cb_dark_ground|");
+        for(int x=-radius;x<=radius;x++)for(int z=-radius;z<=radius;z++){
+            if(x*x+z*z>radius*radius)continue;
+            Vec3 top=origin.add(x,2.5,z),bottom=origin.add(x,-12,z);
+            if(!level.hasChunkAt(net.minecraft.core.BlockPos.containing(top)))continue;
+            var hit=level.clip(new ClipContext(top,bottom,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,owner));
+            if(hit.getType()==HitResult.Type.MISS)continue;
+            float y=(float)(hit.getLocation().y-origin.y+.015);
+            name.append(x).append(',').append(y).append(',').append(z).append(';');
+        }
+        return display(level,origin,name.toString());
+    }
+    private static Display.BlockDisplay orb(ServerLevel level,Vec3 center){return display(level,center,"cb_dark_void");}
+    private static Display.BlockDisplay display(ServerLevel level,Vec3 center,String name){
         Display.BlockDisplay display=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);if(display==null)return null;
-        display.addTag("cb_temporary_rock");display.setCustomName(Component.literal("cb_dark_void"));display.setCustomNameVisible(false);
+        display.addTag("cb_temporary_rock");display.setCustomName(Component.literal(name));display.setCustomNameVisible(false);
         display.setBlockState(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
         var settings=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)display;settings.creeperborn$duration(0);settings.creeperborn$positionDuration(0);settings.creeperborn$width(32);settings.creeperborn$height(32);settings.creeperborn$view(1);
         display.snapTo(center.x,center.y,center.z);level.addFreshEntity(display);return display;
     }
-    private static void removeVoid(Void v){if(v.visual()!=null)v.visual().discard();}
-    private static final DustParticleOptions BLACK=new DustParticleOptions(0x12051B,1.3f),VIOLET=new DustParticleOptions(0x6E1CBB,1.1f);
+    private static void removeVoid(Void v){if(v.visual()!=null)v.visual().discard();if(v.ground()!=null)v.ground().discard();}
+    private static final DustParticleOptions BLACK=new DustParticleOptions(0x020204,1.8f),VIOLET=new DustParticleOptions(0x6E1CBB,.65f);
     private static void dust(ServerLevel level,Vec3 at,int count){level.sendParticles(BLACK,at.x,at.y,at.z,count,.4,.5,.4,.01);level.sendParticles(VIOLET,at.x,at.y,at.z,Math.max(1,count/3),.4,.5,.4,.01);}
     private static void darkLine(ServerLevel level,Vec3 from,Vec3 to,int count){
-        for(int i=0;i<=count;i++){double t=i/(double)count;Vec3 at=from.lerp(to,t).add(Math.sin(t*24)*.1,Math.sin(t*12)*.1,0);level.sendParticles(VIOLET,at.x,at.y,at.z,1,0,0,0,0);}
+        for(int i=0;i<=count;i++){double t=i/(double)count;Vec3 at=from.lerp(to,t).add(Math.sin(t*24)*.1,Math.sin(t*12)*.1,0);level.sendParticles(BLACK,at.x,at.y,at.z,2,.04,.04,.04,0);level.sendParticles(VIOLET,at.x,at.y,at.z,1,0,0,0,0);}
+    }
+    private static void coil(ServerLevel level,LivingEntity target,long time){
+        double radius=Math.max(.5,target.getBbWidth()/2+.2),height=target.getBbHeight();
+        for(int i=0;i<36;i++){
+            double t=i/35.0,a=t*Math.PI*6+time*.22;
+            Vec3 at=target.position().add(Math.cos(a)*radius,.1+t*Math.max(.6,height-.15),Math.sin(a)*radius);
+            level.sendParticles(BLACK,at.x,at.y,at.z,1,.025,.025,.025,0);
+            level.sendParticles(VIOLET,at.x,at.y,at.z,1,0,0,0,0);
+        }
     }
     private static void chains(ServerLevel level,LivingEntity target){
         for(int i=0;i<24;i++){double a=i*Math.PI/6;Vec3 at=target.position().add(Math.cos(a)*.6,.2+i*.06,Math.sin(a)*.6);level.sendParticles(BLACK,at.x,at.y,at.z,1,0,0,0,0);}
@@ -222,23 +258,25 @@ public final class Dark{
         }
     }
     public static void tickEffects(){
+        coils.removeIf(c->{if(!c.owner().isAlive()||!c.target().isAlive()||c.owner().level()!=c.level()||c.target().level()!=c.level()||now(c.owner())>=c.ends())return true;if(now(c.owner())%4==0)coil(c.level(),c.target(),now(c.owner()));return false;});
         tethers.entrySet().removeIf(entry->{Tether t=entry.getValue();if(!rooted(t.target()))return true;
             t.target().setDeltaMovement(Vec3.ZERO);if(t.target() instanceof Mob mob)mob.getNavigation().stop();if(now(t.owner())%5==0)chains(t.level(),t.target());return false;});
         for(Void v:List.copyOf(voids)){
             if(!voids.contains(v))continue;
             if(!v.owner().isAlive()||v.owner().level()!=v.level()||WaterRules.suppressed(v.owner())){removeVoid(v);voids.remove(v);continue;}
             long now=now(v.owner());boolean finish=now>=v.ends();
-            if(v.visual()!=null){float scale=(float)Math.max(.05,Math.min(1,(v.ends()-now)/10.0));v.visual().setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),new org.joml.Quaternionf(),new org.joml.Vector3f(scale),new org.joml.Quaternionf()));}
-            if(now%5==0){dust(v.level(),v.center(),12);wave(v.level(),v.center(),1.8+Math.sin(now*.2)*.2);}
-            for(LivingEntity target:v.level().getEntitiesOfClass(LivingEntity.class,new AABB(v.center(),v.center()).inflate(6))){
+            if(v.visual()!=null){float scale=(float)Math.max(.05,Math.min(1,(v.ends()-now)/10.0))*v.size();v.visual().setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),new org.joml.Quaternionf(),new org.joml.Vector3f(scale),new org.joml.Quaternionf()));}
+            if(v.ends()-now>=68&&now%2==0)darkLine(v.level(),LightningBolts.hand(v.owner()),v.center(),18);
+            if(now%5==0){dust(v.level(),v.center(),20);wave(v.level(),v.center(),v.radius());}
+            for(LivingEntity target:v.level().getEntitiesOfClass(LivingEntity.class,new AABB(v.center(),v.center()).inflate(v.radius()))){
                 if(!v.owner().isAlive()||!voids.contains(v))break;
-                if(!enemy(v.owner(),target)||target.position().distanceToSqr(v.center())>36
+                if(!enemy(v.owner(),target)||target.position().distanceToSqr(v.center())>v.radius()*v.radius()
                     ||v.level().clip(new ClipContext(v.center(),target.getEyePosition(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,v.owner())).getType()!=HitResult.Type.MISS)continue;
                 Vec3 pull=v.center().subtract(target.position()).normalize().scale(.28);
                 if(target instanceof ServerPlayer sp)Rubber.impulse(sp,pull);else target.setDeltaMovement(target.getDeltaMovement().scale(.4).add(pull));
                 if(finish||now%20==0)hurt(v.owner(),target,(float)((finish?12:4)*Mastery.multiplier(v.owner())),true);
             }
-            if(finish){wave(v.level(),v.center(),6);removeVoid(v);voids.remove(v);}
+            if(finish){wave(v.level(),v.center(),v.radius());removeVoid(v);voids.remove(v);}
         }
     }
     public static List<Capture> captures(Player p){
@@ -289,7 +327,7 @@ public final class Dark{
         }
     }
     public static int flags(Player p){State s=states.get(p.getUUID());return s==null?0:(mantle(p)?1:0)|(s.surge>0?2:0)|(s.held==0&&now(p)-s.press>=7?4:0)|(now(p)<s.flare?8:0);}
-    public static String status(Player p){return "Dark "+(unlocked(p)?"tier "+tier(p)+"/3 | "+uses(p)+" uses | "+seconds(p)+"s | Selected: "+choice(p)+" | Captured power: "+extra(p)+(extra(p)==null?"":" tier "+fruitTier(p,extra(p))+"/3"):"locked")+" | Pending captures: "+captures(p).size();}
+    public static String status(Player p){return "Dark "+(unlocked(p)?"tier "+tier(p)+"/3 | "+uses(p)+" uses | "+seconds(p)+"s | Selected: "+choice(p)+" | Second power: "+extra(p)+(extra(p)==null?"":" tier "+fruitTier(p,extra(p))+"/3"):"locked")+" | Pending captures: "+captures(p).size();}
     public static void tick(MinecraftServer server){
         for(Player p:server.getPlayerList().getPlayers())tickPlayer(p);tickEffects();
         for(var viewer:server.getPlayerList().getPlayers()){
@@ -303,6 +341,6 @@ public final class Dark{
             }
         }
     }
-    public static void forget(Player p){endMantle(p);cancelInput(p);states.remove(p.getUUID());sent.remove(p.getUUID());tethers.entrySet().removeIf(e->e.getValue().owner()==p||e.getValue().target()==p);voids.removeIf(v->{if(v.owner()!=p)return false;removeVoid(v);return true;});}
-    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);states.clear();sent.clear();voids.forEach(Dark::removeVoid);voids.clear();tethers.clear();}
+    public static void forget(Player p){coils.removeIf(c->c.owner()==p||c.target()==p);endMantle(p);cancelInput(p);states.remove(p.getUUID());sent.remove(p.getUUID());tethers.entrySet().removeIf(e->e.getValue().owner()==p||e.getValue().target()==p);voids.removeIf(v->{if(v.owner()!=p)return false;removeVoid(v);return true;});}
+    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);states.clear();sent.clear();voids.forEach(Dark::removeVoid);voids.clear();tethers.clear();coils.clear();}
 }
