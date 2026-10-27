@@ -111,6 +111,7 @@ public final class Dark{
         }
         return best;
     }
+    static boolean voidDamage(Player owner,LivingEntity target,float amount){return hurt(owner,target,amount,true);}
     private static boolean hurt(Player owner,LivingEntity target,float damage,boolean capture){
         Player previous=voidKiller.get();if(capture)voidKiller.set(owner);
         try{
@@ -187,7 +188,11 @@ public final class Dark{
         for(int i=0;i<24;i++){double a=i*Math.PI/6;Vec3 at=target.position().add(Math.cos(a)*.6,.2+i*.06,Math.sin(a)*.6);level.sendParticles(BLACK,at.x,at.y,at.z,1,0,0,0,0);}
         // Two separated fruit lobes and a jagged gap suggest a cracked fruit above the victim.
         Vec3 head=target.getEyePosition().add(0,.5,0);
-        darkLine(level,head.add(-.2,-.12,0),head.add(-.05,.12,0),6);darkLine(level,head.add(.2,-.12,0),head.add(.05,.12,0),6);
+        for(int i=0;i<24;i++){double a=i*Math.PI/12;double x=Math.cos(a)*.25;if(Math.abs(x)<.06)continue;
+            level.sendParticles(VIOLET,head.x+x,head.y+Math.sin(a)*.23,head.z,1,0,0,0,0);}
+        darkLine(level,head.add(.03,.24,0),head.add(-.05,.05,0),4);
+        darkLine(level,head.add(-.05,.05,0),head.add(.05,-.04,0),4);
+        darkLine(level,head.add(.05,-.04,0),head.add(-.03,-.24,0),4);
     }
     private static void wave(ServerLevel level,Vec3 center,double radius){
         for(int i=0;i<64;i++){double a=i*Math.PI/32;Vec3 at=center.add(Math.cos(a)*radius,0,Math.sin(a)*radius);level.sendParticles(BLACK,at.x,at.y,at.z,1,.05,.1,.05,0);}
@@ -198,7 +203,7 @@ public final class Dark{
         if(!unlocked(p)||!p.isAlive()||p.isSpectator()||WaterRules.suppressed(p)||s.level!=null&&s.level!=p.level()){endMantle(p);cancelInput(p);return;}
         if(s.held>=0&&(!selected(p)||suppressed(p)||now>s.heartbeat))cancelInput(p);
         if(s.held==2&&now-s.press>=7&&now%5==0)Creeperborn.say(p,"Void Collapse "+Math.min(100,(now-s.press)*100/60)+"% — hold three seconds, release");
-        if(s.held==0&&now-s.press>=7&&now%5==0)dust((ServerLevel)p.level(),p.getEyePosition().add(0,-.35,0),8);
+        if((s.held==0&&now-s.press>=7||now<s.flare)&&now%5==0){Vec3 hand=LightningBolts.hand(p);((ServerLevel)p.level()).sendParticles(VIOLET,hand.x,hand.y,hand.z,8,.12,.12,.12,.01);}
         if(s.surge>0){
             Vec3 next=p.position().add(s.surgeDirection.scale(1.3));
             if(!p.level().hasChunkAt(net.minecraft.core.BlockPos.containing(next))||!p.level().getWorldBorder().isWithinBounds(net.minecraft.core.BlockPos.containing(next))

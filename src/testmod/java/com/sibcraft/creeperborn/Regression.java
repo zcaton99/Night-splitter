@@ -669,6 +669,108 @@ public final class Regression implements ModInitializer {
         FruitClaims.releaseOnDeath(rubber);Rubber.clear();
     }
 
+    private void checkDarkMoves(ServerLevel level){
+        Dark.clear();Player p=player(level);p.snapTo(-12.5,y+30,8.5);p.setYRot(0);p.setXRot(0);
+        check(Dark.consume(p,Relics.darkFruit())&&Dark.tier(p)==1&&CombatNetwork.selection(p)==8,"Dark fruit unlocks with authoritative control selection");
+        check(!Rubber.consume(p,Relics.fruit())&&!Dark.consume(player(level),Relics.darkFruit()),"Dark still enforces ordinary consumption and unique owner limits");
+        check(Dark.cast(p,1,0).contains("locked")&&Dark.cast(p,2,0).contains("locked"),"X and C are gated at tiers two and three");
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+30,16.5);target.setNoAi(true);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
+        check(Dark.cast(p,0,0).equals("Black Vortex!")&&target.getHealth()<100&&target.getDeltaMovement().z<0,"Black Vortex damages and reels target toward caster");
+        check(Dark.cast(p,0,0).contains("recovering"),"Dark Vortex cooldown enforced");
+        target.snapTo(-12.5,y+30,12.5);target.damageCooldownTime=0;
+        check(Dark.cast(p,0,7).equals("Nullifying Grasp!")&&Dark.rooted(target)&&Shackles.rooted(target),"Grasp roots a nearby aimed target using native movement guard");
+        check(Dark.graspTicks(p)==60,"Ordinary Grasp lasts three seconds");
+        clock(level,level.getGameTime()+61);check(!Dark.rooted(target),"Grasp root expires");
+        for(Element element:Element.values())Mastery.grant(p,element,3);
+        check(Dark.graspTicks(p)==100,"All-four mastery extends Grasp to five seconds");
+        Dark.suppress(p,20,false);check(Dark.cast(p,0,0).contains("suppressed"),"Fruit suppression blocks Dark casts");
+        Progress.select(p,Element.EARTH);
+        check(!CombatNetwork.press(p,0).contains("suppressed"),"Element controls remain usable while fruit suppressed");
+        clock(level,level.getGameTime()+21);Dark.choose(p,"dark");Dark.grant(p,2);p.getFoodData().setFoodLevel(20);
+        check(Dark.cast(p,1,0).equals("Dark Mantle!")&&Dark.mantle(p),"Tier-two Mantle activates shadow form");
+        Player attacker=player(level);var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.setOwner(attacker);
+        p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4);
+        check(Math.abs(p.getHealth()-17.8)<.001&&Dark.energy(p)==1,"Mantle reduces incoming projectile damage and stores a charge");
+        for(int i=0;i<8;i++)Dark.damage(p,p.damageSources().arrow(arrow,attacker),4);
+        check(Dark.energy(p)==6,"Mantle energy caps at six");
+        target.setHealth(100);target.damageCooldownTime=0;
+        check(Dark.cast(p,1,7).equals("Liberation!")&&Dark.energy(p)==0&&target.getHealth()<100,"Liberation spends energy on damaging outward shockwave");
+        Dark.endMantle(p);Dark.grant(p,3);
+        check(Dark.cast(p,2,59).contains("cancelled"),"Void Collapse requires a full three-second charge");
+        check(Dark.cast(p,2,0).equals("Shadow Surge!"),"Tap C starts grounded Surge");
+        Dark.tickPlayer(p);check(p.getDeltaMovement().z>0,"Shadow Surge drives forward motion");
+        Dark.endMantle(p);p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        target.snapTo(-12.5,y+30,38.5);target.setHealth(100);target.damageCooldownTime=0;
+        check(Dark.cast(p,2,60).equals("Void Collapse!"),"Hold C places a Void");
+        var spheres=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(40)).stream()
+            .filter(d->d.getCustomName()!=null&&d.getCustomName().getString().equals("cb_dark_void")).toList();
+        check(spheres.size()==1&&!spheres.getFirst().shouldBeSaved(),"Void sphere is an original temporary display excluded from saves");
+        for(int i=0;i<81;i++){clock(level,level.getGameTime()+1);Dark.tickEffects();}
+        check(spheres.getFirst().isRemoved()&&target.getHealth()<100,"Void pulses damage and its sphere cleans up at collapse");
+        FruitClaims.releaseOnDeath(p);target.discard();Dark.clear();Creeperborn.ABILITIES.clear();
+    }
+    private ItemStack capturedItem(Player p,String token){
+        for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack item=p.getInventory().getItem(i);if(Relics.captureToken(item).equals(token))return item;}
+        return ItemStack.EMPTY;
+    }
+    private void checkDarkCaptures(ServerLevel level){
+        Dark.clear();Player dark=player(level);dark.snapTo(-12.5,y+30,8.5);
+        check(Dark.consume(dark,Relics.darkFruit()),"Dark available for capture tests");Dark.grant(dark,3);
+        Player phoenix=player(level);check(Phoenix.consume(phoenix,Relics.phoenixFruit()),"Phoenix victim obtains fruit");Phoenix.grant(phoenix,3);
+        Phoenix.cast(phoenix,1,8);
+        check(Phoenix.form(phoenix)&&phoenix.getAbilities().mayfly,"Victim enters full Phoenix before Grasp test");
+        Dark.suppress(phoenix,100,true);
+        check(!Phoenix.form(phoenix)&&!phoenix.getAbilities().mayfly&&Dark.suppressed(phoenix),"Strong nullification ends transformation and restores original flight");
+        clock(level,level.getGameTime()+701);phoenix.getFoodData().setFoodLevel(20);Phoenix.cast(phoenix,1,8);
+        check(Phoenix.form(phoenix),"Phoenix can transform after suppression and recovery expire");
+        phoenix.setHealth(20);phoenix.damageCooldownTime=0;Dark.voidDamage(dark,phoenix,100);
+        check(phoenix.isAlive()&&Phoenix.spent(phoenix)&&Dark.captures(dark).isEmpty(),"Phoenix Rebirth is not captured as a death");
+        clock(level,level.getGameTime()+61);phoenix.damageCooldownTime=0;Dark.voidDamage(dark,phoenix,100);
+        check(!phoenix.isAlive()&&Dark.captures(dark).size()==1,"Actual Void-attributed player death offers a capture");
+        var first=Dark.captures(dark).getFirst();
+        check(first.fruit().equals("phoenix")&&first.tier()==2&&first.token().equals(FruitClaims.owner("phoenix")),"Capture caps tier at two and reserves unique ownership");
+        check(!Phoenix.consume(player(level),Relics.phoenixFruit()),"Pending capture prevents another player claiming a duplicate power");
+        check(Dark.decide(dark,first.token().toString(),true).contains("eaten")&&Phoenix.unlocked(dark)&&Phoenix.tier(dark)==2,"Eat grants the captured fruit at its retained tier cap");
+        check(Phoenix.selected(dark)&&!Dark.selected(dark)&&CombatNetwork.selection(dark)==6,"Captured power has independent authoritative selection");
+        Dark.cycle(dark);check(Dark.selected(dark)&&!Phoenix.selected(dark),"G cycle selects only Dark");
+        Dark.cycle(dark);Phoenix.grant(dark,3);Phoenix.cast(dark,1,8);
+        check(Phoenix.form(dark),"Captured Phoenix can progress to full form");
+        Dark.cycle(dark);check(Dark.selected(dark)&&!Phoenix.form(dark)&&!dark.getAbilities().mayfly,"Switching powers ends prior form without flight leak");
+        FruitClaims.load(server);FruitClaims.reconcile(dark);
+        check(Dark.unlocked(dark)&&Phoenix.unlocked(dark),"Dark plus captured ownership survives world reload and reconciliation");
+        Player rubber=player(level);check(Rubber.consume(rubber,Relics.fruit()),"Second victim obtains Rubber");Rubber.grant(rubber,2);
+        Dark.voidDamage(dark,rubber,100);var second=Dark.captures(dark).getFirst();
+        check(Dark.decide(dark,second.token().toString(),true).contains("two powers")&&Dark.captures(dark).size()==1,"A full Dark owner cannot eat a third power");
+        check(Dark.decide(dark,second.token().toString(),false).contains("materialized"),"Full owner can Materialize instead");
+        ItemStack materialized=capturedItem(dark,second.token().toString()),duplicate=materialized.copy();
+        check(!materialized.isEmpty()&&Relics.captureTier(materialized)==2,"Materialized item retains captured tier");
+        Player friend=player(level);check(Rubber.consume(friend,materialized)&&Rubber.tier(friend)==2,"Friend can eat a materialized captured fruit");
+        check(!Rubber.consume(player(level),duplicate),"Copied token cannot create duplicate fruit owners");
+        Player lightning=player(level);check(Lightning.consume(lightning,Relics.lightningFruit()),"Third victim obtains Lightning");Dark.voidDamage(dark,lightning,100);
+        var third=Dark.captures(dark).getFirst();check(third.tier()==1,"Tier-one captures stay tier one");
+        for(int i=0;i<dark.getInventory().getContainerSize();i++)dark.getInventory().setItem(i,new ItemStack(Items.STONE,64));
+        check(Dark.decide(dark,third.token().toString(),false).contains("Inventory full")&&Dark.captures(dark).size()==1,"Full inventory keeps pending capture rather than losing it");
+        Dark.forget(dark);FruitClaims.load(server);FruitClaims.reconcile(dark);
+        check(Dark.captures(dark).size()==1&&third.token().equals(FruitClaims.owner("lightning")),"Pending choice and reservation survive logout/reload");
+        dark.getInventory().setItem(0,ItemStack.EMPTY);Dark.decide(dark,third.token().toString(),false);
+        ItemStack dropped=capturedItem(dark,third.token().toString()).copy();
+        for(int i=0;i<dark.getInventory().getContainerSize();i++)dark.getInventory().setItem(i,ItemStack.EMPTY);
+        ItemEntity item=new ItemEntity(level,dark.getX(),dark.getY(),dark.getZ(),dropped);level.addFreshEntity(item);item.discard();
+        check(FruitClaims.lightningAvailable(),"Destroying a dropped captured fruit releases its reservation");
+        Player door=player(level);check(DoorFruit.consume(door,Relics.doorFruit()),"Fourth victim obtains Door");Dark.voidDamage(dark,door,100);
+        var fourth=Dark.captures(dark).getFirst();
+        dark.damageCooldownTime=0;dark.hurtServer(level,dark.damageSources().genericKill(),1000);
+        check(!dark.isAlive()&&FruitClaims.darkAvailable()&&FruitClaims.phoenixAvailable(),"Actual Dark death releases both equipped powers");
+        var drops=level.getEntitiesOfClass(ItemEntity.class,dark.getBoundingBox().inflate(3)).stream().filter(v->Relics.captureToken(v.getItem()).equals(fourth.token().toString())).toList();
+        check(drops.size()==1&&Dark.captures(dark).isEmpty(),"Unresolved capture drops as a fruit on owner death");
+        ItemStack doorItem=drops.getFirst().getItem().copy();drops.getFirst().setItem(ItemStack.EMPTY);drops.getFirst().discard();
+        check(fourth.token().equals(FruitClaims.owner("door")),"Pickup removal preserves the captured fruit reservation");
+        Player doorFriend=player(level);check(DoorFruit.consume(doorFriend,doorItem)&&DoorFruit.tier(doorFriend)==1,"Dropped pending capture remains consumable at retained tier");
+        FruitClaims.releaseOnDeath(friend);FruitClaims.releaseOnDeath(doorFriend);Dark.clear();Phoenix.clear();Lightning.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -681,6 +783,8 @@ public final class Regression implements ModInitializer {
         checkLightning(level);
         checkLightningChargeAndFlashes(level);
         checkRubberLightningCounter(level);
+        checkDarkMoves(level);
+        checkDarkCaptures(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
