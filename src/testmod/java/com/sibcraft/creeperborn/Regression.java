@@ -159,6 +159,7 @@ public final class Regression implements ModInitializer {
             @Override public boolean setGameMode(GameType value){mode=value;getAbilities().mayfly=value==GameType.SPECTATOR;getAbilities().flying=value==GameType.SPECTATOR;return true;}
             @Override public void onUpdateAbilities(){}
             @Override public void sendOverlayMessage(Component message){}
+            @Override public void sendSystemMessage(Component message){}
             @Override public void snapTo(double x,double yy,double z){setPos(x,yy,z);}
             @Override public void teleportTo(double x,double yy,double z){snapTo(x,yy,z);}
             @Override public boolean teleportTo(ServerLevel destination,double x,double yy,double z,java.util.Set<net.minecraft.world.entity.Relative> relative,float yaw,float pitch,boolean resetCamera){
@@ -190,7 +191,7 @@ public final class Regression implements ModInitializer {
         var start=owner.position();check(DoorSpace.safe(level,owner,start),"Clear floor is valid Door exit");
         level.setBlockAndUpdate(owner.blockPosition().above(),Blocks.STONE.defaultBlockState());
         check(!DoorSpace.safe(level,owner,start),"Solid head space rejects exit");level.setBlockAndUpdate(owner.blockPosition().above(),Blocks.AIR.defaultBlockState());
-        check(!DoorSpace.safe(level,owner,start.add(0,5,0)),"Unsupported midair exit rejected");
+        check(!DoorSpace.safe(level,owner,start.add(0,5,0))&&DoorSpace.fits(level,owner,start.add(0,5,0)),"Midair fits a deliberate exit but is not a safe automatic return");
         check(DoorFruit.cast(owner,1).startsWith("Rescue Door!")&&DoorSpace.active(owner)&&owner.isSpectator(),"Rescue immediately enters bounded spectator-backed travel");
         check(owner.entityTags().stream().anyMatch(t->t.startsWith("cb_door_return_")),"Travel saves a persistent recovery snapshot");
         check(DoorFruit.ready(owner,1)==0,"Cooldown does not begin while passage is active");
@@ -252,6 +253,105 @@ public final class Regression implements ModInitializer {
         FruitClaims.releaseOnDeath(friend);DoorSpace.clear();DoorFruit.clear();
     }
 
+
+    private void checkDangerousDoors(ServerLevel level){
+        DoorSpace.clear();DoorFruit.clear();
+        var p=doorPlayer(level,"DangerDoor");p.snapTo(-6.5,y+20,22.5);
+        check(DoorFruit.consume(p,Relics.doorFruit()),"Dangerous-exit fixture owns Door");DoorFruit.grant(p,3);
+        for(var fluid:new net.minecraft.world.level.block.Block[]{Blocks.WATER,Blocks.LAVA}){
+            for(int dx=-1;dx<=1;dx++)for(int dz=-1;dz<=1;dz++)for(int dy=0;dy<3;dy++)
+                level.setBlockAndUpdate(new BlockPos(-7+dx,(int)y+20+dy,29+dz),fluid.defaultBlockState());
+            var point=new net.minecraft.world.phys.Vec3(-6.5,y+20,29.5);
+            check(DoorSpace.fits(level,p,point)&&!DoorSpace.safe(level,p,point),"Fluid permits deliberate exits but not automatic returns: "+fluid);
+            check(DoorSpace.open(p,1).startsWith("Rescue Door!"),"Rescue enters before dangerous exit test");
+            p.snapTo(point.x,point.y,point.z);
+            check(DoorSpace.exit(p).startsWith("Exit opened")&&!DoorSpace.active(p)&&p.position().distanceTo(point)<.001,
+                "Chosen fluid exit uses exact position without rerouting to dry land");
+            check(p.gameMode()==GameType.SURVIVAL&&!Mastery.harmony(p),"Dangerous exit restores nonimmune Survival");
+            p.damageCooldownTime=0;float before=p.getHealth();
+            p.hurtServer(level,fluid==Blocks.LAVA?p.damageSources().lava():p.damageSources().drown(),2);
+            check(p.getHealth()<before,"Door exit does not grant lava or drowning immunity");
+            p.setHealth(20);p.clearFire();p.snapTo(-6.5,y+20,22.5);
+            DoorSpace.clear();
+            for(int dx=-1;dx<=1;dx++)for(int dz=-1;dz<=1;dz++)for(int dy=0;dy<3;dy++)
+                level.setBlockAndUpdate(new BlockPos(-7+dx,(int)y+20+dy,29+dz),Blocks.AIR.defaultBlockState());
+        }
+        DoorSpace.open(p,1);p.snapTo(-6.5,y+24,24.5);var airborne=p.position();
+        check(DoorSpace.exit(p).startsWith("Exit opened")&&p.position().distanceTo(airborne)<.001,"Unsupported air exit stays at chosen height");
+        p.damageCooldownTime=0;float before=p.getHealth();p.hurtServer(level,p.damageSources().fall(),4);
+        check(p.getHealth()<before,"Door exit does not grant fall immunity");p.setHealth(20);DoorSpace.clear();
+        p.snapTo(-6.5,y+20,22.5);DoorSpace.open(p,1);
+        p.snapTo(-6.5,y+20,24.5);level.setBlockAndUpdate(p.blockPosition().above(),Blocks.STONE.defaultBlockState());
+        check(DoorSpace.exit(p).startsWith("Exit blocked")&&DoorSpace.active(p),"Solid block at head still prevents exit");
+        level.setBlockAndUpdate(p.blockPosition().above(),Blocks.AIR.defaultBlockState());DoorSpace.forget(p);DoorSpace.clear();
+        p.snapTo(-6.5,y+24,22.5);
+        check(DoorSpace.open(p,0).startsWith("Door opened"),"Door entrance can be placed without supporting ground");
+        DoorSpace.forget(p);DoorSpace.clear();
+        for(var fluid:new net.minecraft.world.level.block.Block[]{Blocks.WATER,Blocks.LAVA}){
+            p.snapTo(-6.5,y+20,22.5);
+            for(int dz=1;dz<=3;dz++)for(int dy=0;dy<2;dy++)level.setBlockAndUpdate(new BlockPos(-7,(int)y+20+dy,22+dz),fluid.defaultBlockState());
+            check(DoorSpace.open(p,0).startsWith("Door opened"),"Door entrance can be placed in fluid: "+fluid);
+            DoorSpace.forget(p);DoorSpace.clear();
+            for(int dz=1;dz<=3;dz++)for(int dy=0;dy<2;dy++)level.setBlockAndUpdate(new BlockPos(-7,(int)y+20+dy,22+dz),Blocks.AIR.defaultBlockState());
+        }
+        FruitClaims.releaseOnDeath(p);DoorFruit.clear();
+    }
+    private void checkTridentCuring(ServerLevel level){
+        Player owner=player(level),healer=player(level);
+        for(Element e:Element.values()){Mastery.grant(owner,e,1);Mastery.grant(healer,e,1);}
+        Villager guard=EntityTypes.VILLAGER.create(level,EntitySpawnReason.EVENT);
+        guard.snapTo(-3.5,y+20,32.5);guard.setNoAi(true);guard.setVillagerDataFinalized(true);
+        guard.setVillagerData(guard.getVillagerData().withProfession(level.registryAccess(),net.minecraft.world.entity.npc.villager.VillagerProfession.CLERIC));
+        guard.setVillagerXp(23);
+        var offers=new net.minecraft.world.item.trading.MerchantOffers();
+        offers.add(new net.minecraft.world.item.trading.MerchantOffer(new net.minecraft.world.item.trading.ItemCost(Items.EMERALD,2),new ItemStack(Items.BREAD,3),12,5,.05f));
+        guard.setOffers(offers);level.addFreshEntity(guard);
+        check(Creeperborn.GUARDIANS.assign(owner,guard,Element.FIRE),"Cure fixture is a Fire guardian");
+        BlockPos post=new BlockPos(-4,(int)y+20,32);Creeperborn.GUARDIANS.post(guard,post);
+        Progress.select(healer,Element.WATER);
+        Zombie infector=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        infector.snapTo(-3.5,y+20,34.5);infector.setNoAi(true);
+        check(infector.convertVillagerToZombieVillager(level,guard),"Native zombification succeeds");
+        var area=new AABB(-5,y+19,31,-2,y+24,34);
+        var zombies=level.getEntitiesOfClass(net.minecraft.world.entity.monster.zombie.ZombieVillager.class,area);
+        check(zombies.size()==1,"Zombified guardian found");
+        var zombie=zombies.getFirst();
+        check(Guardians.element(zombie)==Element.FIRE&&zombie.entityTags().contains("cb_owner_"+owner.getUUID()),
+            "Native zombification preserves guardian element and owner");
+        check(!Creeperborn.GUARDIANS.cure(player(level),zombie),"Trident curing requires all four unlocked elements");
+        check(Creeperborn.GUARDIANS.cure(healer,zombie),"Trident instantly performs native zombie-villager cure");
+        var restored=level.getEntitiesOfClass(Villager.class,area);
+        check(restored.size()==1,"Cured villager found");Villager v=restored.getFirst();
+        check(Guardians.element(v)==Element.FIRE&&Guardians.owns(owner,v)&&!Guardians.owns(healer,v),
+            "Cure retains original Fire faction and owner rather than healer selected Water");
+        check(Creeperborn.GUARDIANS.post(v).equals(post),"Guardian post survives zombification and cure");
+        check(v.getVillagerXp()==23&&v.getOffers().size()==1&&v.getOffers().getFirst().getResult().is(Items.BREAD)
+            &&v.getOffers().getFirst().getResult().getCount()==3,"Native cure preserves stored experience and trade offers");
+        Zombie enemy=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);enemy.snapTo(-3.5,y+20,29.5);enemy.setNoAi(true);level.addFreshEntity(enemy);
+        Creeperborn.GUARDIANS.tick();
+        check(enemy.getHealth()<enemy.getMaxHealth()&&enemy.isOnFire(),"Restored Fire guardian resumes elemental defense");
+        enemy.discard();v.discard();infector.discard();Creeperborn.GUARDIANS.clear();
+        var ordinary=EntityTypes.ZOMBIE_VILLAGER.create(level,EntitySpawnReason.EVENT);
+        ordinary.snapTo(-3.5,y+20,32.5);ordinary.setNoAi(true);level.addFreshEntity(ordinary);
+        check(Creeperborn.GUARDIANS.cure(healer,ordinary),"Trident also cures ordinary zombie villagers");
+        var normal=level.getEntitiesOfClass(Villager.class,area);
+        check(normal.size()==1&&Guardians.element(normal.getFirst())==null,"Ordinary cure does not invent elemental powers");
+        normal.forEach(net.minecraft.world.entity.Entity::discard);
+    }
+    private void checkExplicitFruitCommands(ServerLevel level){
+        var dispatcher=server.getCommands().getDispatcher();
+        var root=dispatcher.getRoot().getChild("creeperborn").getChild("testfruit");
+        check(root.getChild("rubber")!=null&&root.getChild("door")!=null,"Both fruit names appear in command completion");
+        var p=doorPlayer(level,"FruitCommands");
+        try{
+            dispatcher.execute("creeperborn testfruit",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
+            check(count(p,"fruit:rubber")==0&&count(p,"fruit:door")==0,"Bare testfruit command grants no default fruit");
+            dispatcher.execute("creeperborn testfruit rubber",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
+            dispatcher.execute("creeperborn testfruit door",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
+            check(count(p,"fruit:rubber")==1&&count(p,"fruit:door")==1,"Explicit fruit commands grant requested fruit only");
+        }catch(com.mojang.brigadier.exceptions.CommandSyntaxException error){throw new AssertionError(error);}
+    }
+
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
     private Player player(ServerLevel level,UUID id) {
         Player p = new Player(level, new GameProfile(id, "BenderTest")) {
@@ -264,6 +364,9 @@ public final class Regression implements ModInitializer {
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
         y = level.getMaxY() - 40;
         checkDoorFruit(level);
+        checkDangerousDoors(level);
+        checkTridentCuring(level);
+        checkExplicitFruitCommands(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

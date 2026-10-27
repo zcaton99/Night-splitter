@@ -12,7 +12,8 @@
     "SlabShacklesMoveMixin",
     "PunchDisplayAccessor",
     "DoorCameraMixin",
-    "DoorSpectatorMenuMixin"
+    "DoorSpectatorMenuMixin",
+    "ZombieVillagerCureAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

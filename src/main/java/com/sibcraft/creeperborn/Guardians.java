@@ -30,6 +30,14 @@ public final class Guardians {
         v.addTag("cb_faction_" + e.key()); v.addTag("cb_owner_" + player.getUUID());
         post(v, v.blockPosition()); villagers.put(v.getUUID(), v); return true;
     }
+    public boolean cure(Player player,net.minecraft.world.entity.monster.zombie.ZombieVillager zombie){
+        if(!Progress.all(player)||!player.isAlive()||player.isSpectator()||!zombie.isAlive()||zombie.isRemoved()
+            ||player.level()!=zombie.level()||!(zombie.level() instanceof ServerLevel level))return false;
+        var conversion=(com.sibcraft.creeperborn.mixin.ZombieVillagerCureAccessor)zombie;
+        conversion.creeperborn$start(player.getUUID(),0);
+        conversion.creeperborn$finish(level);
+        return zombie.isRemoved();
+    }
     public void post(Villager v, BlockPos pos) {
         for (String tag : Set.copyOf(v.entityTags())) if (tag.startsWith("cb_post_")) v.removeTag(tag);
         v.addTag("cb_post_" + pos.getX() + "_" + pos.getY() + "_" + pos.getZ());

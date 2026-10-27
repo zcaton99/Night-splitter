@@ -88,13 +88,21 @@ public final class Creeperborn implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
-            if (!Relics.kind(player.getItemInHand(hand)).equals("trident") || !(entity instanceof Villager v)) return InteractionResult.PASS;
+            if (!Relics.kind(player.getItemInHand(hand)).equals("trident")) return InteractionResult.PASS;
+            if (!(entity instanceof Villager) && !(entity instanceof net.minecraft.world.entity.monster.zombie.ZombieVillager)) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (level instanceof ServerLevel) {
-                Element e = Progress.selected(player);
-                say(player, e != null && GUARDIANS.assign(player, v, e)
-                    ? e.title + " guardian joined your faction. Trades and home/work routines are preserved."
-                    : "Requires all four elements, an adult villager, and ownership (or an unclaimed villager).");
+                if(entity instanceof net.minecraft.world.entity.monster.zombie.ZombieVillager zombie){
+                    Element original=Guardians.element(zombie);
+                    boolean cured=GUARDIANS.cure(player,zombie);
+                    say(player,cured?(original==null?"Zombie villager cured!":original.title+" guardian restored to its original faction.")
+                        :"Curing with the Elemental Trident requires all four unlocked elements.");
+                }else if(entity instanceof Villager v){
+                    Element e = Progress.selected(player);
+                    say(player, e != null && GUARDIANS.assign(player, v, e)
+                        ? e.title + " guardian joined your faction. Trades and home/work routines are preserved."
+                        : "Requires all four elements, an adult villager, and ownership (or an unclaimed villager).");
+                }
             }
             return InteractionResult.SUCCESS;
         });
@@ -108,7 +116,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.22 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.23 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
@@ -191,7 +199,8 @@ public final class Creeperborn implements ModInitializer {
                     DoorFruit.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,DoorFruit.status(p));return 1;
                 })));
             root.then(Commands.literal("testfruit").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .executes(ctx -> { Progress.give(ctx.getSource().getPlayerOrException(),Relics.fruit()); return 1; })
+                .executes(ctx -> { chat(ctx.getSource().getPlayerOrException(),"Usage: /creeperborn testfruit rubber|door"); return 0; })
+                .then(Commands.literal("rubber").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.fruit());return 1;}))
                 .then(Commands.literal("door").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.doorFruit());return 1;})));
             root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {

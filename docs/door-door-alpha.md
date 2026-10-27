@@ -1,4 +1,4 @@
-# Door-Door alpha.21
+# Door-Door alpha.23
 
 Door is a separate rare fruit alongside Rubber. One fruit per player and one living owner per fruit per world. Existing Rubber ownership saves migrate without losing ownership. Death releases the owned fruit and its progression; elemental progress remains.
 
@@ -10,7 +10,7 @@ Door is a separate rare fruit alongside Rubber. One fruit per player and one liv
 | X | Rescue Door | 6s | 20 blocks | 30s |
 | C | Shared Passage | 30s | 96 blocks | 45s |
 
-Z/C create a visible warped door ahead on clear ground. Walk into it. X immediately enters. While traveling, Z requests an exit at your feet. The exit needs clear body space, solid ground, and no water/lava/fire. Unsupported or blocked exits are rejected without ending travel.
+Z/C create a visible warped door ahead where the player's body fits. Walk into it. X immediately enters. While traveling, Z requests an exit at your feet. Deliberate exits require only clear body space. Water, lava, dangerous ground and unsupported air are allowed; they confer no extra fire, drowning or fall immunity. Solid-body obstruction is rejected without ending travel. Automatic returns still search for safe ground and fall back to vanilla respawn placement.
 
 All-four elemental mastery adds 50% to travel time/range and increases the shared admission window from five to eight seconds. Shared guests enter voluntarily after the owner enters, fly independently inside the same radius, and share the owner's deadline. After the owner creates an exit, guests have five seconds to walk into it or press Z; remaining guests arrive automatically. Before an exit is created, guests can press Z to return to their own entrance.
 
@@ -34,3 +34,9 @@ Test each mode with and without elemental mastery; blocked exits, tight rooms, c
 ## Later design: Holy Bag (not implemented)
 
 A proposed permanent multi-fruit unlock earned through four distinct elemental guardian villagers and a cleric trade requiring all four elemental hearts/orbs. Each newly eaten fruit still needs separate mastery and must be available under the world's unique ownership rule. Exact trade sequence, guardian proximity/verification and whether the bag unlock survives death remain to be decided before implementation.
+
+## Alpha.23 trident and commands
+
+Use the Elemental Trident on a zombie villager to cure it instantly; all four elements must be unlocked. Native conversion retains any existing guardian faction/owner/post tags and stored trades/experience. The original guardian element wins over the healer's selected element. Ordinary zombie villagers become ordinary villagers; use the trident again to assign an element normally.
+
+Fruit testing now requires `/creeperborn testfruit rubber` or `/creeperborn testfruit door`. The bare command displays usage and grants nothing. No new fruit or Holy Bag is added in alpha.23.

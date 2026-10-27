@@ -41,13 +41,21 @@ public final class DoorSpace {
     public static int admission(boolean mastered){return mastered?160:100;}
     public static boolean active(Player p){return travelers.containsKey(p.getUUID());}
     public static boolean ownsSession(Player p){return sessions.containsKey(p.getUUID());}
-    public static boolean safe(ServerLevel level,Player p,Vec3 feet){
-        BlockPos at=BlockPos.containing(feet);
-        if(at.getY()<=level.getMinY()||at.getY()+3>=level.getMaxY()||!level.getWorldBorder().isWithinBounds(at))return false;
-        if(!level.hasChunksAt(at.getX()-1,at.getZ()-1,at.getX()+1,at.getZ()+1))return false;
+    /** Deliberate exits need body clearance, not dry ground or hazard immunity. */
+    public static boolean fits(ServerLevel level,Player p,Vec3 feet){
         AABB box=p.getBoundingBox().move(feet.subtract(p.position()));
-        // Query without the spectator entity: spectator collision queries can ignore solids.
-        if(!level.noCollision(null,box)||level.getBlockState(at.below()).getCollisionShape(level,at.below()).isEmpty())return false;
+        BlockPos min=BlockPos.containing(box.minX-.001,box.minY,box.minZ-.001);
+        BlockPos max=BlockPos.containing(box.maxX+.001,box.maxY,box.maxZ+.001);
+        if(box.minY<level.getMinY()||box.maxY>level.getMaxY()||!level.getWorldBorder().isWithinBounds(box))return false;
+        if(!level.hasChunksAt(min.getX(),min.getZ(),max.getX(),max.getZ()))return false;
+        // A null entity keeps Spectator collision rules from ignoring solid blocks.
+        return level.noCollision(null,box);
+    }
+    public static boolean safe(ServerLevel level,Player p,Vec3 feet){
+        if(!fits(level,p,feet))return false;
+        BlockPos at=BlockPos.containing(feet);
+        AABB box=p.getBoundingBox().move(feet.subtract(p.position()));
+        if(level.getBlockState(at.below()).getCollisionShape(level,at.below()).isEmpty())return false;
         for(BlockPos pos:BlockPos.betweenClosed(BlockPos.containing(box.minX,box.minY-1,box.minZ),BlockPos.containing(box.maxX,box.maxY,box.maxZ)))
             if(!level.getFluidState(pos).isEmpty()||level.getBlockState(pos).is(Blocks.FIRE)||level.getBlockState(pos).is(Blocks.SOUL_FIRE)
                 ||level.getBlockState(pos).is(Blocks.MAGMA_BLOCK)||level.getBlockState(pos).is(Blocks.CACTUS))return false;
@@ -89,9 +97,9 @@ public final class DoorSpace {
         if(forward.lengthSqr()<.1)forward=new Vec3(0,0,1);
         ServerLevel level=(ServerLevel)owner.level();
         Vec3 returnPoint=nearbySafe(level,owner,owner.position());
-        if(returnPoint==null)return "No safe return point nearby. Open a door near solid, clear ground.";
+        if(returnPoint==null)returnPoint=owner.position(); // Timeout recovery may use vanilla spawn when no safe ground exists.
         Vec3 entrance=mode==1?owner.position():owner.position().add(forward.scale(1.7));
-        if(mode!=1&&!safe(level,owner,entrance))return "Door entrance blocked. Face a clear spot with solid ground.";
+        if(!fits(level,owner,entrance))return "Door entrance blocked. Your body needs clear space.";
         Session s=new Session();s.owner=owner;s.level=level;s.entrance=entrance;s.mode=mode;
         boolean mastered=Mastery.harmony(owner);long now=level.getGameTime();s.range=range(mode,mastered);
         s.admission=now+(mode==2?admission(mastered):160);s.deadline=s.admission;
@@ -116,7 +124,7 @@ public final class DoorSpace {
             if(p.level()!=s.level||s.exit!=null||s.level.getGameTime()>=s.admission
                 ||(p!=s.owner&&(s.mode!=2||!s.entered)))continue;
             if(touches(p,s.entrance)){
-                Vec3 point=nearbySafe(s.level,p,p.position());
+                Vec3 point=nearbySafe(s.level,p,p.position());if(point==null)point=p.position();
                 if(point!=null&&!WaterRules.suppressed(p)){enter(p,s,point);return active(p);}
             }
         }
@@ -134,13 +142,19 @@ public final class DoorSpace {
     private static void restore(ServerPlayer p,Saved saved,Vec3 requested,ServerLevel destination,boolean keepFacing){
         float yaw=keepFacing?p.getYRot():saved.yaw(),pitch=keepFacing?p.getXRot():saved.pitch();
         if(p.isAlive()){
-            Vec3 safe=nearbySafe(destination,p,requested);
+            Vec3 safe=keepFacing?(fits(destination,p,requested)?requested:null):nearbySafe(destination,p,requested);
+            if(safe==null&&keepFacing){
+                // A chosen exit that became solid cannot suffocate a late passenger.
+                destination=savedLevel(p,saved);safe=nearbySafe(destination,p,new Vec3(saved.x(),saved.y(),saved.z()));
+            }
             if(safe!=null)p.teleportTo(destination,safe.x,safe.y,safe.z,Set.of(),yaw,pitch,true);
             else p.teleport(p.findRespawnPositionAndUseSpawnBlock(false,net.minecraft.world.level.portal.TeleportTransition.DO_NOTHING));
         }
         p.setGameMode(GameType.byName(saved.mode(),GameType.SURVIVAL));
         p.getAbilities().mayfly=saved.mayfly();p.getAbilities().flying=saved.flying();p.getAbilities().setFlyingSpeed(saved.speed());p.onUpdateAbilities();
-        p.setDeltaMovement(Vec3.ZERO);p.setIgnoreFallDamageFromCurrentImpulse(true,p.position());removeSnapshot(p);
+        p.setDeltaMovement(Vec3.ZERO);
+        p.setIgnoreFallDamageFromCurrentImpulse(!keepFacing,p.position());
+        removeSnapshot(p);
     }
     private static ServerLevel savedLevel(ServerPlayer p,Saved saved){
         ServerLevel level=p.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION,Identifier.parse(saved.dimension())));
@@ -172,7 +186,7 @@ public final class DoorSpace {
         }
         if(!active(player)){if(!s.entered)finish(s,false);return "Door closed.";}
         Vec3 at=player.position();
-        if(!safe(s.level,player,at))return "Exit blocked or unsupported. Find clear standing space over solid ground; press Z again.";
+        if(!fits(s.level,player,at))return "Exit blocked. Find enough open space for your body; press Z again.";
         s.exit=at;s.exitDeadline=s.level.getGameTime()+100;s.exitVisuals=door(s.level,at,player.getYRot());
         if(at.distanceToSqr(s.entrance)>=16)DoorFruit.credit(s.owner);
         close(s.level,s.entrance,s.entranceVisuals);s.admission=0;
