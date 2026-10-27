@@ -19,6 +19,10 @@ public final class Relics {
         ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:door");
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Door-Door Fruit — right-click to consume"));return item;
     }
+    public static ItemStack lightningFruit(){
+        ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:lightning");
+        item.set(DataComponents.CUSTOM_NAME,Component.literal("Lightning Creeper Fruit — right-click to consume"));return item;
+    }
     public static ItemStack phoenixFruit(){
         ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:phoenix");
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Phoenix Fruit — right-click to consume"));return item;

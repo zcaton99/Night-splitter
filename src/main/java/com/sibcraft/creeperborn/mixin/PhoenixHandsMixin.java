@@ -1,5 +1,6 @@
 package com.sibcraft.creeperborn.mixin;
 import com.sibcraft.creeperborn.client.PhoenixVisuals;
+import com.sibcraft.creeperborn.client.LightningVisuals;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -12,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PhoenixHandsMixin{
     @Inject(method="submitHandsWithItems",at=@At("HEAD"),cancellable=true)
     private void creeperborn$birdHands(float partial,PoseStack poses,SubmitNodeCollector nodes,PlayerRenderState player,FirstPersonHandsAndItemsRenderState hands,CallbackInfo ci){
-        if(player.avatarRenderState!=null&&(PhoenixVisuals.flags(player.avatarRenderState.id)&2)!=0)ci.cancel();
+        if(player.avatarRenderState!=null&&((PhoenixVisuals.flags(player.avatarRenderState.id)&2)!=0||(LightningVisuals.flags(player.avatarRenderState.id)&1)!=0))ci.cancel();
     }
 }

@@ -357,11 +357,11 @@ public final class Regression implements ModInitializer {
             check(count(p,"fruit:rubber")==1&&count(p,"fruit:door")==1&&count(p,"fruit:phoenix")==1,"Explicit fruit commands grant requested fruit only");
             var source=p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS);
             check(dispatcher.execute("creeperborn fruitmastery 3",source)==0,"Generic mastery refuses to grant an uneaten fruit");
-            for(int fruit=0;fruit<3;fruit++){
-                check(fruit==0?Rubber.consume(p,Relics.fruit()):fruit==1?DoorFruit.consume(p,Relics.doorFruit()):Phoenix.consume(p,Relics.phoenixFruit()),"Command test eats its own fruit");
+            for(int fruit=0;fruit<4;fruit++){
+                check(fruit==0?Rubber.consume(p,Relics.fruit()):fruit==1?DoorFruit.consume(p,Relics.doorFruit()):fruit==2?Phoenix.consume(p,Relics.phoenixFruit()):Lightning.consume(p,Relics.lightningFruit()),"Command test eats its own fruit");
                 for(int tier:new int[]{2,3,1}){
                     check(dispatcher.execute("creeperborn fruitmastery "+tier,source)==1,"Generic fruitmastery accepts tier");
-                    check((fruit==0?Rubber.tier(p):fruit==1?DoorFruit.tier(p):Phoenix.tier(p))==tier,"Generic mastery applies to the owned fruit");
+                    check((fruit==0?Rubber.tier(p):fruit==1?DoorFruit.tier(p):fruit==2?Phoenix.tier(p):Lightning.tier(p))==tier,"Generic mastery applies to the owned fruit");
                 }
                 FruitClaims.releaseOnDeath(p);
             }
@@ -513,6 +513,73 @@ public final class Regression implements ModInitializer {
         };
         p.snapTo(.5, y, .5); p.setHealth(20); p.setYRot(0); p.setXRot(0); return p;
     }
+    private void checkLightning(ServerLevel level){
+        Lightning.clear();FruitCreepers.clear();
+        Player p=player(level);p.snapTo(-12.5,y+26,8.5);p.setYRot(0);p.setXRot(0);
+        check(Lightning.consume(p,Relics.lightningFruit())&&Lightning.tier(p)==1,"Lightning fruit unlocks tier one");
+        check(CombatNetwork.selection(p)==7&&WaterRules.vulnerable(p),"Lightning uses fruit controls and inherits the water curse");
+        check(!Phoenix.consume(p,Relics.phoenixFruit())&&!Lightning.consume(player(level),Relics.lightningFruit()),"Lightning obeys personal and world ownership limits");
+        FruitClaims.load(server);check(Lightning.unlocked(p),"Lightning claim persists across reload");
+        check(Lightning.cast(p,1,0).contains("needs")&&Lightning.cast(p,2,0).contains("needs"),"Movement and Storm are mastery gated");
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT),chain=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        target.snapTo(-12.5,y+26,20.5);chain.snapTo(-10.5,y+26,21.5);
+        for(Zombie e:new Zombie[]{target,chain}){e.setNoAi(true);e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(e);}
+        check(Lightning.cast(p,0,0).equals("Lightning Bolt!")&&Math.abs(target.getHealth()-12)<.001,"Aimed bolt reaches twelve blocks and deals eight damage");
+        check(Math.abs(chain.getHealth()-16)<.001&&Lightning.uses(p)==1,"Lightning chains at half damage and credits one successful cast");
+        check(Lightning.cast(p,0,0).contains("recovering"),"Bolt cooldown is enforced");
+        target.setHealth(20);chain.setHealth(20);target.damageCooldownTime=chain.damageCooldownTime=0;
+        clock(level,level.getGameTime()+21);
+        for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,15),Blocks.STONE.defaultBlockState());
+        Lightning.cast(p,0,0);check(target.getHealth()==20&&chain.getHealth()==20,"Walls block initial lightning targeting");
+        for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,15),Blocks.AIR.defaultBlockState());
+        clock(level,level.getGameTime()+21);Lightning.press(p,0);clock(level,level.getGameTime()+159);Lightning.release(p,0);
+        check(target.getHealth()==20,"Judgment released before eight seconds cancels without damage");
+        Lightning.press(p,0);clock(level,level.getGameTime()+160);Lightning.heartbeat(p);Lightning.tickPlayer(p);Lightning.release(p,0);
+        check(!target.isAlive()&&!chain.isAlive(),"Eight-second charged strike hits its target and impact area");
+        check(!level.getBlockState(new BlockPos(-13,(int)y+26,20)).is(Blocks.FIRE),"Lightning attack does not set terrain on fire");
+        target.discard();chain.discard();
+        Lightning.grant(p,2);
+        for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,12),Blocks.STONE.defaultBlockState());
+        check(Lightning.flashDestination(p,20).z<11.8,"Flash Step checks full body clearance before a wall");
+        check(Lightning.cast(p,1,0).equals("Flash Step!")&&p.getZ()<11.8&&p.getZ()>8.5,"Flash Step moves to the last clear position");
+        check(Lightning.cast(p,1,0).contains("recovering"),"Flash Step cooldown is enforced");
+        for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,12),Blocks.AIR.defaultBlockState());
+        p.snapTo(-12.5,y+26,8.5);Lightning.press(p,1);clock(level,level.getGameTime()+7);Lightning.heartbeat(p);Lightning.tickPlayer(p);
+        check(p.getDeltaMovement().z>1,"Held X starts fast forward Lightning Rush");
+        Lightning.release(p,1);p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        check(Lightning.ready(p,"rush")>level.getGameTime(),"Releasing Rush starts recovery");
+        Lightning.grant(p,3);p.getFoodData().setFoodLevel(20);
+        check(Lightning.cast(p,2,0).startsWith("Storm Form!")&&Lightning.storm(p)&&p.getAbilities().flying,"Storm Form grants flight at tier three");
+        check(Lightning.duration(p)==1200&&Lightning.damage(p,p.damageSources().generic(),10)==5,"Unmastered Storm lasts sixty seconds and halves damage");
+        target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+26,30.5);target.setNoAi(true);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
+        clock(level,level.getGameTime()+301);Lightning.cast(p,0,0);
+        check(Math.abs(target.getHealth()-86)<.001,"Storm aims powerful fourteen-damage strikes over twenty blocks");
+        Lightning.end(p);check(!p.getAbilities().mayfly&&!p.getAbilities().flying,"Ending Storm restores original flight permissions");
+        for(Element element:Element.values())Mastery.grant(p,element,3);
+        clock(level,level.getGameTime()+901);Lightning.cast(p,2,0);
+        check(Lightning.duration(p)==1800&&Lightning.storm(p),"All-four mastery extends Storm to ninety seconds");
+        target.setHealth(100);target.damageCooldownTime=0;Lightning.cast(p,0,0);
+        check(Math.abs(target.getHealth()-82.5)<.001,"Mastered Storm boosts strike damage by twenty-five percent");
+        p.setHealth(20);p.damageCooldownTime=0;
+        check(!p.hurtServer(level,p.damageSources().generic(),4)&&p.getHealth()==20,"Ordinary attacks pass through mastered Storm");
+        Player attacker=player(level);for(Element element:Element.values())Mastery.grant(attacker,element,3);
+        p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().playerAttack(attacker),4);
+        check(Math.abs(p.getHealth()-18)<.001,"All-four master can hurt Storm at half damage");
+        Lightning.forget(p);FruitClaims.load(server);
+        check(Lightning.unlocked(p)&&Lightning.tier(p)==3&&!p.getAbilities().mayfly&&Lightning.ready(p,"storm")>level.getGameTime(),"Logout keeps ownership/mastery and recovery without leaked flight");
+        Mastery.grant(p,Element.EARTH,2);clock(level,level.getGameTime()+901);p.getFoodData().setFoodLevel(20);Lightning.cast(p,2,0);
+        level.setBlockAndUpdate(p.blockPosition().above(),Blocks.WATER.defaultBlockState());
+        check(WaterRules.suppressed(p),"Lightning water curse returns without all-four mastery");
+        WaterRules.apply(p);check(!Lightning.storm(p)&&!p.getAbilities().mayfly,"Submersion ends Storm and restores flight");
+        level.setBlockAndUpdate(p.blockPosition().above(),Blocks.AIR.defaultBlockState());
+        p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().genericKill(),1000);
+        check(!p.isAlive()&&FruitClaims.lightningAvailable()&&!Lightning.unlocked(p),"Actual death releases Lightning and clears its powers");
+        check(Progress.unlocked(p,Element.AIR),"Lightning death preserves elemental progression");
+        target.discard();Lightning.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -522,6 +589,7 @@ public final class Regression implements ModInitializer {
         checkTridentCuring(level);
         checkExplicitFruitCommands(level);
         checkPhoenix(level);
+        checkLightning(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

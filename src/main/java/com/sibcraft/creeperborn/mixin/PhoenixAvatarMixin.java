@@ -13,7 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PhoenixAvatarMixin{
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$bird(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
-        if(state instanceof AvatarRenderState avatar){int flags=PhoenixVisuals.flags(avatar.id);
+        if(state instanceof AvatarRenderState avatar){
+            int lightning=LightningVisuals.flags(avatar.id);
+            if((lightning&1)!=0){StormRenderer.submit(avatar,poses,nodes,lightning);ci.cancel();return;}
+            int flags=PhoenixVisuals.flags(avatar.id);
             if((flags&2)!=0){PhoenixRenderer.submit(avatar,poses,nodes,flags,true);ci.cancel();}
         }
     }
