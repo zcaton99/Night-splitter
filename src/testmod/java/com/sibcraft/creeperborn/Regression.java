@@ -134,7 +134,7 @@ public final class Regression implements ModInitializer {
         p.snapTo(.5,y+10,.5);p.setHealth(20);
         for(Element e:Element.values())Mastery.grant(p,e,3);
         for(var source:new net.minecraft.world.damagesource.DamageSource[]{
-            p.damageSources().lava(),p.damageSources().onFire(),p.damageSources().fall(),p.damageSources().drown()
+            p.damageSources().lava(),p.damageSources().onFire(),p.damageSources().fall(),p.damageSources().drown(),p.damageSources().freeze()
         }){
             p.damageCooldownTime=0;p.hurtTime=0;p.setDeltaMovement(.1,0,.2);
             var before=p.getDeltaMovement();
@@ -588,6 +588,10 @@ public final class Regression implements ModInitializer {
         check(!Rubber.unlocked(lavaMaster)&&Rubber.damage(lavaMaster,lavaMaster.damageSources().lava(),10)==0,
             "All-four mastery grants lava immunity without any fruit");
         check(WaterRules.mastered(lavaMaster)&&lavaMaster.canBreatheUnderwater(),"All-four mastery grants underwater breathing without a fruit");
+        check(!lavaMaster.canFreeze(),"All-four mastery prevents native freezing");
+        lavaMaster.setTicksFrozen(200);WaterRules.apply(lavaMaster);
+        check(lavaMaster.getTicksFrozen()==0,"Mastery clears preexisting frozen buildup");
+        check(Rubber.damage(lavaMaster,lavaMaster.damageSources().freeze(),4)==0,"Mastery rejects freezing damage without a fruit");
         lavaMaster.setAirSupply(1);WaterRules.apply(lavaMaster);
         check(lavaMaster.getAirSupply()==lavaMaster.getMaxAirSupply(),"Nonfruit master replenishes air");
         float breathBefore=lavaMaster.getHealth();
@@ -610,6 +614,9 @@ public final class Regression implements ModInitializer {
         lavaMaster.hurtServer(level,lavaMaster.damageSources().fall(),4);
         check(lavaMaster.getHealth()<fallBefore,"Native fall damage returns without full mastery");
         check(!WaterRules.mastered(lavaMaster)&&!lavaMaster.canBreatheUnderwater(),"Losing one mastery removes underwater breathing");
+        check(lavaMaster.canFreeze()&&Rubber.damage(lavaMaster,lavaMaster.damageSources().freeze(),4)==4,"Losing one mastery restores normal freezing");
+        lavaMaster.setTicksFrozen(180);WaterRules.apply(lavaMaster);
+        check(lavaMaster.getTicksFrozen()==180,"Nonmaster keeps ordinary frozen buildup");
         check(Rubber.damage(lavaMaster,lavaMaster.damageSources().drown(),4)==4,"Drowning protection requires all-four mastery");
         Player airOnly=player(level);Mastery.grant(airOnly,Element.AIR,3);
         check(Rubber.damage(airOnly,airOnly.damageSources().fall(),4)==4,"Air-only mastery does not grant the all-four reward");

@@ -13,7 +13,8 @@
     "PunchDisplayAccessor",
     "DoorCameraMixin",
     "DoorSpectatorMenuMixin",
-    "ZombieVillagerCureAccessor"
+    "ZombieVillagerCureAccessor",
+    "MasteredFreezingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

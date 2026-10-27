@@ -116,14 +116,14 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.23 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.24 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
                 chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));
                 chat(p,"Door claim: "+(FruitClaims.doorAvailable()?"available":FruitClaims.ownsDoor(p)?"yours":"another living player"));
                 chat(p,"Rubber claim: "+(FruitClaims.available()?"available":FruitClaims.owns(p)?"yours":"another living player"));
-                chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall immunity":"not yet mastered"));
+                chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall/freezing immunity":"not yet mastered"));
                 chat(p,"Water: "+(WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
                     +" | Eyes submerged: "+WaterRules.submerged(p)+" | Air: "+p.getAirSupply()+"/"+p.getMaxAirSupply());
                 if(Progress.unlocked(p,Element.AIR)){

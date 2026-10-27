@@ -54,7 +54,7 @@ public final class WaterRules {
     }
     public static void apply(Player p){
         if(!p.isAlive()||p.isSpectator())return;
-        if(Mastery.harmony(p))p.clearFire();
+        if(Mastery.harmony(p)){p.clearFire();p.setTicksFrozen(0);}
         if(mastered(p)){p.setAirSupply(p.getMaxAirSupply());return;}
         if(!suppressed(p))return;
         Rubber.suspendInWater(p);
