@@ -31,7 +31,7 @@ public final class LightningBolts{
         if(!(owner.level() instanceof ServerLevel level)||from.distanceToSqr(to)<.01)return;
         Display.BlockDisplay d=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);if(d==null)return;
         Bolt b=new Bolt();b.owner=owner;b.level=level;b.from=from;b.to=to;b.hand=hand;b.display=d;
-        d.addTag("cb_temporary_rock");d.setCustomNameVisible(false);d.setBlockState(Blocks.WHITE_CONCRETE.defaultBlockState());
+        d.addTag("cb_temporary_rock");d.setCustomNameVisible(false);d.setBlockState(Blocks.STONE.defaultBlockState());
         var settings=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;
         settings.creeperborn$duration(0);settings.creeperborn$positionDuration(0);settings.creeperborn$view(1);settings.creeperborn$width(128);settings.creeperborn$height(128);
         pose(b);

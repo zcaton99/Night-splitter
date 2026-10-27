@@ -153,7 +153,6 @@ public final class Lightning {
         float damage=(float)((charged?(storm(p)?40:24):(storm(p)?14:8))*strength);
         if(!charged&&!storm(p)){
             LightningBolts.launch(p,LightningBolts.hand(p),end,true);
-            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }else beam(level,from,end,charged?80:40);
         boolean changed=false;
         if(charged||storm(p)){
