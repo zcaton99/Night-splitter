@@ -262,6 +262,11 @@ public final class Rubber {
         if(!unlocked(p))return amount;
         if(source.typeHolder().equals(p.damageSources().fellOutOfWorld().typeHolder())||source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL))return amount;
         if(source.typeHolder().equals(p.damageSources().drown().typeHolder()))return WaterRules.mastered(p)?0:amount;
+        if(Lightning.electrical(source)){
+            if(gear(p))return 0;
+            State guard=state(p);if(guard.guarding)credit(p);
+            return amount*.2f*(guard.guarding?.2f:1);
+        }
         boolean heat=heat(source);
         if(gear(p)) {
             if(source.is(DamageTypeTags.IS_FALL))return 0;

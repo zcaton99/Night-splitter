@@ -139,8 +139,14 @@ public final class Lightning {
         }
         return best;
     }
-    private static boolean hit(Player p,LivingEntity e,float amount){
-        return e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),amount);
+    private static final ThreadLocal<DamageSource> electricSource=new ThreadLocal<>();
+    public static boolean electrical(DamageSource source){return source==electricSource.get();}
+    static boolean hit(Player p,LivingEntity e,float amount){
+        if(e instanceof Player target&&Rubber.unlocked(target)&&Rubber.gear(target))return false;
+        DamageSource source=p.damageSources().playerAttack(p),previous=electricSource.get();
+        electricSource.set(source);
+        try{return e.hurtServer((ServerLevel)p.level(),source,amount);}
+        finally{if(previous==null)electricSource.remove();else electricSource.set(previous);}
     }
     private static void strike(Player p,boolean charged){
         ServerLevel level=(ServerLevel)p.level();Vec3 from=p.getEyePosition(),end=from.add(p.getLookAngle().scale(range(p,charged)));

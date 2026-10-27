@@ -1,4 +1,4 @@
-# Lightning Creeper Fruit — alpha.32
+# Lightning Creeper Fruit — alpha.33
 
 Fourth rare fruit; one fruit per player and one living owner of each fruit per world. Ownership and mastery persist across logout/restart. Actual death releases the fruit and resets its progression, retaining elemental progression. Existing fruit saves without a Lightning owner remain compatible. Total Fruitborn spawn chance stays unchanged; available types share it.
 
@@ -42,3 +42,9 @@ Judgment requires neither full health nor a minimum hunger level. Low hunger now
 Storm visuals are three times larger in both horizontal axes; height, duration, movement, damage area and player collision remain unchanged.
 
 Flash Step now has three charges normally and five with all-four elemental mastery. Each accepted jump spends one. All charges refill three seconds after the latest successful jump. Failed placement spends none, and logout cannot reset spent charges.
+
+## Alpha.33 Rubber counter
+
+Rubber fruit owners take 80% less damage from all Lightning fruit attacks: normal bolts, chain arcs, Judgment and both Storm strikes. Bounce Guard stacks with this resistance, leaving 4% of the original electric damage before other native defenses. Gear 5 blocks Lightning fruit attacks completely, including from all-four masters, without hurt feedback.
+
+Lightning damage is classified only during its own damage call. A sword held by the caster does not make the lightning a sharp-weapon attack; ordinary melee/heat weaknesses and unrelated damage remain unchanged.

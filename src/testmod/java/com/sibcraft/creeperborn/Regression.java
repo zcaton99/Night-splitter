@@ -643,6 +643,32 @@ public final class Regression implements ModInitializer {
         target.discard();FruitClaims.releaseOnDeath(p);Lightning.clear();
     }
 
+    private void checkRubberLightningCounter(ServerLevel level){
+        Player caster=player(level),rubber=player(level);
+        check(Rubber.consume(rubber,Relics.fruit()),"Rubber owner available for Lightning counter test");
+        for(float amount:new float[]{8,4,24,14,40,50}){
+            rubber.setHealth(20);rubber.damageCooldownTime=0;
+            check(Lightning.hit(caster,rubber,amount)&&Math.abs(rubber.getHealth()-(20-amount*.2f))<.001,
+                "Rubber resists eighty percent of bolt, chain, Judgment and Storm damage");
+        }
+        caster.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND,new ItemStack(Items.DIAMOND_SWORD));
+        rubber.setHealth(20);rubber.damageCooldownTime=0;Lightning.hit(caster,rubber,8);
+        check(Math.abs(rubber.getHealth()-18.4)<.001,"Holding a sword does not turn an electric attack into Rubber's sharp-weapon weakness");
+        check(Math.abs(Rubber.damage(rubber,caster.damageSources().playerAttack(caster),8)-12)<.001,
+            "Electrical context is cleared and ordinary sharp-weapon weakness remains");
+        Rubber.grant(rubber,3);rubber.getFoodData().setFoodLevel(20);Rubber.press(rubber,2,0);
+        clock(level,level.getGameTime()+7);Rubber.heartbeat(rubber);Rubber.tickPlayer(rubber);
+        rubber.setHealth(20);rubber.damageCooldownTime=0;Lightning.hit(caster,rubber,8);
+        check(Math.abs(rubber.getHealth()-19.68)<.001,"Bounce Guard stacks with Rubber's electric resistance");
+        Rubber.cancelInput(rubber);
+        check(Rubber.cast(rubber,2,0).contains("Gear 5")&&Rubber.gear(rubber),"Gear 5 is active for Lightning immunity test");
+        rubber.setHealth(20);rubber.damageCooldownTime=0;rubber.hurtTime=0;
+        check(!Lightning.hit(caster,rubber,50)&&rubber.getHealth()==20&&rubber.hurtTime==0,"Gear 5 blocks Lightning completely without hurt feedback");
+        for(Element element:Element.values())Mastery.grant(caster,element,3);
+        check(!Lightning.hit(caster,rubber,50)&&rubber.getHealth()==20,"All-four mastery does not remove Rubber's Lightning counter");
+        FruitClaims.releaseOnDeath(rubber);Rubber.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -654,6 +680,7 @@ public final class Regression implements ModInitializer {
         checkPhoenix(level);
         checkLightning(level);
         checkLightningChargeAndFlashes(level);
+        checkRubberLightningCounter(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
