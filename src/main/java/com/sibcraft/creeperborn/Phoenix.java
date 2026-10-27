@@ -20,8 +20,13 @@ public final class Phoenix {
     private static final class State {
         Player owner;ServerLevel level;long wingUntil,formUntil,attackReady,heldAt=-1,heartbeat,flareUntil,recent=-10000,credit=-10000,shieldUntil;
         int held=-1,diveTicks,healFuel;Vec3 diveDirection,lastPosition;
-        boolean grantedFlight,oldFlying,flight,healing;float oldSpeed;
+        boolean grantedFlight,oldFlying,flight,healing,blessAttempted;float oldSpeed;
     }
+    private static final class Blessing{
+        Player owner;LivingEntity target;long expires,next;float heal;
+        Blessing(Player owner,LivingEntity target,float heal){this.owner=owner;this.target=target;this.heal=heal;this.expires=owner.level().getGameTime()+200;this.next=owner.level().getGameTime()+40;}
+    }
+    private static final Map<UUID,Blessing> blessings=new HashMap<>();
     private record View(int entity,int flags){}
     private static final Map<UUID,State> states=new HashMap<>();
     private static final Map<UUID,Map<UUID,View>> sent=new HashMap<>();
@@ -62,12 +67,13 @@ public final class Phoenix {
     }
     public static void press(Player p,int move){
         if(!selected(p)||!p.isAlive()||p.isSpectator()||WaterRules.suppressed(p)||move<0||move>2)return;
-        State s=state(p);if(s.held>=0)return;s.level=(ServerLevel)p.level();s.held=move;s.heldAt=now(p);s.heartbeat=now(p)+15;
+        State s=state(p);if(s.held>=0)return;s.level=(ServerLevel)p.level();s.held=move;s.blessAttempted=false;s.heldAt=now(p);s.heartbeat=now(p)+15;
     }
     public static void heartbeat(Player p){State s=state(p);if(s.held>=0)s.heartbeat=now(p)+15;}
     public static void cancelInput(Player p){State s=state(p);s.held=-1;s.heldAt=-1;s.healing=false;}
     public static void release(Player p,int move){
-        State s=state(p);if(s.held!=move)return;long held=now(p)-s.heldAt;boolean healing=s.healing;cancelInput(p);s.healing=healing;
+        State s=state(p);if(s.held!=move)return;long held=now(p)-s.heldAt;boolean healing=s.healing,blessed=s.blessAttempted;cancelInput(p);s.healing=healing;
+        if(move==2&&held>=7&&blessed)return;
         if(!selected(p)||!p.isAlive()||p.isSpectator())return;
         String text=cast(p,move,held);if(!text.isEmpty())Creeperborn.say(p,text);
     }
@@ -77,7 +83,8 @@ public final class Phoenix {
         if(move<0||move>2)return "";
         State s=state(p);boolean charged=held>=7;
         if(move==0){
-            if(now(p)<s.attackReady||s.healing)return "Phoenix attack recovering.";
+            if(s.healing)return "Tap C to stop Healing Flames before attacking.";
+            if(now(p)<s.attackReady)return "Phoenix attack recovering.";
             s.attackReady=now(p)+(charged?100:20);s.recent=now(p);s.flareUntil=now(p)+10;
             if(charged){s.level=(ServerLevel)p.level();s.diveTicks=9;s.diveDirection=p.getLookAngle().normalize();return "Phoenix Dive!";}
             talon(p,s);return "Phoenix Talon!";
@@ -95,11 +102,47 @@ public final class Phoenix {
             grantFlight(p,s);s.flareUntil=now(p)+20;particles(p,30);
             return charged?"Phoenix Form! Tap C to heal nearby players and villagers.":"Wing Flight! Tap X again to land.";
         }
+        if(charged)return bless(p);
         if(tier(p)<3)return "Healing Flames needs 40 uses + one active hour.";
         if(s.healing){s.healing=false;return "Healing Flames stopped.";}
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to heal.";
         s.healing=true;s.level=(ServerLevel)p.level();s.recent=now(p);
         return "Healing Flames! Tap C again to stop.";
+    }
+    private static boolean friendly(Player p,LivingEntity target){
+        return target instanceof Villager||target instanceof Player&&(p.getTeam()==null||p.isAlliedTo(target));
+    }
+    private static String bless(Player p){
+        if(tier(p)<3)return "Phoenix Blessing needs 40 uses + one active hour.";
+        if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to bless teammates.";
+        long ready=0;String prefix="cb_phoenix_bless_ready_";
+        for(String t:p.entityTags())if(t.startsWith(prefix))try{ready=Long.parseLong(t.substring(prefix.length()));}catch(NumberFormatException ignored){}
+        if(now(p)<ready)return "Phoenix Blessing recovering: "+((ready-now(p)+19)/20)+"s.";
+        int count=0;float heal=(float)(1.5*strength(p)*(Mastery.harmony(p)?1.25:1));
+        for(LivingEntity target:((ServerLevel)p.level()).getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(10))){
+            if(target==p||!friendly(p,target)||!target.isAlive()||target.isSpectator()||target.distanceToSqr(p)>100||!p.hasLineOfSight(target))continue;
+            blessings.put(target.getUUID(),new Blessing(p,target,heal));count++;
+        }
+        if(count==0)return "No nearby teammates or villagers to bless.";
+        for(String t:Set.copyOf(p.entityTags()))if(t.startsWith(prefix))p.removeTag(t);
+        p.addTag(prefix+(now(p)+200));p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);credit(p);particles(p,20);
+        return "Phoenix Blessing! "+count+" allies heal for 10s, even outside your circle.";
+    }
+    public static int blessings(){return blessings.size();}
+    public static void tickBlessings(){
+        blessings.values().removeIf(b->{
+            long now=b.target.level().getGameTime();
+            if(!b.target.isAlive()||b.target.isRemoved()||now>b.expires)return true;
+            if(now<b.next)return false;b.next=now+40;
+            State owner=states.get(b.owner.getUUID());
+            boolean inside=owner!=null&&owner.healing&&b.owner.isAlive()&&b.owner.level()==b.target.level()
+                &&b.target.distanceToSqr(b.owner)<=100&&b.owner.hasLineOfSight(b.target);
+            if(!inside)b.target.heal(b.heal);
+            if(b.target.level() instanceof ServerLevel level){
+                Vec3 at=b.target.getEyePosition();level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,at.x,at.y,at.z,4,.2,.3,.2,.01);
+            }
+            return now>=b.expires;
+        });
     }
     private static void grantFlight(Player p,State s){
         if(s.flight)return;s.flight=true;s.grantedFlight=!p.getAbilities().mayfly;
@@ -214,6 +257,9 @@ public final class Phoenix {
         p.clearFire();
         if(s.held>=0&&(!selected(p)||now>s.heartbeat))cancelInput(p);
         if(!selected(p)||tier(p)<3||p.getFoodData().getFoodLevel()<=6)s.healing=false;
+        if(s.held==2&&now-s.heldAt>=7&&!s.blessAttempted){
+            s.blessAttempted=true;Creeperborn.say(p,bless(p));
+        }
         if(form(p)&&Mastery.harmony(p))s.formUntil=Long.MAX_VALUE;
         if(s.formUntil>0&&s.formUntil!=Long.MAX_VALUE&&now>=s.formUntil||s.wingUntil>0&&now>=s.wingUntil||p.getFoodData().getFoodLevel()<=6)end(p);
         if(s.formUntil==Long.MAX_VALUE&&!Mastery.harmony(p))s.formUntil=now+FORM_TICKS;
@@ -254,12 +300,13 @@ public final class Phoenix {
         }
         if((form(p)||wing(p)||s.healing)&&now%20==0){
             String mode=form(p)?"Phoenix Form "+(Mastery.harmony(p)?"unlimited":((s.formUntil-now+19)/20)+"s"):wing(p)?"Wing Flight "+((s.wingUntil-now+19)/20)+"s":"Healing Flames";
-            Creeperborn.say(p,mode+" | Food "+p.getFoodData().getFoodLevel()+"/20 | Rebirth "+(spent(p)?"spent":"ready"));
+            Creeperborn.say(p,mode+" | Food "+p.getFoodData().getFoodLevel()+"/20 | Rebirth "+(tier(p)<3?"locked":spent(p)?"spent":"ready"));
         }
         if(p.getFoodData().getFoodLevel()<=6){end(p);cancelInput(p);}
     }
     public static void tick(MinecraftServer server){
         for(Player p:server.getPlayerList().getPlayers())tickPlayer(p);
+        tickBlessings();
         for(var viewer:server.getPlayerList().getPlayers()){
             if(!ServerPlayNetworking.canSend(viewer,PhoenixVisualPayload.TYPE))continue;
             Map<UUID,View> cache=sent.computeIfAbsent(viewer.getUUID(),id->new HashMap<>());
@@ -275,5 +322,5 @@ public final class Phoenix {
         }
     }
     public static void forget(Player p){end(p);states.remove(p.getUUID());sent.remove(p.getUUID());}
-    public static void clear(){for(State s:List.copyOf(states.values()))end(s.owner);states.clear();sent.clear();}
+    public static void clear(){for(State s:List.copyOf(states.values()))end(s.owner);states.clear();sent.clear();blessings.clear();
 }

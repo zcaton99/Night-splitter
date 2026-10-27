@@ -403,6 +403,15 @@ public final class Regression implements ModInitializer {
         clock(level,(level.getGameTime()/40+1)*40);Phoenix.tickPlayer(p);
         check(Phoenix.healing(p)&&Math.abs(p.getHealth()-12)<.001,"Channel healing replaces rather than stacks passive self healing");
         check(Math.abs(near.getHealth()-12)<.001&&far.getHealth()==10,"Healing Flames reaches ten-block radius only");
+        Phoenix.press(p,2);clock(level,level.getGameTime()+8);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
+        check(Phoenix.blessings()==1,"Holding C applies a timed blessing to nearby allies");
+        Phoenix.release(p,2);
+        near.setHealth(10);near.snapTo(-12.5,y+20,34);
+        clock(level,level.getGameTime()+40);Phoenix.tickBlessings();
+        check(Math.abs(near.getHealth()-11.5)<.001,"Blessing follows allies beyond the circle at seventy-five percent healing strength");
+        near.snapTo(-12.5,y+20,29);near.setHealth(10);p.setHealth(20);
+        clock(level,(level.getGameTime()/40+1)*40);Phoenix.tickPlayer(p);Phoenix.tickBlessings();
+        check(Math.abs(near.getHealth()-12)<.001,"Circle healing and lingering blessing do not stack");
         check(Phoenix.cast(p,2,0).contains("stopped")&&!Phoenix.healing(p),"Second C tap stops Healing Flames");
         Phoenix.cancelInput(p);near.discard();far.discard();
         Mastery.set(p,"cb_phoenix_fuel_",0);p.getFoodData().setFoodLevel(20);

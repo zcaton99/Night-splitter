@@ -73,7 +73,7 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if(kind.equals("fruit:phoenix")){
-                say(player,Phoenix.consume(player,stack)?"Phoenix unlocked! G selects fruit; Z attacks, X wings, hold X form, tap C healing.":"One fruit per player; Phoenix may already have a living owner.");
+                say(player,Phoenix.consume(player,stack)?"Phoenix unlocked! G selects fruit; Z attacks, X wings, hold X form, tap C healing circle; hold C ally blessing.":"One fruit per player; Phoenix may already have a living owner.");
             }else if(kind.equals("fruit:door")){
                 say(player,DoorFruit.consume(player,stack)?"Door-Door unlocked! G selects fruit, Z opens a passage.":"One fruit per player. This fruit may also be claimed by another living owner.");
             } else if (kind.equals("fruit:rubber")) {
