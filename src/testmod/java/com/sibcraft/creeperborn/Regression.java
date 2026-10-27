@@ -370,6 +370,18 @@ public final class Regression implements ModInitializer {
 
 
     private void clock(ServerLevel level,long time){((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(time);}
+    private void checkPhoenixTalonForm(ServerLevel level,Player p,int range){
+        check(Phoenix.talonRange(p)==range,"Talon range follows active Phoenix form");
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        target.setNoAi(true);target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
+        target.snapTo(p.getX(),p.getY(),p.getZ()+range-1);level.addFreshEntity(target);
+        clock(level,level.getGameTime()+101);
+        check(Phoenix.cast(p,0,0).equals("Phoenix Talon!")&&Math.abs(target.getHealth()-14)<.001,"Transformed Talon hits near boosted reach without increasing damage");
+        target.snapTo(p.getX(),p.getY(),p.getZ()+range+1);target.setHealth(20);target.damageCooldownTime=0;
+        clock(level,level.getGameTime()+21);Phoenix.cast(p,0,0);
+        check(target.getHealth()==20,"Transformed Talon cannot exceed its own range cap");
+        target.discard();
+    }
     private void checkPhoenix(ServerLevel level){
         Phoenix.clear();FruitCreepers.clear();
         Player p=player(level);p.snapTo(-12.5,y+20,20.5);p.setYRot(0);p.setXRot(0);
@@ -404,11 +416,14 @@ public final class Regression implements ModInitializer {
         for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,22),Blocks.AIR.defaultBlockState());
         target.discard();p.snapTo(-12.5,y+20,20.5);
         Phoenix.grant(p,2);check(Phoenix.cast(p,1,0).startsWith("Wing Flight!")&&Phoenix.wing(p)&&p.getAbilities().flying,"Tap X grants wing flight at tier two");
+        checkPhoenixTalonForm(level,p,15);
         clock(level,level.getGameTime()+601);Phoenix.tickPlayer(p);
         check(!Phoenix.wing(p)&&!p.getAbilities().mayfly&&!p.getAbilities().flying,"Thirty-second flight expires and restores permissions");
+        check(Phoenix.talonRange(p)==10,"Ending flight restores normal Talon reach");
         check(Phoenix.cast(p,1,0).contains("recovering"),"Wing Flight has five-second recovery");
         Phoenix.grant(p,3);p.getFoodData().setFoodLevel(20);
         check(Phoenix.cast(p,1,8).startsWith("Phoenix Form!")&&Phoenix.form(p),"Hold X activates full Phoenix form at tier three");
+        checkPhoenixTalonForm(level,p,20);
         check(Phoenix.damage(p,p.damageSources().generic(),10)==5,"Normal form reduces ordinary damage by half");
         p.damageCooldownTime=0;p.setHealth(20);p.hurtServer(level,p.damageSources().generic(),4);
         check(Math.abs(p.getHealth()-18)<.001,"Native damage path applies normal-form mitigation");

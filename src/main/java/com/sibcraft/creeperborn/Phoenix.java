@@ -195,13 +195,14 @@ public final class Phoenix {
         p.setHealth(p.getMaxHealth()/2);p.clearFire();end(p);cancelInput(p);
         s.shieldUntil=now(p)+60;s.recent=now(p);particles(p,70);Creeperborn.say(p,"Phoenix Rebirth! Half strength for five active minutes. Revival spent.");return true;
     }
+    public static int talonRange(Player p){return form(p)?20:wing(p)?15:10;}
     private static void talon(Player p,State s){
         ServerLevel level=(ServerLevel)p.level();Vec3 eye=p.getEyePosition(),look=p.getLookAngle();
-        LivingEntity best=null;double distance=11;
-        for(LivingEntity e:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(10))){
+        int range=talonRange(p);LivingEntity best=null;double distance=range+1;
+        for(LivingEntity e:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(range))){
             if(!(e instanceof Enemy)||!e.isAlive()||!p.hasLineOfSight(e))continue;
             Vec3 delta=e.getEyePosition().subtract(eye);double d=delta.length();
-            if(d<=10&&d<distance&&delta.normalize().dot(look)>.55){best=e;distance=d;}
+            if(d<=range&&d<distance&&delta.normalize().dot(look)>.55){best=e;distance=d;}
         }
         if(best!=null)hit(p,best,(float)(6*strength(p)));particles(p,12);
     }

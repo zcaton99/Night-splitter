@@ -1,4 +1,4 @@
-# Phoenix — alpha.28
+# Phoenix — alpha.29
 
 Phoenix is the third rare fruit in Creeperborn. It follows the existing one-fruit-per-player and one-living-owner-per-fruit rules, preserves ownership across logout/restart, and loses powers/progression on actual death. Elemental unlocks/mastery remain.
 
@@ -8,7 +8,7 @@ Select Phoenix with G; B enables combat controls. Z/X/C are rebindable in Minecr
 
 | Input | Ability | Starting balance |
 | --- | --- | --- |
-| Tap Z | Phoenix Talon | 6 damage, 10-block forward reach, 1s cooldown |
+| Tap Z | Phoenix Talon | 6 damage; 10-block reach normally, 15 in Wing Flight, 20 in full Phoenix Form; 1s cooldown |
 | Hold Z at least .35s, release | Phoenix Dive | Up to about 16 blocks; swept hostile hit, 10 damage plus small 4-damage impact area; 5s cooldown; walls stop travel |
 | Tap X | Wing Flight | Partial animated wings, 30s duration; tap again to end; 5s cooldown after ending |
 | Hold X at least .35s, release | Phoenix Form | Full bird, 90s maximum, half incoming damage; 30s cooldown after ending |
@@ -60,3 +60,7 @@ The full Phoenix now matches the fiery wings: red head/body, glowing orange crow
 ## Alpha.28 Talon reach
 
 Phoenix Talon now reaches ten blocks (previously five). It still selects the nearest hostile in its forward cone with line of sight, deals six base damage, and has a one-second cooldown. Walls block targeting; Dive is unchanged.
+
+## Alpha.29 form-specific Talon reach
+
+Talon reaches 10 blocks normally, 15 during Wing Flight, and 20 during full Phoenix Form. The bonus follows the active form and ends with it, including after Rebirth. Damage, cooldown, forward targeting and line-of-sight rules remain unchanged. Dive remains separate.
