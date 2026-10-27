@@ -546,7 +546,7 @@ public final class Regression implements ModInitializer {
         for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,12),Blocks.AIR.defaultBlockState());
         p.snapTo(-12.5,y+26,8.5);Lightning.press(p,1);clock(level,level.getGameTime()+7);Lightning.heartbeat(p);Lightning.tickPlayer(p);
         check(p.getDeltaMovement().z>1,"Held X starts fast forward Lightning Rush");
-        Lightning.release(p,1);p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        Lightning.release(p,1);check(p.getDeltaMovement().lengthSqr()==0,"Releasing Rush stops its movement immediately");
         check(Lightning.ready(p,"rush")>level.getGameTime(),"Releasing Rush starts recovery");
         Lightning.grant(p,3);p.getFoodData().setFoodLevel(20);
         check(Lightning.cast(p,2,0).startsWith("Storm Form!")&&Lightning.storm(p)&&p.getAbilities().flying,"Storm Form grants flight at tier three");
@@ -570,6 +570,9 @@ public final class Regression implements ModInitializer {
         Lightning.forget(p);FruitClaims.load(server);
         check(Lightning.unlocked(p)&&Lightning.tier(p)==3&&!p.getAbilities().mayfly&&Lightning.ready(p,"storm")>level.getGameTime(),"Logout keeps ownership/mastery and recovery without leaked flight");
         Mastery.grant(p,Element.EARTH,2);clock(level,level.getGameTime()+901);p.getFoodData().setFoodLevel(20);Lightning.cast(p,2,0);
+        clock(level,level.getGameTime()+1201);Lightning.tickPlayer(p);
+        check(!Lightning.storm(p)&&!p.getAbilities().mayfly,"Unmastered Storm expires at sixty seconds");
+        clock(level,level.getGameTime()+901);p.getFoodData().setFoodLevel(20);Lightning.cast(p,2,0);
         level.setBlockAndUpdate(p.blockPosition().above(),Blocks.WATER.defaultBlockState());
         check(WaterRules.suppressed(p),"Lightning water curse returns without all-four mastery");
         WaterRules.apply(p);check(!Lightning.storm(p)&&!p.getAbilities().mayfly,"Submersion ends Storm and restores flight");

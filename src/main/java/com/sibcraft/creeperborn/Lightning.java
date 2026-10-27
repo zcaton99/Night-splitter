@@ -61,7 +61,7 @@ public final class Lightning {
     }
     public static void heartbeat(Player p){State s=states.get(p.getUUID());if(s!=null&&s.held>=0)s.heartbeat=now(p)+15;}
     public static void cancelInput(Player p){State s=states.get(p.getUUID());if(s==null)return;
-        if(s.rushStart>0)cooldown(p,"rush",160);s.rushStart=0;s.held=-1;
+        if(s.rushStart>0){cooldown(p,"rush",160);Rubber.impulse(p,Vec3.ZERO);}s.rushStart=0;s.held=-1;
     }
     public static void release(Player p,int move){
         State s=states.get(p.getUUID());if(s==null||s.held!=move)return;
@@ -232,7 +232,7 @@ public final class Lightning {
                 else{
                     Vec3 next=flashDestination(p,2),delta=next.subtract(p.position());
                     if(delta.lengthSqr()<.01)cancelInput(p);
-                    else{Rubber.impulse(p,delta.normalize().scale(Math.min(1.6,delta.length())));if(now%5==0)beam((ServerLevel)p.level(),p.getEyePosition(),p.getEyePosition().subtract(p.getLookAngle()),5);}
+                    else{if(now==s.rushStart)credit(p);Rubber.impulse(p,delta.normalize().scale(Math.min(1.6,delta.length())));if(now%5==0)beam((ServerLevel)p.level(),p.getEyePosition(),p.getEyePosition().subtract(p.getLookAngle()),5);}
                 }
             }
         }
