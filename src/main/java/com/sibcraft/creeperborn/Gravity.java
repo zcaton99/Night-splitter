@@ -227,7 +227,17 @@ public final class Gravity{
             if(m.visual()!=null)m.visual().snapTo(at.x,at.y,at.z);
             if(now(m.owner())%3==0){
                 m.level().sendParticles(PURPLE,at.x,at.y,at.z,12,1,1,1,.02);
-                m.level().sendParticles(ParticleTypes.FLAME,at.x,at.y-1.4,at.z,35,1.4,.35,1.4,.03);
+                // A complete flame shell follows the rock, with a tapering wake above its descent.
+                double radius=m.radius()>=14?2.7:2.1;
+                for(int flame=0;flame<24;flame++){
+                    double y=1-2*(flame+.5)/24.0,angle=flame*Math.PI*(3-Math.sqrt(5))+now(m.owner())*.18;
+                    double horizontal=Math.sqrt(1-y*y);
+                    Vec3 fire=at.add(Math.cos(angle)*horizontal*radius,y*radius,Math.sin(angle)*horizontal*radius);
+                    m.level().sendParticles(ParticleTypes.FLAME,fire.x,fire.y,fire.z,2,.08,.08,.08,.015);
+                }
+                m.level().sendParticles(ParticleTypes.FLAME,at.x,at.y-1.4,at.z,25,1.4,.35,1.4,.03);
+                for(int wake=1;wake<=3;wake++)
+                    m.level().sendParticles(ParticleTypes.FLAME,at.x,at.y+wake*1.4,at.z,8-wake,1.2/wake,.5,1.2/wake,.02);
                 m.level().sendParticles(ParticleTypes.SMOKE,at.x,at.y+1,at.z,12,.8,.8,.8,.03);
             }
             if(t>=1){
