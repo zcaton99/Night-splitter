@@ -59,7 +59,7 @@ public final class Dark{
         if(item.isEmpty()||!Relics.kind(item).equals("fruit:dark")||!FruitClaims.claimItem(p,item,"dark"))return false;
         p.addTag("cb_fruit_dark");grant(p,Relics.captureTier(item));choose(p,"dark");item.shrink(1);return true;
     }
-    private static void credit(Player p){State s=state(p);if(now(p)-s.recent>=20)Mastery.set(p,"cb_dark_uses_",uses(p)+1);s.recent=now(p);}
+    private static void credit(Player p){if(!p.isAlive()||!unlocked(p))return;State s=state(p);if(now(p)-s.recent>=20)Mastery.set(p,"cb_dark_uses_",uses(p)+1);s.recent=now(p);}
     private static long value(Player p,String prefix){
         for(String t:p.entityTags())if(t.startsWith(prefix))try{return Long.parseLong(t.substring(prefix.length()));}catch(NumberFormatException ignored){}
         return 0;
@@ -116,7 +116,7 @@ public final class Dark{
         Player previous=voidKiller.get();if(capture)voidKiller.set(owner);
         try{
             boolean hit=target.hurtServer((ServerLevel)owner.level(),owner.damageSources().playerAttack(owner),damage);
-            if(hit){if(target instanceof Player victim)suppress(victim,20,false);credit(owner);}return hit;
+            if(hit){if(target.isAlive()&&target instanceof Player victim)suppress(victim,20,false);credit(owner);}return hit;
         }finally{if(capture){if(previous==null)voidKiller.remove();else voidKiller.set(previous);}}
     }
     public static long ready(Player p,int move,boolean held){return value(p,"cb_dark_ready_"+move+"_"+held+"_");}
@@ -224,19 +224,22 @@ public final class Dark{
     public static void tickEffects(){
         tethers.entrySet().removeIf(entry->{Tether t=entry.getValue();if(!rooted(t.target()))return true;
             t.target().setDeltaMovement(Vec3.ZERO);if(t.target() instanceof Mob mob)mob.getNavigation().stop();if(now(t.owner())%5==0)chains(t.level(),t.target());return false;});
-        voids.removeIf(v->{
-            if(!v.owner().isAlive()||v.owner().level()!=v.level()||WaterRules.suppressed(v.owner())){removeVoid(v);return true;}
+        for(Void v:List.copyOf(voids)){
+            if(!voids.contains(v))continue;
+            if(!v.owner().isAlive()||v.owner().level()!=v.level()||WaterRules.suppressed(v.owner())){removeVoid(v);voids.remove(v);continue;}
             long now=now(v.owner());boolean finish=now>=v.ends();
             if(v.visual()!=null){float scale=(float)Math.max(.05,Math.min(1,(v.ends()-now)/10.0));v.visual().setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),new org.joml.Quaternionf(),new org.joml.Vector3f(scale),new org.joml.Quaternionf()));}
             if(now%5==0){dust(v.level(),v.center(),12);wave(v.level(),v.center(),1.8+Math.sin(now*.2)*.2);}
             for(LivingEntity target:v.level().getEntitiesOfClass(LivingEntity.class,new AABB(v.center(),v.center()).inflate(6))){
-                if(!enemy(v.owner(),target)||target.position().distanceToSqr(v.center())>36||!v.owner().hasLineOfSight(target))continue;
+                if(!v.owner().isAlive()||!voids.contains(v))break;
+                if(!enemy(v.owner(),target)||target.position().distanceToSqr(v.center())>36
+                    ||v.level().clip(new ClipContext(v.center(),target.getEyePosition(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,v.owner())).getType()!=HitResult.Type.MISS)continue;
                 Vec3 pull=v.center().subtract(target.position()).normalize().scale(.28);
                 if(target instanceof ServerPlayer sp)Rubber.impulse(sp,pull);else target.setDeltaMovement(target.getDeltaMovement().scale(.4).add(pull));
                 if(finish||now%20==0)hurt(v.owner(),target,(float)((finish?12:4)*Mastery.multiplier(v.owner())),true);
             }
-            if(finish){wave(v.level(),v.center(),6);removeVoid(v);}return finish;
-        });
+            if(finish){wave(v.level(),v.center(),6);removeVoid(v);voids.remove(v);}
+        }
     }
     public static List<Capture> captures(Player p){
         List<Capture> list=new ArrayList<>();
@@ -286,7 +289,7 @@ public final class Dark{
         }
     }
     public static int flags(Player p){State s=states.get(p.getUUID());return s==null?0:(mantle(p)?1:0)|(s.surge>0?2:0)|(s.held==0&&now(p)-s.press>=7?4:0)|(now(p)<s.flare?8:0);}
-    public static String status(Player p){return "Dark "+(unlocked(p)?"tier "+tier(p)+"/3 | "+uses(p)+" uses | "+seconds(p)+"s | Selected: "+choice(p)+" | Captured power: "+extra(p):"locked")+" | Pending captures: "+captures(p).size();}
+    public static String status(Player p){return "Dark "+(unlocked(p)?"tier "+tier(p)+"/3 | "+uses(p)+" uses | "+seconds(p)+"s | Selected: "+choice(p)+" | Captured power: "+extra(p)+(extra(p)==null?"":" tier "+fruitTier(p,extra(p))+"/3"):"locked")+" | Pending captures: "+captures(p).size();}
     public static void tick(MinecraftServer server){
         for(Player p:server.getPlayerList().getPlayers())tickPlayer(p);tickEffects();
         for(var viewer:server.getPlayerList().getPlayers()){
