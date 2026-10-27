@@ -57,9 +57,9 @@ public final class Hearts {
         UUID id=UUID.fromString(link.victim);var p=server.getPlayerList().getPlayer(id);if(p!=null)return p;
         for(ServerLevel level:server.getAllLevels())if(level.getEntity(id) instanceof LivingEntity e)return e;return null;
     }
-    public static boolean hasHeart(Player owner){return links.values().stream().filter(l->l.owner.equals(owner.getUUID().toString())).count()>=5;}
+    public static long count(Player owner){return links.values().stream().filter(l->l.owner.equals(owner.getUUID().toString())).count();}
     public static boolean extract(Player owner,LivingEntity target){
-        if(!Op.unlocked(owner)||!owner.isAlive()||!target.isAlive()||target==owner||!Op.inside(owner,owner)||!Op.inside(owner,target)||hasHeart(owner)
+        if(!Op.unlocked(owner)||!owner.isAlive()||!target.isAlive()||target==owner||!Op.inside(owner,owner)||!Op.inside(owner,target)
             ||links.values().stream().anyMatch(l->l.victim.equals(target.getUUID().toString())))return false;
         String token=UUID.randomUUID().toString();Link link=new Link(token,owner.getUUID().toString(),target.getUUID().toString());
         // Reserve before handing out the cube. A full inventory leaves it in durable pending storage.

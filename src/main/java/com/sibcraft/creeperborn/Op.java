@@ -161,7 +161,7 @@ public final class Op {
             if(s.held==1){
                 if(tier(p)<2){cancelInput(p);return;}
                 LivingEntity t=target(p,8);
-                if(t==null||Hearts.hasHeart(p)||now<value(p,"cb_op_ready_1_true_")||p.getHealth()<s.health||p.hurtTime>0){cancelInput(p);return;}
+                if(t==null||now<value(p,"cb_op_ready_1_true_")||p.getHealth()<s.health||p.hurtTime>0){cancelInput(p);return;}
                 if(s.target!=t){s.target=t;s.charge=now;}
                 line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
                 if(now%10==0)Creeperborn.say(p,"Heart Extraction "+Math.min(100,(now-s.charge)*100/60)+"%");

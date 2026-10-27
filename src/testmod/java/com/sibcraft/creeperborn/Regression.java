@@ -846,9 +846,9 @@ public final class Regression implements ModInitializer {
         java.util.List<Zombie> victims=new java.util.ArrayList<>();
         for(int i=0;i<6;i++){
             Zombie z=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);z.snapTo(-7+i,y+15,11);z.setNoAi(true);level.addFreshEntity(z);victims.add(z);
-            check(Hearts.extract(p,z)==(i<5),"Up to five different hearts, sixth rejected");
+            check(Hearts.extract(p,z),"Collection allows six distinct named hearts without a cap");
         }
-        check(Hearts.hasHeart(p),"Five-heart limit enforced");
+        check(Hearts.count(p)==6,"Heart collection has no five-heart cap");
         var z=victims.getFirst();ItemStack killCube=ItemStack.EMPTY;
         for(int i=0;i<p.getInventory().getContainerSize();i++){var candidate=p.getInventory().getItem(i);if(!Hearts.token(candidate).isEmpty()){killCube=candidate.copy();candidate.shrink(1);break;}}
         ItemEntity dropped=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),killCube);level.addFreshEntity(dropped);
