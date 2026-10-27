@@ -346,15 +346,93 @@ public final class Regression implements ModInitializer {
     private void checkExplicitFruitCommands(ServerLevel level){
         var dispatcher=server.getCommands().getDispatcher();
         var root=dispatcher.getRoot().getChild("creeperborn").getChild("testfruit");
-        check(root.getChild("rubber")!=null&&root.getChild("door")!=null,"Both fruit names appear in command completion");
+        check(root.getChild("rubber")!=null&&root.getChild("door")!=null&&root.getChild("phoenix")!=null,"All three fruit names appear in command completion");
         var p=doorPlayer(level,"FruitCommands");
         try{
             dispatcher.execute("creeperborn testfruit",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
             check(count(p,"fruit:rubber")==0&&count(p,"fruit:door")==0,"Bare testfruit command grants no default fruit");
             dispatcher.execute("creeperborn testfruit rubber",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
             dispatcher.execute("creeperborn testfruit door",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
-            check(count(p,"fruit:rubber")==1&&count(p,"fruit:door")==1,"Explicit fruit commands grant requested fruit only");
+            dispatcher.execute("creeperborn testfruit phoenix",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
+            check(count(p,"fruit:rubber")==1&&count(p,"fruit:door")==1&&count(p,"fruit:phoenix")==1,"Explicit fruit commands grant requested fruit only");
         }catch(com.mojang.brigadier.exceptions.CommandSyntaxException error){throw new AssertionError(error);}
+    }
+
+
+    private void clock(ServerLevel level,long time){((net.minecraft.world.level.storage.ServerLevelData)level.getLevelData()).setGameTime(time);}
+    private void checkPhoenix(ServerLevel level){
+        Phoenix.clear();FruitCreepers.clear();
+        Player p=player(level);p.snapTo(-12.5,y+20,20.5);p.setYRot(0);p.setXRot(0);
+        check(Phoenix.consume(p,Relics.phoenixFruit())&&Phoenix.tier(p)==1,"Phoenix fruit unlocks independently at tier one");
+        check(CombatNetwork.selection(p)==6&&!Rubber.consume(p,Relics.fruit())&&!DoorFruit.consume(p,Relics.doorFruit()),"Phoenix selection and one-fruit cap");
+        FruitClaims.load(server);check(Phoenix.unlocked(p),"Phoenix ownership persists across claim reload");
+        check((WaterRules.flags(p)&1)!=0&&WaterRules.vulnerable(p),"Phoenix inherits the fruit water curse");
+        check(Phoenix.cast(p,1,0).contains("needs")&&Phoenix.cast(p,1,8).contains("needs"),"Mastery gates partial and full flight");
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+20,24.5);target.setNoAi(true);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(target);
+        check(Phoenix.cast(p,0,0).equals("Phoenix Talon!")&&Math.abs(target.getHealth()-14)<.001,"Talon deals six damage to an aimed hostile");
+        check(Phoenix.uses(p)==1&&Phoenix.cast(p,0,0).contains("recovering"),"Successful Talon credits mastery and observes cooldown");
+        target.setHealth(20);target.damageCooldownTime=0;clock(level,level.getGameTime()+21);
+        Phoenix.cast(p,0,8);
+        for(int i=0;i<8;i++){clock(level,level.getGameTime()+1);Phoenix.tickPlayer(p);p.move(net.minecraft.world.entity.MoverType.SELF,p.getDeltaMovement());}
+        check(target.getHealth()<20,"Swept Phoenix Dive hits a hostile along movement path");
+        p.snapTo(-12.5,y+20,20.5);target.setHealth(20);target.damageCooldownTime=0;clock(level,level.getGameTime()+101);
+        for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,22),Blocks.STONE.defaultBlockState());
+        Phoenix.cast(p,0,8);
+        for(int i=0;i<8;i++){clock(level,level.getGameTime()+1);Phoenix.tickPlayer(p);p.move(net.minecraft.world.entity.MoverType.SELF,p.getDeltaMovement());}
+        check(target.getHealth()==20,"Solid wall stops Phoenix Dive before a hostile");
+        for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,22),Blocks.AIR.defaultBlockState());
+        target.discard();p.snapTo(-12.5,y+20,20.5);
+        Phoenix.grant(p,2);check(Phoenix.cast(p,1,0).startsWith("Wing Flight!")&&Phoenix.wing(p)&&p.getAbilities().flying,"Tap X grants wing flight at tier two");
+        clock(level,level.getGameTime()+601);Phoenix.tickPlayer(p);
+        check(!Phoenix.wing(p)&&!p.getAbilities().mayfly&&!p.getAbilities().flying,"Thirty-second flight expires and restores permissions");
+        check(Phoenix.cast(p,1,0).contains("recovering"),"Wing Flight has five-second recovery");
+        Phoenix.grant(p,3);p.getFoodData().setFoodLevel(20);
+        check(Phoenix.cast(p,1,8).startsWith("Phoenix Form!")&&Phoenix.form(p),"Hold X activates full Phoenix form at tier three");
+        check(Phoenix.damage(p,p.damageSources().generic(),10)==5,"Normal form reduces ordinary damage by half");
+        p.damageCooldownTime=0;p.setHealth(20);p.hurtServer(level,p.damageSources().generic(),4);
+        check(Math.abs(p.getHealth()-18)<.001,"Native damage path applies normal-form mitigation");
+        check(Phoenix.immune(p,p.damageSources().lava())&&Phoenix.immune(p,p.damageSources().fall()),"Phoenix grants fire and fall immunity without elemental mastery");
+        check(!Phoenix.revive(p,p.damageSources().fellOutOfWorld())&&!Phoenix.spent(p),"Void bypasses revival without consuming it");
+        p.setHealth(10);clock(level,(level.getGameTime()/40+1)*40);Phoenix.tickPlayer(p);
+        check(Math.abs(p.getHealth()-11)<.001,"Phoenix Form passively heals half a heart every two seconds");
+        Villager near=EntityTypes.VILLAGER.create(level,EntitySpawnReason.EVENT),far=EntityTypes.VILLAGER.create(level,EntitySpawnReason.EVENT);
+        near.snapTo(-12.5,y+20,29);far.snapTo(-12.5,y+20,32);near.setNoAi(true);far.setNoAi(true);near.setHealth(10);far.setHealth(10);level.addFreshEntity(near);level.addFreshEntity(far);
+        p.setHealth(10);Phoenix.press(p,2);clock(level,level.getGameTime()+8);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
+        clock(level,(level.getGameTime()/40+1)*40);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
+        check(Phoenix.healing(p)&&Math.abs(p.getHealth()-12)<.001,"Channel healing replaces rather than stacks passive self healing");
+        check(Math.abs(near.getHealth()-12)<.001&&far.getHealth()==10,"Healing Flames reaches ten-block radius only");
+        Phoenix.cancelInput(p);near.discard();far.discard();
+        Mastery.set(p,"cb_phoenix_fuel_",0);p.getFoodData().setFoodLevel(20);
+        for(int i=0;i<60;i++){clock(level,(level.getGameTime()/20+1)*20);Phoenix.tickPlayer(p);}
+        check(p.getFoodData().getFoodLevel()==19,"Flight consumes half a hunger icon per minute of active flight");
+        clock(level,level.getGameTime()+601);Phoenix.tickPlayer(p);
+        check(!Phoenix.form(p)&&Phoenix.cast(p,1,8).contains("recovering"),"Normal full form stops at ninety seconds and starts thirty-second recovery");
+        for(Element e:Element.values())Mastery.grant(p,e,3);
+        clock(level,level.getGameTime()+601);p.getFoodData().setFoodLevel(20);Phoenix.cast(p,1,8);
+        clock(level,level.getGameTime()+18000);Phoenix.tickPlayer(p);
+        check(Phoenix.form(p),"All-four mastered Phoenix Form has no duration cap");
+        p.setHealth(20);p.damageCooldownTime=0;p.hurtTime=0;
+        check(!p.hurtServer(level,p.damageSources().generic(),100)&&p.getHealth()==20&&p.hurtTime==0,"Attacks pass through all-four mastered Phoenix Form without hurt feedback");
+        check(!Phoenix.immune(p,p.damageSources().genericKill()),"Even mastered Phoenix does not block kill command");
+        Mastery.grant(p,Element.EARTH,2);p.damageCooldownTime=0;
+        p.hurtServer(level,p.damageSources().generic(),100);
+        check(p.isAlive()&&Math.abs(p.getHealth()-10)<.001&&Phoenix.spent(p)&&Phoenix.unlocked(p),"Native fatal hit triggers one resurrection at half health without losing fruit");
+        check(!Phoenix.form(p)&&!p.getAbilities().mayfly&&Phoenix.recovery(p)==300&&Phoenix.strength(p)==.5,"Rebirth ends form and starts five active minutes at half strength");
+        check(Phoenix.immune(p,p.damageSources().generic()),"Rebirth grants three-second protection");
+        Phoenix.forget(p);FruitClaims.load(server);
+        check(Phoenix.spent(p)&&Phoenix.recovery(p)==300&&Phoenix.strength(p)==.5,"Logout/reload cannot reset revival or skip recovery");
+        for(int i=0;i<6;i++){p.snapTo(p.getX()+.3,p.getY(),p.getZ());clock(level,(level.getGameTime()/20+1)*20);Phoenix.tickPlayer(p);}
+        check(Phoenix.recovery(p)<300&&Phoenix.recovery(p)>290,"Recovery decreases only with active online play");
+        Mastery.set(p,"cb_phoenix_recovery_",0);check(Phoenix.spent(p)&&Phoenix.strength(p)==1,"Recovery restores strength without recharging resurrection");
+        clock(level,level.getGameTime()+601);p.getFoodData().setFoodLevel(20);p.setHealth(20);Phoenix.cast(p,1,8);
+        p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().generic(),100);
+        check(!p.isAlive()&&FruitClaims.phoenixAvailable()&&!Phoenix.unlocked(p),"Second fatal hit causes real death and releases Phoenix");
+        check(Progress.unlocked(p,Element.AIR),"Actual fruit death preserves elemental progress");
+        Player next=player(level);check(Phoenix.consume(next,Relics.phoenixFruit()),"Phoenix can be eaten by next owner after death");Phoenix.grant(next,3);Phoenix.cast(next,1,8);
+        next.damageCooldownTime=0;next.hurtServer(level,next.damageSources().genericKill(),1000);
+        check(!next.isAlive()&&FruitClaims.phoenixAvailable(),"Native kill bypasses fresh Phoenix resurrection");
+        Phoenix.clear();FruitCreepers.clear();
     }
 
     private Player player(ServerLevel level) { return player(level,UUID.randomUUID()); }
@@ -372,6 +450,7 @@ public final class Regression implements ModInitializer {
         checkDangerousDoors(level);
         checkTridentCuring(level);
         checkExplicitFruitCommands(level);
+        checkPhoenix(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
@@ -968,7 +1047,7 @@ public final class Regression implements ModInitializer {
         check(FruitClaims.owns(p)&&!FruitClaims.available(),"Fruit claim survives world-file reload, including offline owner");
         Creeperborn.config().naturalCreepers=true;Creeperborn.config().fruitChance=1;
         Creeper blocked=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);FruitCreepers.track(blocked);
-        check(!blocked.entityTags().contains("cb_fruitborn_rubber")&&FruitCreepers.door(blocked),"Claimed Rubber is suppressed while unclaimed Door may still spawn");
+        check(!blocked.entityTags().contains("cb_fruitborn_rubber")&&FruitCreepers.fruit(blocked),"Claimed Rubber is suppressed while another unclaimed fruit may spawn");
         FruitCreepers.unload(blocked);
         Mastery.grant(p,Element.EARTH,3);Progress.select(p,Element.EARTH);
         p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().genericKill(),1000);

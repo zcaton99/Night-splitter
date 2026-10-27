@@ -110,7 +110,7 @@ public final class DoorSpace {
     private static Saved snapshot(ServerPlayer p,Vec3 point,Session s){return new Saved(p.level().dimension().identifier().toString(),point.x,point.y,point.z,p.getYRot(),p.getXRot(),p.gameMode().getName(),p.getAbilities().getFlyingSpeed(),p.getAbilities().mayfly,p.getAbilities().flying,s.mode,p==s.owner);}
     private static void enter(ServerPlayer p,Session s,Vec3 safeReturn){
         if(active(p)||p.isSpectator()||!p.isAlive()||WaterRules.suppressed(p))return;
-        Rubber.forget(p); // End temporary Gear flight/guard before recording baseline abilities.
+        Rubber.forget(p);Phoenix.forget(p); // Restore temporary fruit flight before recording baseline abilities.
         Saved saved=snapshot(p,safeReturn,s);p.addTag(RETURN+Base64.getUrlEncoder().withoutPadding().encodeToString(GSON.toJson(saved).getBytes(StandardCharsets.UTF_8)));
         Traveler t=new Traveler();t.player=p;t.saved=saved;t.session=s;t.last=p.position();travelers.put(p.getUUID(),t);s.travelers.add(p.getUUID());
         Rubber.cancelInput(p);p.stopRiding();p.setGameMode(GameType.SPECTATOR);p.getAbilities().flying=true;

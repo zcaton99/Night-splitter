@@ -1,5 +1,6 @@
 package com.sibcraft.creeperborn.mixin;
 import com.sibcraft.creeperborn.Rubber;
+import com.sibcraft.creeperborn.Phoenix;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
@@ -14,10 +15,10 @@ public abstract class RubberDamageMixin {
     @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
         // Zero damage alone still enters vanilla's hurt sound, animation and knockback path.
-        if((Object)this instanceof Player p&&Rubber.masteryImmune(p,source))cir.setReturnValue(false);
+        if((Object)this instanceof Player p&&(Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)))cir.setReturnValue(false);
     }
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
-        return (Object)this instanceof Player p ? Rubber.damage(p,source,amount) : amount;
+        return (Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,amount)) : amount;
     }
 }

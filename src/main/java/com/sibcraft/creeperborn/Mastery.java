@@ -46,7 +46,7 @@ public final class Mastery {
     public static void tick(MinecraftServer server) {
         for (Player p : server.getPlayerList().getPlayers()) {
             Vec3 previousPosition = lastPosition.put(p.getUUID(), p.position()); Element e = Progress.selected(p);
-            if (WaterRules.suppressed(p) || Rubber.selected(p) || DoorFruit.selected(p) || e == null || !p.isAlive() || p.isSpectator()) continue;
+            if (WaterRules.suppressed(p) || Rubber.selected(p) || DoorFruit.selected(p) || Phoenix.selected(p) || e == null || !p.isAlive() || p.isSpectator()) continue;
             boolean moving = previousPosition != null && previousPosition.distanceToSqr(p.position()) > .04;
             boolean casting = p.level().getGameTime() - recentAction.getOrDefault(p.getUUID(), Long.MIN_VALUE / 2) < 200;
             if (moving || casting) {

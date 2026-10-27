@@ -14,7 +14,8 @@
     "DoorCameraMixin",
     "DoorSpectatorMenuMixin",
     "ZombieVillagerCureAccessor",
-    "MasteredFreezingMixin"
+    "MasteredFreezingMixin",
+    "PhoenixRevivalMixin"
   ],
   "injectors": {
     "defaultRequire": 1
