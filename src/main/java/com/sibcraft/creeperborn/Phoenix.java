@@ -197,11 +197,11 @@ public final class Phoenix {
     }
     private static void talon(Player p,State s){
         ServerLevel level=(ServerLevel)p.level();Vec3 eye=p.getEyePosition(),look=p.getLookAngle();
-        LivingEntity best=null;double distance=6;
-        for(LivingEntity e:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(6))){
+        LivingEntity best=null;double distance=11;
+        for(LivingEntity e:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(10))){
             if(!(e instanceof Enemy)||!e.isAlive()||!p.hasLineOfSight(e))continue;
             Vec3 delta=e.getEyePosition().subtract(eye);double d=delta.length();
-            if(d<=5&&d<distance&&delta.normalize().dot(look)>.55){best=e;distance=d;}
+            if(d<=10&&d<distance&&delta.normalize().dot(look)>.55){best=e;distance=d;}
         }
         if(best!=null)hit(p,best,(float)(6*strength(p)));particles(p,12);
     }

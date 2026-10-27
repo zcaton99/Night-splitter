@@ -382,6 +382,16 @@ public final class Regression implements ModInitializer {
         target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(target);
         check(Phoenix.cast(p,0,0).equals("Phoenix Talon!")&&Math.abs(target.getHealth()-14)<.001,"Talon deals six damage to an aimed hostile");
         check(Phoenix.uses(p)==1&&Phoenix.cast(p,0,0).contains("recovering"),"Successful Talon credits mastery and observes cooldown");
+        target.snapTo(-12.5,y+20,29.5);target.setHealth(20);target.damageCooldownTime=0;clock(level,level.getGameTime()+21);
+        Phoenix.cast(p,0,0);check(Math.abs(target.getHealth()-14)<.001,"Talon reaches hostile nine blocks away");
+        target.snapTo(-12.5,y+20,31.5);target.setHealth(20);target.damageCooldownTime=0;clock(level,level.getGameTime()+21);
+        Phoenix.cast(p,0,0);check(target.getHealth()==20,"Talon excludes hostile beyond ten blocks");
+        target.snapTo(-12.5,y+20,29.5);
+        for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,25),Blocks.STONE.defaultBlockState());
+        clock(level,level.getGameTime()+21);Phoenix.cast(p,0,0);
+        check(target.getHealth()==20,"Longer Talon still cannot attack through a wall");
+        for(int dy=20;dy<=22;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,25),Blocks.AIR.defaultBlockState());
+        target.snapTo(-12.5,y+20,24.5);
         target.setHealth(20);target.damageCooldownTime=0;clock(level,level.getGameTime()+21);
         Phoenix.cast(p,0,8);
         for(int i=0;i<8;i++){clock(level,level.getGameTime()+1);Phoenix.tickPlayer(p);p.move(net.minecraft.world.entity.MoverType.SELF,p.getDeltaMovement());}
