@@ -175,7 +175,7 @@ public final class DoorSpace {
                 closing.add(new Closing(s.level,s.exit,List.copyOf(s.exitVisuals),s.level.getGameTime()+100));s.exitVisuals.clear();
             }else close(s.level,s.exit,s.exitVisuals);
         }
-        sessions.remove(s.owner.getUUID());DoorFruit.ended(s.owner,s.mode);
+        sessions.remove(s.owner.getUUID());if(s.entered)DoorFruit.ended(s.owner,s.mode);
     }
     public static String exit(Player player){
         Session s=sessions.get(player.getUUID());Traveler t=travelers.get(player.getUUID());

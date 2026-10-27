@@ -206,7 +206,11 @@ public final class Regression implements ModInitializer {
         check(owner.entityTags().stream().noneMatch(t->t.startsWith("cb_door_return_")),"Exit removes recovery marker");
         check(DoorFruit.cast(owner,1).contains("recovering"),"Immediate rescue reuse is blocked");
         owner.snapTo(-10.5,y+20,22.5);
+        long unusedReady=DoorFruit.ready(owner,0);int unusedUses=DoorFruit.uses(owner);
         check(DoorFruit.cast(owner,0).startsWith("Door opened"),"Normal Passage creates a walk-through entrance");
+        check(DoorSpace.exit(owner).equals("Door closed.")&&!DoorSpace.ownsSession(owner),"Unused entrance can be cancelled before walking in");
+        check(DoorFruit.ready(owner,0)==unusedReady&&DoorFruit.uses(owner)==unusedUses,"Cancelling unused door spends neither cooldown nor progression use");
+        check(DoorFruit.cast(owner,0).startsWith("Door opened"),"Cancelled unused Door can be reopened immediately");
         check(!DoorSpace.active(owner),"Normal Passage does not enter before walking through");
         owner.snapTo(-10.5,y+20,24.2);check(DoorSpace.tryEnter(owner),"Walking into entrance starts travel");
         owner.snapTo(12,y+20,24.2);DoorSpace.tick(server);
