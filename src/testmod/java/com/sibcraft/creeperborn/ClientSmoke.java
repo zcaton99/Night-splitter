@@ -31,7 +31,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 state.ageInTicks=15;PhoenixRenderer.submit(state,new PoseStack(),nodes,1,false);
                 state.ageInTicks=30;PhoenixRenderer.submit(state,new PoseStack(),nodes,6,true);
                 state.ageInTicks=50;PhoenixRenderer.submit(state,new PoseStack(),nodes,10,true);
-                if(parts[0]!=20)throw new AssertionError("Expected 20 model submissions, got "+parts[0]);
+                if(parts[0]!=24)throw new AssertionError("Expected 24 model submissions, got "+parts[0]);
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");

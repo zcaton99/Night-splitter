@@ -13,10 +13,12 @@ import org.joml.Quaternionf;
 /** Original articulated model: a body, head, crown, talons, layered wing feathers and a forked tail. */
 public final class PhoenixRenderer{
     private static final Identifier BLUE=Identifier.withDefaultNamespace("textures/block/blue_concrete.png");
+    private static final Identifier RED=Identifier.withDefaultNamespace("textures/block/red_concrete.png");
+    private static final Identifier FIRE=Identifier.withDefaultNamespace("textures/block/orange_concrete.png");
     private static final Identifier CYAN=Identifier.withDefaultNamespace("textures/block/light_blue_concrete.png");
     private static final Identifier GOLD=Identifier.withDefaultNamespace("textures/block/gold_block.png");
     private static final Identifier WHITE=Identifier.withDefaultNamespace("textures/block/white_concrete.png");
-    private static final ModelPart BODY=body(),WINGS=wings(false),FEATHERS=wings(true),CREST=crest(),GOLD_PARTS=gold(),EYES=eyes();
+    private static final ModelPart BODY=body(),WINGS=wings(false),FEATHERS=wings(true),CREST=crest(),GOLD_PARTS=gold(),EYES=eyes(),FIRE_TIPS=fireTips();
     private static ModelPart bake(MeshDefinition mesh){return LayerDefinition.create(mesh,16,16).bakeRoot();}
     private static void box(PartDefinition root,String name,float x,float y,float z,float w,float h,float d){
         root.addOrReplaceChild(name,CubeListBuilder.create().texOffs(0,0).addBox(x,y,z,w,h,d),PartPose.ZERO);
@@ -42,6 +44,20 @@ public final class PhoenixRenderer{
                 for(int i=0;i<5;i++)box(outer,"flame_"+i,side==1?i*3+.5f:-i*3-2.5f,0,-10-i,2,1,8+i);
                 for(int i=0;i<3;i++)box(wing,"cover_"+i,side==1?i*4+.5f:-i*4-4.5f,.15f,-5-i,4,.8f,7);
             }
+        }
+        return bake(m);
+    }
+    /** Layered orange/yellow tongues sit above and below the red leading feathers. */
+    private static ModelPart fireTips(){
+        MeshDefinition m=new MeshDefinition();var root=m.getRoot();
+        for(int side:new int[]{-1,1}){
+            var wing=root.addOrReplaceChild(side==1?"left":"right",CubeListBuilder.create(),PartPose.offset(side*4,16,0));
+            var outer=wing.addOrReplaceChild("outer",CubeListBuilder.create(),PartPose.offset(side*13,0,1));
+            for(int i=0;i<5;i++){
+                float x=side==1?i*3+1:-i*3-2;
+                box(outer,"ember_"+i,x,-1.1f,-11-i,1,2.4f,5+i);
+            }
+            for(int i=0;i<3;i++)box(wing,"ember_cover_"+i,side==1?i*4+1.5f:-i*4-2.5f,-1.2f,-6-i,1,2.8f,4);
         }
         return bake(m);
     }
@@ -79,7 +95,7 @@ public final class PhoenixRenderer{
     public static void submit(AvatarRenderState state,PoseStack poses,SubmitNodeCollector nodes,int flags,boolean full){
         float time=state.ageInTicks,flap=(float)Math.sin(time*((flags&8)!=0?.8:.4))*.6f+.15f;
         if((flags&4)!=0)flap=(float)Math.sin(time*.18f)*.2f+.65f;
-        poseWings(WINGS,flap);poseWings(FEATHERS,flap);
+        poseWings(WINGS,flap);poseWings(FEATHERS,flap);poseWings(FIRE_TIPS,flap);
         CREST.getChild("tail").xRot=(float)Math.sin(time*.18f)*.12f;
         poses.pushPose();
         poses.rotate(new Quaternionf().rotationY((float)Math.toRadians(-state.bodyRot)));
@@ -90,9 +106,10 @@ public final class PhoenixRenderer{
             part(BODY,BLUE,poses,nodes,false);part(CREST,CYAN,poses,nodes,true);
             part(GOLD_PARTS,GOLD,poses,nodes,false);part(EYES,WHITE,poses,nodes,true);
         }else poses.translate(0,.35,-.12);
-        part(WINGS,BLUE,poses,nodes,false);part(FEATHERS,CYAN,poses,nodes,true);
+        part(WINGS,RED,poses,nodes,false);part(FEATHERS,FIRE,poses,nodes,true);
+        part(FIRE_TIPS,GOLD,poses,nodes,true);
         poses.popPose();
     }
     /** Client smoke tests initialize and validate the full mesh without entering a world. */
-    public static void validate(){BODY.getChild("head");WINGS.getChild("left").getChild("outer");FEATHERS.getChild("right");CREST.getChild("tail");}
+    public static void validate(){BODY.getChild("head");WINGS.getChild("left").getChild("outer");FEATHERS.getChild("right");CREST.getChild("tail");FIRE_TIPS.getChild("left").getChild("outer");}
 }

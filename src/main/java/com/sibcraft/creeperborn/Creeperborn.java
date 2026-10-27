@@ -213,8 +213,12 @@ public final class Creeperborn implements ModInitializer {
                 })));
             root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
-                    ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p))return 0;
-                    Rubber.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,Rubber.status(p));return 1;
+                    ServerPlayer p=ctx.getSource().getPlayerOrException();int tier=IntegerArgumentType.getInteger(ctx,"tier");
+                    if(Phoenix.unlocked(p)){Phoenix.grant(p,tier);chat(p,Phoenix.status(p));}
+                    else if(DoorFruit.unlocked(p)){DoorFruit.grant(p,tier);chat(p,DoorFruit.status(p));}
+                    else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,Rubber.status(p));}
+                    else {chat(p,"Eat a Devil Fruit first; fruitmastery changes the fruit you own.");return 0;}
+                    return 1;
                 })));
             root.then(Commands.literal("fruit").executes(ctx -> {
                 ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p)&&!DoorFruit.unlocked(p)&&!Phoenix.unlocked(p))return 0;

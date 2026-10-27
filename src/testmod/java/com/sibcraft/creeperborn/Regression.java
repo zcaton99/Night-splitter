@@ -355,6 +355,16 @@ public final class Regression implements ModInitializer {
             dispatcher.execute("creeperborn testfruit door",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
             dispatcher.execute("creeperborn testfruit phoenix",p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS));
             check(count(p,"fruit:rubber")==1&&count(p,"fruit:door")==1&&count(p,"fruit:phoenix")==1,"Explicit fruit commands grant requested fruit only");
+            var source=p.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS);
+            check(dispatcher.execute("creeperborn fruitmastery 3",source)==0,"Generic mastery refuses to grant an uneaten fruit");
+            for(int fruit=0;fruit<3;fruit++){
+                check(fruit==0?Rubber.consume(p,Relics.fruit()):fruit==1?DoorFruit.consume(p,Relics.doorFruit()):Phoenix.consume(p,Relics.phoenixFruit()),"Command test eats its own fruit");
+                for(int tier:new int[]{2,3,1}){
+                    check(dispatcher.execute("creeperborn fruitmastery "+tier,source)==1,"Generic fruitmastery accepts tier");
+                    check((fruit==0?Rubber.tier(p):fruit==1?DoorFruit.tier(p):Phoenix.tier(p))==tier,"Generic mastery applies to the owned fruit");
+                }
+                FruitClaims.releaseOnDeath(p);
+            }
         }catch(com.mojang.brigadier.exceptions.CommandSyntaxException error){throw new AssertionError(error);}
     }
 

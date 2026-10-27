@@ -240,6 +240,23 @@ public final class Phoenix {
             if(count>=25)level.sendParticles(new DustParticleOptions(0xFFD34D,1.3f),at.x,at.y,at.z,count/2,.6,.7,.6,.04);
         }
     }
+    /** Dense warm flame mantle below the face; a blue core preserves Phoenix's healing identity. */
+    private static void mantle(Player p){
+        ServerLevel level=(ServerLevel)p.level();
+        Vec3 at=p.position().add(0,.7,0);
+        level.sendParticles(ParticleTypes.FLAME,at.x,at.y,at.z,24,.32,.4,.32,.008);
+        level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,at.x,at.y+.1,at.z,8,.25,.35,.25,.008);
+        // Dotted, fiery leading edges follow the same articulated flap as the client model.
+        double yaw=Math.toRadians(p.getYRot()),time=p.tickCount;
+        int flags=visualFlags(p);double flap=Math.sin(time*((flags&8)!=0?.8:.4))*.6+.15;
+        if((flags&4)!=0)flap=Math.sin(time*.18)*.2+.65;
+        for(int side:new int[]{-1,1})for(int i=1;i<=5;i++){
+            double span=i*.32,localX=side*span*Math.cos(flap),localZ=-.2;
+            double x=p.getX()+localX*Math.cos(yaw)+localZ*Math.sin(yaw);
+            double z=p.getZ()-localX*Math.sin(yaw)+localZ*Math.cos(yaw);
+            level.sendParticles(ParticleTypes.FLAME,x,p.getY()+1.35+span*Math.sin(flap),z,1,.06,.06,.06,.002);
+        }
+    }
     public static int visualFlags(Player p){
         State s=states.get(p.getUUID());if(s==null)return 0;
         return (wing(p)?1:0)|(form(p)?2:0)|(s.healing?4:0)|(now(p)<s.flareUntil?8:0);
@@ -292,7 +309,8 @@ public final class Phoenix {
             }
             if(s.healing&&++s.healFuel>=10){s.healFuel=0;p.getFoodData().setFoodLevel(Math.max(6,p.getFoodData().getFoodLevel()-1));}
         }
-        if((form(p)||wing(p)||s.healing)&&now%5==0)particles(p,s.healing?10:4);
+        if((form(p)||wing(p))&&now%5==0)mantle(p);
+        else if(s.healing&&now%5==0)particles(p,10);
         if(s.healing&&now%10==0)ring(p);
         if((form(p)||wing(p))&&now%5==0){
             Vec3 tail=p.position().subtract(p.getLookAngle().scale(.8)).add(0,.7,0);
