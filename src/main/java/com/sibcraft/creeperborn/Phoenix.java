@@ -322,5 +322,5 @@ public final class Phoenix {
         }
     }
     public static void forget(Player p){end(p);states.remove(p.getUUID());sent.remove(p.getUUID());}
-    public static void clear(){for(State s:List.copyOf(states.values()))end(s.owner);states.clear();sent.clear();blessings.clear();
+    public static void clear(){for(State s:List.copyOf(states.values()))end(s.owner);states.clear();sent.clear();blessings.clear();}
 }
