@@ -1003,6 +1003,29 @@ public final class Regression implements ModInitializer {
         t.discard();group.discard();outside.discard();hidden.discard();blastEdge.discard();blastOutside.discard();Gravity.clear();FruitCreepers.clear();
     }
 
+
+    private void checkFruitArtwork(ServerLevel level){
+        for(String type:Dark.FRUITS){
+            ItemStack fruit=Relics.fruit(type);
+            var expected=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+type);
+            check(expected.equals(fruit.get(DataComponents.ITEM_MODEL)),"New "+type+" fruit has its own item appearance");
+            check(!Relics.updateFruitModel(fruit),"Appearance refresh is idempotent");
+            String token=UUID.randomUUID().toString();ItemStack captured=Relics.captured(type,token,2);
+            captured.remove(DataComponents.ITEM_MODEL);
+            check(Relics.updateFruitModel(captured)&&expected.equals(captured.get(DataComponents.ITEM_MODEL)),"Old captured "+type+" fruit appearance migrates");
+            check(Relics.captureToken(captured).equals(token)&&Relics.captureTier(captured)==2&&Relics.kind(captured).equals("fruit:"+type),"Artwork migration preserves capture and mastery metadata");
+        }
+        ItemStack plain=new ItemStack(Items.CHORUS_FRUIT);var vanilla=plain.get(DataComponents.ITEM_MODEL);
+        check(!Relics.updateFruitModel(plain)&&java.util.Objects.equals(vanilla,plain.get(DataComponents.ITEM_MODEL)),"Ordinary chorus fruit keeps vanilla appearance");
+        Player p=player(level);ItemStack old=Relics.gravityFruit();old.remove(DataComponents.ITEM_MODEL);p.addItem(old);
+        ItemStack held=Relics.opFruit();held.remove(DataComponents.ITEM_MODEL);p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,held);
+        ItemStack cursor=Relics.darkFruit();cursor.remove(DataComponents.ITEM_MODEL);p.containerMenu.setCarried(cursor);
+        Relics.refreshFruitModels(p);
+        check(held.get(DataComponents.ITEM_MODEL).toString().equals("creeperborn:fruit_op")&&cursor.get(DataComponents.ITEM_MODEL).toString().equals("creeperborn:fruit_dark"),"Offhand and cursor fruit appearances refresh");
+        boolean migrated=false;for(int i=0;i<p.getInventory().getContainerSize();i++){ItemStack item=p.getInventory().getItem(i);if(Relics.kind(item).equals("fruit:gravity"))migrated=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_gravity").equals(item.get(DataComponents.ITEM_MODEL));}
+        check(migrated,"Existing inventory fruit appearances refresh");
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1020,6 +1043,7 @@ public final class Regression implements ModInitializer {
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
+        checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

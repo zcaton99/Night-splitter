@@ -9,6 +9,21 @@ import net.minecraft.world.item.component.CustomData;
 
 public final class Relics {
     private Relics() {}
+    public static boolean updateFruitModel(ItemStack item){
+        if(item.isEmpty())return false;
+        String kind=kind(item);
+        if(!kind.startsWith("fruit:")||!Dark.FRUITS.contains(kind.substring(6)))return false;
+        var model=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+kind.substring(6));
+        if(model.equals(item.get(DataComponents.ITEM_MODEL)))return false;
+        item.set(DataComponents.ITEM_MODEL,model);return true;
+    }
+    /** Refresh old saves, including held items, cursor stacks and currently open containers. */
+    public static void refreshFruitModels(net.minecraft.world.entity.player.Player player){
+        for(int i=0;i<player.getInventory().getContainerSize();i++)updateFruitModel(player.getInventory().getItem(i));
+        updateFruitModel(player.getOffhandItem());
+        updateFruitModel(player.containerMenu.getCarried());
+        for(var slot:player.containerMenu.slots)updateFruitModel(slot.getItem());
+    }
     public static ItemStack heart(Element element) {
         ItemStack item = new ItemStack(Items.HEART_OF_THE_SEA);
         mark(item, "heart:" + element.key());
@@ -66,6 +81,7 @@ public final class Relics {
     private static void mark(ItemStack item, String kind) {
         CompoundTag tag = new CompoundTag(); tag.putString("creeperborn", kind);
         item.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        updateFruitModel(item);
     }
     public static String kind(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);

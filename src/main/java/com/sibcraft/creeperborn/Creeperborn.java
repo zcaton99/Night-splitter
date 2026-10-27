@@ -42,7 +42,7 @@ public final class Creeperborn implements ModInitializer {
         CombatNetwork.init();
         ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
         ServerLifecycleEvents.SERVER_STARTING.register(Hearts::load);
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { DoorSpace.recover(handler.player); Rubber.recoverFlight(handler.player); Phoenix.recoverFlight(handler.player); Lightning.recoverFlight(handler.player); FruitClaims.reconcile(handler.player);Hearts.join(handler.player); });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { DoorSpace.recover(handler.player); Rubber.recoverFlight(handler.player); Phoenix.recoverFlight(handler.player); Lightning.recoverFlight(handler.player); FruitClaims.reconcile(handler.player);Hearts.join(handler.player);Relics.refreshFruitModels(handler.player); });
         Path path = FabricLoader.getInstance().getConfigDir().resolve("creeperborn.json");
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try {
@@ -51,13 +51,13 @@ public final class Creeperborn implements ModInitializer {
                 throw new IllegalArgumentException("elementalChance must be 0–1");
             Files.createDirectories(path.getParent()); Files.writeString(path, gson.toJson(config) + "\n");
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
-        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
+        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { if(entity instanceof net.minecraft.world.entity.item.ItemEntity item)Relics.updateFruitModel(item.getItem()); FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {DoorSpace.clear();Phoenix.clear();Lightning.clear();Dark.clear();Gravity.clear();Op.clear();});
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); Dark.clear();Gravity.clear();Op.clear(); Hearts.clear();FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);Gravity.tick(server);Op.tick(server);Hearts.tick(server);
-            if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);}
+            if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);for(var p:server.getPlayerList().getPlayers())Relics.refreshFruitModels(p);}
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
@@ -140,7 +140,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.41 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.42 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");

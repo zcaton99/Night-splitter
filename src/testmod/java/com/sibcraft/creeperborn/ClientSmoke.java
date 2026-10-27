@@ -20,6 +20,17 @@ public final class ClientSmoke implements ClientModInitializer{
             if(ticks<60||client.gui.screen()==null||client.gui.overlay()!=null)return;
             done=true;
             try{
+                var modelManager=client.getModelManager();
+                var itemGetter=Arrays.stream(modelManager.getClass().getMethods()).filter(method->method.getName().equals("getItemModel")
+                    &&method.getParameterCount()==1&&method.getParameterTypes()[0]==net.minecraft.resources.Identifier.class).findFirst()
+                    .orElseThrow(()->new AssertionError("Native item-model lookup unavailable"));
+                for(String fruit:Dark.FRUITS){
+                    var id=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+fruit);
+                    var texture=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","textures/item/fruit_"+fruit+".png");
+                    if(client.getResourceManager().getResource(texture).isEmpty())throw new AssertionError("Missing fruit texture: "+fruit);
+                    Object model=itemGetter.invoke(modelManager,id);
+                    if(model==null||model.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Fruit item model did not bake: "+fruit);
+                }
                 com.sibcraft.creeperborn.client.BoltRenderer.validate();
                 com.sibcraft.creeperborn.client.DarkGroundRenderer.validate();
                 com.sibcraft.creeperborn.client.ShadowRenderer.validate();com.sibcraft.creeperborn.client.VoidRenderer.validate();
