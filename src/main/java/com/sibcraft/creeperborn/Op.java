@@ -122,7 +122,7 @@ public final class Op {
         if(!selected(p)||!p.isAlive()||p.isSpectator())return "Select Op-Op with G.";
         if(Dark.suppressed(p)||WaterRules.suppressed(p))return "Op-Op powers suppressed.";
         boolean hold=held>=7;if(move<0||move>2)return "";
-        if(move==0&&!hold)return toggle(p);
+        if(move==0&&hold)return toggle(p);
         if(tier(p)<move+1)return "Move locked: X needs tier 2; C needs tier 3.";
         if(!valid(p))return "You and your target must be inside ROOM.";
         if(now(p)<value(p,"cb_op_ready_"+move+"_"+hold+"_"))return "Move recovering.";
@@ -132,7 +132,7 @@ public final class Op {
             line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
             // Two attacks split the strike between ordinary damage and armor-bypassing magic.
             hurt(p,t,5);t.damageCooldownTime=0;t.hurtServer((ServerLevel)p.level(),p.damageSources().magic(),(float)(5*Mastery.multiplier(p)));
-            credit(p);value(p,"cb_op_ready_0_true_",now(p)+20);return "Gamma Knife!";
+            credit(p);value(p,"cb_op_ready_0_false_",now(p)+20);return "Gamma Knife!";
         }
         if(move==1&&hold)return held>=60?"Hold X steadily on an enemy for three seconds.":"Heart Extraction needs a three-second channel.";
         if(move==1){
@@ -158,7 +158,7 @@ public final class Op {
             if(now%20==0)Creeperborn.say(p,"ROOM "+((s.ends-now+19)/20)+"s | "+(int)diameter(p)+" blocks | Shambles "+remaining(p)+"/"+charges(p));
         }
         if(s.held>=0&&(!selected(p)||now>s.heartbeat)){cancelInput(p);return;}
-        if(s.held>=0&&now-s.press>=7){
+        if(s.held>=1&&now-s.press>=7){
             if(!valid(p)){cancelInput(p);return;}
             if(s.held==1){
                 if(tier(p)<2){cancelInput(p);return;}

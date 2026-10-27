@@ -84,7 +84,7 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if(kind.equals("op:heart")){say(player,Hearts.use(player,stack));
-            }else if(kind.equals("fruit:op")){say(player,Op.consume(player,stack)?"Op-Op unlocked! G selects fruit; Z ROOM/Gamma Knife; X Shock/Heart; C Shambles/Takt.":"Fruit slot full, or Op-Op is already claimed.");
+            }else if(kind.equals("fruit:op")){say(player,Op.consume(player,stack)?"Op-Op unlocked! G selects fruit; Z Gamma Knife/ROOM; X Shock/Heart; C Shambles/Takt.":"Fruit slot full, or Op-Op is already claimed.");
             }else if(kind.equals("fruit:dark")){
                 say(player,Dark.consume(player,stack)?"Dark unlocked! G selects fruit; Z Vortex/Grasp; X Mantle/Liberation; C Surge/Void Collapse.":"Dark may already be claimed, or both fruit slots are full.");
             }else if(kind.equals("fruit:lightning")){

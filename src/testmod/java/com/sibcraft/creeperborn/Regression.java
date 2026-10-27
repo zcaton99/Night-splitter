@@ -819,11 +819,12 @@ public final class Regression implements ModInitializer {
         check(WaterRules.vulnerable(p)&&!Op.consume(player(level),Relics.opFruit()),"Op water curse and unique owner");
         check(Op.diameter(p)==30&&Op.duration(p)==600,"Base ROOM is 30 diameter and 30 seconds");
         check(Op.cast(p,1,0).contains("locked")&&Op.cast(p,2,0).contains("locked"),"X tier two and C tier three");
-        check(Op.cast(p,0,0).startsWith("ROOM!")&&Op.room(p),"Tier one tap Z opens ROOM");
+        Op.press(p,0);clock(level,level.getGameTime()+7);Op.heartbeat(p);Op.tickPlayer(p);Op.release(p,0);
+        check(Op.room(p),"Tier one held Z opens ROOM through actual press/heartbeat/release route");
         Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
         target.snapTo(-8,y+15,12);target.setNoAi(true);target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
         check(Op.inside(p,target),"Enemy inside spherical ROOM");
-        check(Op.cast(p,0,7).equals("Gamma Knife!")&&target.getHealth()<100,"Tier one hold Z damages target with Gamma Knife");
+        check(Op.cast(p,0,0).equals("Gamma Knife!")&&target.getHealth()<100,"Tier one tap Z damages target with Gamma Knife");
         target.snapTo(-8,y+15,25);check(!Op.inside(p,target),"Targets outside ROOM excluded");
         Op.grant(p,2);check(Op.diameter(p)==70&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
         target.snapTo(-8,y+15,12);target.damageCooldownTime=0;
@@ -833,10 +834,10 @@ public final class Regression implements ModInitializer {
         p.snapTo(-8,y+15,-15);target.snapTo(-8,y+15,40);
         BlockPos roomWall=new BlockPos(-8,(int)y+16,0);level.setBlockAndUpdate(roomWall,Blocks.STONE.defaultBlockState());
         target.damageCooldownTime=0;
-        check(Op.cast(p,0,7).equals("Gamma Knife!"),"Gamma Knife reaches across ROOM through terrain beyond old range");
-        check(Op.cast(p,0,7).contains("recovering"),"Gamma cooldown still prevents immediate spam");
+        check(Op.cast(p,0,0).equals("Gamma Knife!"),"Gamma Knife reaches across ROOM through terrain beyond old range");
+        check(Op.cast(p,0,0).contains("recovering"),"Gamma cooldown still prevents immediate spam");
         clock(level,level.getGameTime()+20);target.damageCooldownTime=0;
-        check(Op.cast(p,0,7).equals("Gamma Knife!"),"Gamma Knife recovers after one second");
+        check(Op.cast(p,0,0).equals("Gamma Knife!"),"Gamma Knife recovers after one second");
         clock(level,level.getGameTime()+120);target.damageCooldownTime=0;
         check(Op.cast(p,1,0).equals("Counter Shock!")&&Op.rooted(target),"Counter Shock reaches far target anywhere inside ROOM");
         level.setBlockAndUpdate(roomWall,Blocks.AIR.defaultBlockState());

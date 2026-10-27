@@ -73,7 +73,7 @@ public final class CombatNetwork {
             if (payload.action() == 4) {
                 Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);
                 if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
-                else if(Op.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Op-Op — Z ROOM / hold Gamma Knife | X Shock / hold Heart | C Shambles / hold Takt");}
+                else if(Op.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Op-Op — Z Gamma Knife / hold ROOM | X Shock / hold Heart | C Shambles / hold Takt");}
                 else if(Lightning.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Lightning — Z: Bolt / hold 8s Judgment | X: Flash / hold Rush | C: Storm Form");}
                 else if(Phoenix.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Phoenix — Z: Talon / hold Dive | X: Wings / hold Form | C: Healing Circle / hold Ally Blessing");}
                 else if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Directional dodge / hold Grapple | C: Gear 5 / hold Guard"); }
