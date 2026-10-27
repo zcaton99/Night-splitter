@@ -29,6 +29,7 @@ public final class CreeperbornClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.PhoenixVisualPayload.TYPE,(payload,context)->PhoenixVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.LightningVisualPayload.TYPE,(payload,context)->LightningVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.DarkVisualPayload.TYPE,(payload,context)->DarkVisuals.update(payload.entity(),payload.flags()));
+        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.StringControlPayload.TYPE,(payload,context)->StringVisuals.update(payload));
         KeyMapping toggle=key("toggle",InputConstants.KEY_B),cycle=key("cycle",InputConstants.KEY_R),fruits=key("fruit",InputConstants.KEY_G);
         KeyMapping[] moves={key("move1",InputConstants.KEY_Z),key("move2",InputConstants.KEY_X),key("move3",InputConstants.KEY_C)};
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
@@ -40,7 +41,8 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
-            if(client.player==null||client.getConnection()==null){WaterRules.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
+            if(client.player==null||client.getConnection()==null){StringVisuals.clear();WaterRules.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
+            StringVisuals.tick(client,ticks);
             if(!checkedBindings){
                 checkedBindings=true;
                 boolean legacy=moves[0].matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_R))

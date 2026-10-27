@@ -18,7 +18,10 @@
     "PhoenixRevivalMixin",
     "PhoenixWaypointMixin",
     "CapturedFruitCleanupMixin",
-    "OpHeartItemMixin"
+    "OpHeartItemMixin",
+    "StringPositionMixin",
+    "StringTeleportMixin",
+    "StringConnectionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -30,6 +33,7 @@
     "DoorGhostMixin",
     "PhoenixAvatarMixin",
     "PhoenixHandsMixin",
-    "PhoenixNameMixin"
+    "PhoenixNameMixin",
+    "StringClientInteractionMixin"
   ]
 }

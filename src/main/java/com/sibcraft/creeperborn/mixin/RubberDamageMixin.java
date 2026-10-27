@@ -17,10 +17,10 @@ public abstract class RubberDamageMixin {
     @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
         // Zero damage alone still enters vanilla's hurt sound, animation and knockback path.
-        if((Object)this instanceof Player p&&(Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)||Lightning.immune(p,source)||com.sibcraft.creeperborn.Gravity.immune(p,source)))cir.setReturnValue(false);
+        if((Object)this instanceof Player p&&(Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)||Lightning.immune(p,source)||com.sibcraft.creeperborn.Gravity.immune(p,source)||com.sibcraft.creeperborn.StringFruit.immune(p,source)))cir.setReturnValue(false);
     }
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
-        return (Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,com.sibcraft.creeperborn.Gravity.damage(p,source,amount))))) : amount;
+        return (Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,com.sibcraft.creeperborn.Gravity.damage(p,source,com.sibcraft.creeperborn.StringFruit.damage(p,source,amount)))))) : amount;
     }
 }

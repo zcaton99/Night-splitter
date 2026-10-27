@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(BlockDisplayEntityRenderState.class)
 public abstract class PunchRenderStateMixin implements PunchVisualState,com.sibcraft.creeperborn.client.BoltVisualState {
+    @Unique private int creeperborn$stringKind;
+    public int creeperborn$stringKind(){return creeperborn$stringKind;}
+    public void creeperborn$stringKind(int kind){creeperborn$stringKind=kind;}
     @Unique private int creeperborn$gravity;
     public int creeperborn$gravity(){return creeperborn$gravity;}
     public void creeperborn$gravity(int kind){creeperborn$gravity=kind;}

@@ -13,6 +13,6 @@ public abstract class SlabShacklesMixin {
     @Inject(method="travel",at=@At("HEAD"),cancellable=true)
     private void creeperborn$rootedTravel(Vec3 input,CallbackInfo ci){
         LivingEntity target=(LivingEntity)(Object)this;
-        if(Shackles.rooted(target)){target.setDeltaMovement(0,0,0);ci.cancel();}
+        if(Shackles.rooted(target)||com.sibcraft.creeperborn.StringFruit.locked(target)){target.setDeltaMovement(0,0,0);ci.cancel();}
     }
 }

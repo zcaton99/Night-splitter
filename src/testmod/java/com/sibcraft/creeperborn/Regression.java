@@ -1026,6 +1026,49 @@ public final class Regression implements ModInitializer {
         check(migrated,"Existing inventory fruit appearances refresh");
     }
 
+
+    private void checkStringFruit(ServerLevel level){
+        StringFruit.clear();Player p=player(level);p.snapTo(-8,y+18,8);p.setYRot(0);p.setXRot(0);
+        check(StringFruit.consume(p,Relics.stringFruit())&&StringFruit.tier(p)==1&&CombatNetwork.selection(p)==11,"String fruit has unique authoritative controls");
+        check(WaterRules.vulnerable(p)&&!StringFruit.consume(player(level),Relics.stringFruit()),"String has water curse and unique ownership");
+        FruitClaims.load(server);check(StringFruit.unlocked(p),"String claim survives world reload");
+        check(StringFruit.cast(p,1,0).contains("tier")&&StringFruit.cast(p,2,0).contains("tier"),"String X/C progression gating");
+        Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(false);
+        t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
+        check(StringFruit.cast(p,0,0).equals("Five-Color Slash!")&&t.getHealth()==94,"String slash hits aimed enemy");
+        check(StringFruit.cast(p,0,0).contains("recovering"),"String slash cooldown");
+        StringFruit.grant(p,2);check(StringFruit.parasiteTicks(p)==100,"Tier two Parasite lasts five seconds");
+        check(StringFruit.cast(p,1,19).contains("one second")&&!StringFruit.controlled(t),"Parasite requires one-second attachment");
+        check(StringFruit.cast(p,1,20).contains("attached")&&StringFruit.controlling(p)&&StringFruit.controlled(t)&&t.isNoAi(),"Parasite controls hostile mob and stops vanilla AI");
+        var before=t.position();t.move(net.minecraft.world.entity.MoverType.SELF,new net.minecraft.world.phys.Vec3(2,0,0));check(t.position().equals(before),"Puppet cannot move itself outside the control driver");
+        var body=p.position();p.setPos(p.getX()+2,p.getY(),p.getZ());check(p.position().equals(body),"Possession leaves caster body fixed");
+        clock(level,level.getGameTime()+101);StringFruit.tickPlayer(p);check(!StringFruit.controlling(p)&&!StringFruit.controlled(t)&&!t.isNoAi(),"Parasite timeout releases mob and restores AI");
+        StringFruit.grant(p,3);check(StringFruit.parasiteTicks(p)==400&&StringFruit.knightTicks(p)==1200,"Mastery grants twenty-second Parasite and one-minute Knight");
+        p.getFoodData().setFoodLevel(20);check(StringFruit.cast(p,0,39).contains("2-second"),"God Thread requires full charge");
+        clock(level,level.getGameTime()+200);t.setHealth(100);t.damageCooldownTime=0;
+        check(StringFruit.cast(p,0,40).equals("God Thread!"),"Awakening upgrades held Z to God Thread");
+        for(int i=0;i<26;i++){clock(level,level.getGameTime()+1);StringFruit.tickEffects();}
+        check(t.getHealth()<100&&t.getHealth()>=76,"God Thread is a real bounded damaging spear barrage");
+        p.getFoodData().setFoodLevel(20);check(StringFruit.cast(p,2,0).contains("summoned"),"Black Knight and Spider Web summon together");
+        check(StringFruit.damage(p,p.damageSources().playerAttack(player(level)),8)==2,"Spider Web reduces incoming entity damage by seventy-five percent");
+        check(StringFruit.cast(p,2,0).contains("control")&&StringFruit.controlling(p),"C pilots the existing Knight");
+        StringFruit.cancelInput(p);check(!StringFruit.controlling(p),"Cancel restores camera control state");
+        check(StringFruit.cast(p,2,7).equals("Birdcage!")&&StringFruit.cageCount()==1,"Birdcage creates persistent arena");
+        var origin=p.position();p.setPos(origin.x+110,origin.y,origin.z);check(p.position().equals(origin),"Caster cannot escape own cage via absolute position");
+        Player enemy=player(level);enemy.snapTo(origin.x+5,origin.y,origin.z);var trapped=enemy.position();enemy.setPos(origin.x+110,origin.y,origin.z);check(enemy.position().equals(trapped),"Enemy cannot teleport across cage");
+        Player outsider=player(level);outsider.snapTo(origin.x+110,origin.y,origin.z); // initial location may be inside; gate must prevent crossing as well.
+        check(StringFruit.crosses(origin.add(-110,0,0),origin.add(110,0,0),origin,100),"Teleport across entire cage cannot bypass boundary");
+        check(!StringFruit.canTeleport(enemy,server.getLevel(net.minecraft.world.level.Level.NETHER),enemy.position()),"Cage blocks dimension escape");
+        check(StringFruit.cast(p,2,7).contains("closing"),"Hold C starts ten-second closing phase");clock(level,level.getGameTime()+199);StringFruit.tickEffects();check(StringFruit.cageCount()==1,"Cage persists throughout closing animation");clock(level,level.getGameTime()+1);StringFruit.tickEffects();check(StringFruit.cageCount()==0,"Cage dissolves after ten seconds");
+        clock(level,level.getGameTime()+700);p.getFoodData().setFoodLevel(20);StringFruit.cast(p,2,7);Dark.suppress(p,60,true);check(StringFruit.cageCount()==0&&!StringFruit.controlling(p),"Nullifying Grasp immediately collapses cage and possession");
+        clock(level,level.getGameTime()+61);for(Element e:Element.values())Mastery.grant(p,e,3);
+        check(StringFruit.parasiteTicks(p)==460&&StringFruit.knightTicks(p)==1380&&Math.abs(StringFruit.range(p)-46)<.001,"All-four mastery boosts String duration and range fifteen percent");
+        Player victim=player(level);victim.snapTo(-8,y+18,13);check(StringFruit.possess(p,victim,20)&&StringFruit.controlled(victim),"Player targets use the same possession state");StringFruit.forget(victim);check(!StringFruit.controlling(p),"Victim disconnect releases controller");
+        var claim=FruitClaims.owner("string");FruitClaims.setOwner("gravity",null);check(claim.equals(FruitClaims.owner("string")),"Legacy fruit saves preserve String owner");
+        StringFruit.forget(p);check(StringFruit.unlocked(p),"Disconnect cleanup keeps fruit ownership");FruitClaims.releaseOnDeath(p);check(FruitClaims.owner("string")==null&&Mastery.harmony(p),"Death releases String while preserving elemental mastery");
+        t.discard();StringFruit.clear();System.out.println("CREEPERBORN_STRING_REGRESSION_PASSED");
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1043,6 +1086,7 @@ public final class Regression implements ModInitializer {
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
+        checkStringFruit(level);
         checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);
@@ -1730,6 +1774,7 @@ public final class Regression implements ModInitializer {
     }
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 }
+
 
 
 

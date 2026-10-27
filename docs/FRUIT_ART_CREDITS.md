@@ -15,3 +15,5 @@ The original images are transparent WebP files served by the site's image host. 
 | gravity | https://onepiecedevilfruits.com/fruit/press-press-fruit/ | https://cd-opf.pages.dev/fruits/aff9b6c2-49b4-4e46-b30c-a26aecd0f156.webp |
 
 Each fruit has its own Minecraft item model in inventory, in hand and as a dropped item. Existing marked fruit stacks are refreshed on join, periodically in player inventories/open containers, and when dropped item entities load. Ordinary chorus fruit is unchanged. Dark's captured/materialized fruits keep the matching appearance and retain capture tokens and mastery metadata. No abilities or controls are changed by this artwork update.
+
+String: https://onepiecedevilfruits.com/fruit/string-string-fruit/ — original image https://cd-opf.pages.dev/fruits/3e6cecd7-2a21-4429-a0ea-472655935312.webp
