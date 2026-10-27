@@ -11,9 +11,13 @@ import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 public final class ClientSmoke implements ClientModInitializer{
     private boolean done;private int ticks;
     @Override public void onInitializeClient(){
+        System.out.println("CREEPERBORN_CLIENT_SMOKE_INITIALIZED "+Boolean.getBoolean("creeperborn.visualSmoke"));
         if(!Boolean.getBoolean("creeperborn.visualSmoke"))return;
         ClientTickEvents.END_CLIENT_TICK.register(client->{
-            if(done||++ticks<60||!(client.gui.screen() instanceof TitleScreen))return;
+            if(done)return;
+            ticks++;
+            if(ticks%100==0)System.out.println("Client smoke waiting: "+(client.gui.screen()==null?"no screen":client.gui.screen().getClass().getSimpleName()));
+            if(ticks<60||client.gui.screen()==null||client.gui.overlay()!=null)return;
             done=true;
             try{
                 PhoenixRenderer.validate();

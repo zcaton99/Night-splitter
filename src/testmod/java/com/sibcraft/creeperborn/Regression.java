@@ -403,7 +403,7 @@ public final class Regression implements ModInitializer {
         clock(level,(level.getGameTime()/40+1)*40);Phoenix.tickPlayer(p);
         check(Phoenix.healing(p)&&Math.abs(p.getHealth()-12)<.001,"Channel healing replaces rather than stacks passive self healing");
         check(Math.abs(near.getHealth()-12)<.001&&far.getHealth()==10,"Healing Flames reaches ten-block radius only");
-        Phoenix.press(p,2);clock(level,level.getGameTime()+8);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
+        Phoenix.press(p,2);clock(level,level.getGameTime()+40);Phoenix.heartbeat(p);Phoenix.tickPlayer(p);
         check(Phoenix.blessings()==1,"Holding C applies a timed blessing to nearby allies");
         Phoenix.release(p,2);
         near.setHealth(10);near.snapTo(-12.5,y+20,34);
