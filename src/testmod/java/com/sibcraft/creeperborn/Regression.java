@@ -158,6 +158,7 @@ public final class Regression implements ModInitializer {
             @Override public GameType gameMode(){return mode==null?GameType.SURVIVAL:mode;}
             @Override public boolean setGameMode(GameType value){mode=value;getAbilities().mayfly=value==GameType.SPECTATOR;getAbilities().flying=value==GameType.SPECTATOR;return true;}
             @Override public void onUpdateAbilities(){}
+            @Override public boolean isInvulnerableTo(ServerLevel destination,net.minecraft.world.damagesource.DamageSource source){return isSpectator()||isCreative();}
             @Override public void sendOverlayMessage(Component message){}
             @Override public void sendSystemMessage(Component message){}
             @Override public void snapTo(double x,double yy,double z){setPos(x,yy,z);}
