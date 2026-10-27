@@ -875,6 +875,29 @@ public final class Regression implements ModInitializer {
             check(Hearts.extract(p,z),"Collection allows six distinct named hearts without a cap");
         }
         check(Hearts.count(p)==6,"Heart collection has no five-heart cap");
+        ItemStack deadHeart=ItemStack.EMPTY,liveHeart=ItemStack.EMPTY;
+        for(int i=0;i<p.getInventory().getContainerSize();i++){
+            ItemStack item=p.getInventory().getItem(i);
+            if(item.getHoverName().getString().contains("Heart of HeartTarget5"))deadHeart=item.copy();
+            if(item.getHoverName().getString().contains("Heart of HeartTarget4"))liveHeart=item.copy();
+        }
+        check(!deadHeart.isEmpty()&&!liveHeart.isEmpty(),"Death cleanup selects two distinct named hearts");
+        Player holder=player(level),offlineHolder=player(level);
+        holder.addItem(deadHeart.copy());holder.addItem(liveHeart.copy());holder.addItem(new ItemStack(Items.GLASS,3));
+        holder.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,deadHeart.copy());holder.containerMenu.setCarried(deadHeart.copy());
+        offlineHolder.addItem(deadHeart.copy());
+        check(Hearts.cleanup(holder)==0,"Living targets' hearts are retained in inventory, offhand and cursor");
+        Zombie doomed=victims.get(5);doomed.damageCooldownTime=0;
+        check(doomed.hurtServer(level,doomed.damageSources().genericKill(),Float.MAX_VALUE)&&!doomed.isAlive(),"Unrelated external damage kills extracted target");
+        check(Hearts.cleanup(holder)==3&&holder.getOffhandItem().isEmpty()&&holder.containerMenu.getCarried().isEmpty(),"Enemy death removes matching heart from inventory, offhand and cursor");
+        check(count(holder,"op:heart")==1,"Another living enemy's heart is preserved");
+        int plainGlass=0;for(int i=0;i<holder.getInventory().getContainerSize();i++){ItemStack item=holder.getInventory().getItem(i);if(item.is(Items.GLASS)&&Relics.kind(item).isEmpty())plainGlass+=item.getCount();}
+        check(plainGlass==3,"Ordinary glass is preserved");
+        Hearts.load(server);Hearts.join(offlineHolder);
+        check(count(offlineHolder,"op:heart")==0,"Offline holder's dead heart disappears on join after save reload");
+        ItemEntity staleDrop=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),deadHeart.copy());level.addFreshEntity(staleDrop);
+        check(Hearts.groundTick(staleDrop)&&staleDrop.isRemoved(),"Dead target's dropped heart disappears instead of leaving plain glass");
+        Hearts.cleanup(p);
         var z=victims.getFirst();ItemStack killCube=ItemStack.EMPTY;
         for(int i=0;i<p.getInventory().getContainerSize();i++){var candidate=p.getInventory().getItem(i);if(!Hearts.token(candidate).isEmpty()){killCube=candidate.copy();candidate.shrink(1);break;}}
         ItemEntity dropped=new ItemEntity(level,p.getX(),p.getY(),p.getZ(),killCube);level.addFreshEntity(dropped);

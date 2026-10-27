@@ -1,4 +1,4 @@
-# Op-Op alpha.37
+# Op-Op alpha.38
 
 Minecraft 26.3, Fabric, Java 25. Install the same JAR on client and server.
 
@@ -22,7 +22,7 @@ Unlimited distinct live targets at once, one cube per victim. Extraction locks o
 
 Fire, lava, explosions and other destructive item removals kill the linked victim. A destroyed heart for an offline player queues death until join. Chunk unloading is not destruction. Dropped cubes do not naturally despawn; after five minutes on the ground they enter durable return storage and deliver to the extractor. Offline owners and full inventories defer delivery. Inventory/container storage pauses the ground timer.
 
-Target death invalidates its cube; extractor death releases all their hearts. Copies of an invalidated token are inert. Hearts and fruit ownership save separately as world JSON files. No terrain edits.
+Target death removes its cube from every online holder's inventory, offhand and cursor, including kills by someone else. Offline holders lose the stale cube on join; stale dropped cubes disappear when loaded. Living or unloaded targets' hearts and ordinary glass are preserved. Target death invalidates its cube; extractor death releases all their hearts. Copies of an invalidated token are inert. Hearts and fruit ownership save separately as world JSON files. No terrain edits.
 
 ## Test commands
 

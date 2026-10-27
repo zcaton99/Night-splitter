@@ -108,7 +108,7 @@ public final class Hearts {
     public static boolean groundTick(ItemEntity entity){
         String token=token(entity.getItem());if(token.isEmpty())return false;
         Link l=links.get(token);
-        if(l==null||l.crushed){entity.setItem(new ItemStack(Items.GLASS));return false;}
+        if(l==null||l.crushed){entity.setItem(ItemStack.EMPTY);entity.discard();return true;}
         if(l.ground<0){l.ground=clock();save();}
         if(clock()-l.ground<6000)return false;
         returnHeart(l);
@@ -126,8 +126,10 @@ public final class Hearts {
         String id=entity.getUUID().toString();
         if(links.values().removeIf(l->l.victim.equals(id)||l.owner.equals(id)&&!l.crushed))save();
         crushing.remove(entity.getUUID());squeezeReady.remove(entity.getUUID());
+        for(var p:server.getPlayerList().getPlayers())cleanup(p);
     }
     public static void join(Player p){
+        cleanup(p);
         for(Link l:List.copyOf(links.values())){
             if(l.crushed&&l.victim.equals(p.getUUID().toString())){p.damageCooldownTime=0;p.hurtServer((ServerLevel)p.level(),p.damageSources().genericKill(),Float.MAX_VALUE);if(!p.isAlive()){links.remove(l.token);save();}}
             else if(l.owner.equals(p.getUUID().toString()))deliver(p,l);
@@ -136,12 +138,27 @@ public final class Hearts {
     public static void tick(MinecraftServer s){
         for(Link l:List.copyOf(links.values())){if(l.crushed)kill(l);else if(l.ground>=0&&clock()-l.ground>=6000)returnHeart(l);}
         for(var p:s.getPlayerList().getPlayers()){
+            cleanup(p);
             if(s.getTickCount()%20==0)for(Link l:List.copyOf(links.values()))if(l.owner.equals(p.getUUID().toString()))deliver(p,l);
             Crush c=crushing.get(p.getUUID());if(c==null)continue;
             ItemStack cube=p.getMainHandItem();if(!token(cube).equals(c.token()))cube=p.getOffhandItem();
             if(!p.isAlive()||p.isSpectator()||!p.isShiftKeyDown()||clock()>c.heartbeat()||!token(cube).equals(c.token())){crushing.remove(p.getUUID());continue;}
             if(clock()-c.start()>=60){destroy(cube);cube.shrink(1);crushing.remove(p.getUUID());Creeperborn.say(p,"Heart crushed.");}
         }
+    }
+    private static boolean stale(ItemStack cube){
+        return !cube.isEmpty()&&Relics.kind(cube).equals("op:heart")&&!links.containsKey(token(cube));
+    }
+    private static int removeStale(ItemStack cube){
+        if(!stale(cube))return 0;int count=cube.getCount();cube.shrink(count);return count;
+    }
+    /** Any holder, including offline holders on join; unrelated glass and live hearts survive. */
+    public static int cleanup(Player p){
+        int removed=0;
+        for(int i=0;i<p.getInventory().getContainerSize();i++)removed+=removeStale(p.getInventory().getItem(i));
+        removed+=removeStale(p.getOffhandItem());
+        removed+=removeStale(p.containerMenu.getCarried());
+        return removed;
     }
     public static void forget(Player p){crushing.remove(p.getUUID());squeezeReady.remove(p.getUUID());}
     public static void clear(){links.clear();squeezeReady.clear();crushing.clear();server=null;path=null;}
