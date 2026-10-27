@@ -32,10 +32,10 @@ public final class StormRenderer{
         for(int i=0;i<5;i++){
             var branch=root.addOrReplaceChild("bolt_"+i,CubeListBuilder.create(),PartPose.offset((i-2)*8,10,(i%2)*12-6));
             box(branch,"top",-1,-8,-1,2,10,2);
-            var bend=branch.addOrReplaceChild("bend",CubeListBuilder.create(),PartPose.offset(0,-7,0));
-            box(bend,"middle",-1,-7,-1,2,8,2);bend.zRot=i%2==0?.6f:-.6f;
-            var tip=bend.addOrReplaceChild("tip",CubeListBuilder.create(),PartPose.offset(0,-6,0));
-            box(tip,"end",-.6f,-7,-.6f,1.2f,8,1.2f);tip.zRot=i%2==0?-1:1;
+            var bend=branch.addOrReplaceChild("bend",CubeListBuilder.create(),PartPose.offsetAndRotation(0,-7,0,0,0,i%2==0?.6f:-.6f));
+            box(bend,"middle",-1,-7,-1,2,8,2);
+            var tip=bend.addOrReplaceChild("tip",CubeListBuilder.create(),PartPose.offsetAndRotation(0,-6,0,0,0,i%2==0?-1:1));
+            box(tip,"end",-.6f,-7,-.6f,1.2f,8,1.2f);
         }
         return LayerDefinition.create(m,16,16).bakeRoot();
     }
