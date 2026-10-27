@@ -34,7 +34,7 @@ public final class Op {
         p.addTag("cb_fruit_op");grant(p,Relics.captureTier(item));p.addTag("cb_mode_fruit");
         if(Dark.unlocked(p))Dark.selectConsumed(p,"op");item.shrink(1);return true;
     }
-    public static double diameter(Player p){return tier(p)>=3?40:tier(p)==2?32:25;}
+    public static double diameter(Player p){return tier(p)>=3?70:tier(p)==2?50:30;}
     public static int duration(Player p){return tier(p)>=3?1800:tier(p)==2?1200:600;}
     public static int charges(Player p){return tier(p)>=3?5:3;}
     public static boolean room(Player p){State s=states.get(p.getUUID());return s!=null&&s.center!=null&&s.level==p.level()&&p.isAlive()&&now(p)<s.ends;}
@@ -54,7 +54,7 @@ public final class Op {
         if(s.shell!=null){
             s.shell.addTag("cb_temporary_rock");s.shell.setCustomName(Component.literal("cb_op_room"));s.shell.setCustomNameVisible(false);
             s.shell.setBlockState(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
-            var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)s.shell;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(48);a.creeperborn$height(48);a.creeperborn$view(2);
+            var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)s.shell;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(80);a.creeperborn$height(80);a.creeperborn$view(2);
             s.shell.snapTo(s.center.x,s.center.y,s.center.z);s.level.addFreshEntity(s.shell);scale(s,diameter(p)/2);
         }
         credit(p);return "ROOM! "+(int)diameter(p)+" block diameter.";
@@ -84,8 +84,7 @@ public final class Op {
     private static boolean enemy(Player p,LivingEntity e){return e!=p&&e.isAlive()&&!e.isSpectator()&&!p.isAlliedTo(e)&&(e instanceof Enemy||e instanceof Player);}
     static LivingEntity target(Player p,double range){
         Vec3 from=p.getEyePosition(),end=from.add(p.getLookAngle().scale(range));
-        var wall=p.level().clip(new ClipContext(from,end,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));
-        if(wall.getType()!=HitResult.Type.MISS)end=wall.getLocation();
+        // ROOM controls its entire interior; terrain does not shorten its spatial attacks.
         LivingEntity best=null;double nearest=from.distanceTo(end)+.001;
         for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(from,end).inflate(.6))){
             if(!enemy(p,e)||!inside(p,e))continue;var hit=e.getBoundingBox().inflate(.25).clip(from,end);
@@ -100,20 +99,23 @@ public final class Op {
     }
     private static boolean clearAt(LivingEntity e,Vec3 at){
         var level=e.level();BlockPos pos=BlockPos.containing(at);
-        return level.hasChunkAt(pos)&&level.getWorldBorder().isWithinBounds(pos)&&at.y>=level.getMinY()&&at.y+e.getBbHeight()<level.getMaxY()
-            &&level.noCollision(e,e.getBoundingBox().move(at.subtract(e.position())));
+        if(!level.hasChunkAt(pos)||!level.getWorldBorder().isWithinBounds(pos)||at.y<level.getMinY()||at.y+e.getBbHeight()>=level.getMaxY())return false;
+        // A mount may occupy the old seat position; only solid terrain prevents a spatial swap.
+        for(var shape:level.getBlockCollisions(e,e.getBoundingBox().move(at.subtract(e.position()))))if(!shape.isEmpty())return false;
+        return true;
     }
+    private static void free(LivingEntity e){e.stopRiding();e.ejectPassengers();}
     private static void teleport(LivingEntity e,Vec3 at){
         if(e instanceof ServerPlayer sp)sp.teleportTo((ServerLevel)e.level(),at.x,at.y,at.z,Set.of(),e.getYRot(),e.getXRot(),false);
         else e.snapTo(at.x,at.y,at.z);e.setDeltaMovement(Vec3.ZERO);
     }
     public static String swap(Player p,LivingEntity e){
-        if(!valid(p)||!enemy(p,e)||!inside(p,e)||p.isPassenger()||e.isPassenger()||p.isVehicle()||e.isVehicle())return "Both targets must be free inside ROOM.";
+        if(!valid(p)||!enemy(p,e)||!inside(p,e))return "Both targets must be inside ROOM.";
         if(remaining(p)==0)return "Shambles recharging.";
         Vec3 a=p.position(),b=e.position();if(!clearAt(p,b)||!clearAt(e,a))return "Not enough space to swap.";
         if(!fuel(p))return "Eat before using Shambles.";
         int spent=now(p)>=value(p,"cb_op_swap_refill_")?0:(int)value(p,"cb_op_swap_spent_");
-        teleport(p,b);teleport(e,a);value(p,"cb_op_swap_spent_",spent+1);value(p,"cb_op_swap_refill_",now(p)+100);
+        free(p);free(e);teleport(p,b);teleport(e,a);value(p,"cb_op_swap_spent_",spent+1);value(p,"cb_op_swap_refill_",now(p)+100);
         line((ServerLevel)p.level(),a.add(0,1,0),b.add(0,1,0));credit(p);return "Shambles! "+remaining(p)+" swaps left.";
     }
     public static String cast(Player p,int move,long held){
@@ -130,13 +132,13 @@ public final class Op {
             line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
             // Two attacks split the strike between ordinary damage and armor-bypassing magic.
             hurt(p,t,5);t.damageCooldownTime=0;t.hurtServer((ServerLevel)p.level(),p.damageSources().magic(),(float)(5*Mastery.multiplier(p)));
-            credit(p);value(p,"cb_op_ready_0_true_",now(p)+100);return "Gamma Knife!";
+            credit(p);value(p,"cb_op_ready_0_true_",now(p)+20);return "Gamma Knife!";
         }
         if(move==1&&hold)return held>=60?"Hold X steadily on an enemy for three seconds.":"Heart Extraction needs a three-second channel.";
         if(move==1){
             if(!fuel(p))return "Eat before Counter Shock.";
-            for(var t:p.level().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(5)))
-                if(enemy(p,t)&&inside(p,t)&&p.distanceToSqr(t)<=25&&p.hasLineOfSight(t)){hurt(p,t,6);stuns.put(t.getUUID(),new Stun(p,t,now(p)+20));impulse(t,Vec3.ZERO);line((ServerLevel)p.level(),p.getEyePosition(),t.getEyePosition());}
+            for(var t:p.level().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(diameter(p))))
+                if(enemy(p,t)&&inside(p,t)){hurt(p,t,6);stuns.put(t.getUUID(),new Stun(p,t,now(p)+20));impulse(t,Vec3.ZERO);line((ServerLevel)p.level(),p.getEyePosition(),t.getEyePosition());}
             value(p,"cb_op_ready_1_false_",now(p)+120);credit(p);return "Counter Shock!";
         }
         if(!hold){LivingEntity t=target(p,diameter(p));return t==null?"Aim at an enemy inside ROOM.":swap(p,t);}
@@ -160,9 +162,10 @@ public final class Op {
             if(!valid(p)){cancelInput(p);return;}
             if(s.held==1){
                 if(tier(p)<2){cancelInput(p);return;}
-                LivingEntity t=target(p,8);
-                if(t==null||now<value(p,"cb_op_ready_1_true_")||p.getHealth()<s.health||p.hurtTime>0){cancelInput(p);return;}
-                if(s.target!=t){s.target=t;s.charge=now;}
+                if(now<value(p,"cb_op_ready_1_true_")){cancelInput(p);return;}
+                if(s.target==null){s.target=target(p,diameter(p));s.charge=now;}
+                LivingEntity t=s.target;
+                if(t==null||!enemy(p,t)||!inside(p,t)){cancelInput(p);return;}
                 line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
                 if(now%10==0)Creeperborn.say(p,"Heart Extraction "+Math.min(100,(now-s.charge)*100/60)+"%");
                 if(now-s.charge>=60){
@@ -171,10 +174,12 @@ public final class Op {
                 }
             }else if(s.held==2&&tier(p)>=3){
                 if(now<value(p,"cb_op_ready_2_true_")){cancelInput(p);return;}
-                if(s.target==null){s.target=target(p,diameter(p));if(s.target==null||!fuel(p)){cancelInput(p);return;}}
+                if(s.target==null){s.target=target(p,diameter(p));if(s.target==null||!fuel(p)){cancelInput(p);return;}free(s.target);}
                 LivingEntity t=s.target;
-                if(!t.isAlive()||!inside(p,t)||!p.hasLineOfSight(t)||now-s.press>100){cancelInput(p);return;}
+                if(!t.isAlive()||!inside(p,t)||now-s.press>100){cancelInput(p);return;}
                 Vec3 anchor=p.getEyePosition().add(p.getLookAngle().scale(5)).add(0,2,0);
+                Vec3 offset=anchor.subtract(s.center);double limit=diameter(p)/2-2;
+                if(offset.lengthSqr()>limit*limit)anchor=s.center.add(offset.normalize().scale(limit));
                 Vec3 delta=anchor.subtract(t.position());impulse(t,delta.scale(.25).add(0,.08,0));
                 if(t instanceof Mob mob)mob.getNavigation().stop();
                 if(now%4==0)line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());

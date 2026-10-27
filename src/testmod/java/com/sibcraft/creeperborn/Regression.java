@@ -817,23 +817,49 @@ public final class Regression implements ModInitializer {
         Op.clear();var p=player(level);p.snapTo(-8,y+15,8);p.setYRot(0);p.setXRot(0);
         check(Op.consume(p,Relics.opFruit())&&Op.tier(p)==1&&CombatNetwork.selection(p)==9,"Op fruit selects authoritative Z/X/C controls");
         check(WaterRules.vulnerable(p)&&!Op.consume(player(level),Relics.opFruit()),"Op water curse and unique owner");
-        check(Op.diameter(p)==25&&Op.duration(p)==600,"Base ROOM is 25 diameter and 30 seconds");
+        check(Op.diameter(p)==30&&Op.duration(p)==600,"Base ROOM is 30 diameter and 30 seconds");
         check(Op.cast(p,1,0).contains("locked")&&Op.cast(p,2,0).contains("locked"),"X tier two and C tier three");
         check(Op.cast(p,0,0).startsWith("ROOM!")&&Op.room(p),"Tier one tap Z opens ROOM");
         Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
         target.snapTo(-8,y+15,12);target.setNoAi(true);target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
         check(Op.inside(p,target),"Enemy inside spherical ROOM");
         check(Op.cast(p,0,7).equals("Gamma Knife!")&&target.getHealth()<100,"Tier one hold Z damages target with Gamma Knife");
-        target.snapTo(-8,y+15,23);check(!Op.inside(p,target),"Targets outside ROOM excluded");
-        Op.grant(p,2);check(Op.diameter(p)==32&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
+        target.snapTo(-8,y+15,25);check(!Op.inside(p,target),"Targets outside ROOM excluded");
+        Op.grant(p,2);check(Op.diameter(p)==50&&Op.duration(p)==1200,"Tier two ROOM intermediate size and time");
         target.snapTo(-8,y+15,12);target.damageCooldownTime=0;
         check(Op.cast(p,1,0).equals("Counter Shock!")&&Op.rooted(target),"Tier two tap X shocks and stuns");
         clock(level,level.getGameTime()+21);check(!Op.rooted(target),"Shock stun expires");
-        Op.grant(p,3);check(Op.diameter(p)==40&&Op.duration(p)==1800&&Op.charges(p)==5,"Mastery ROOM 40 diameter 90 seconds and five Shambles");
+        Op.grant(p,3);check(Op.diameter(p)==70&&Op.duration(p)==1800&&Op.charges(p)==5,"Mastery ROOM 70 diameter 90 seconds and five Shambles");
+        p.snapTo(-8,y+15,-15);target.snapTo(-8,y+15,40);
+        BlockPos roomWall=new BlockPos(-8,(int)y+16,0);level.setBlockAndUpdate(roomWall,Blocks.STONE.defaultBlockState());
+        target.damageCooldownTime=0;
+        check(Op.cast(p,0,7).equals("Gamma Knife!"),"Gamma Knife reaches across ROOM through terrain beyond old range");
+        check(Op.cast(p,0,7).contains("recovering"),"Gamma cooldown still prevents immediate spam");
+        clock(level,level.getGameTime()+20);target.damageCooldownTime=0;
+        check(Op.cast(p,0,7).equals("Gamma Knife!"),"Gamma Knife recovers after one second");
+        clock(level,level.getGameTime()+120);target.damageCooldownTime=0;
+        check(Op.cast(p,1,0).equals("Counter Shock!")&&Op.rooted(target),"Counter Shock reaches far target anywhere inside ROOM");
+        level.setBlockAndUpdate(roomWall,Blocks.AIR.defaultBlockState());
+        var mount=EntityTypes.PIG.create(level,EntitySpawnReason.EVENT);mount.snapTo(target.getX(),target.getY(),target.getZ());mount.setNoAi(true);level.addFreshEntity(mount);
+        check(target.startRiding(mount),"Enemy can start mounted for Shambles regression");
+        check(Op.swap(p,target).startsWith("Shambles!")&&!target.isPassenger(),"Shambles moves and dismounts a mounted enemy");
+        mount.discard();clock(level,level.getGameTime()+100);p.getFoodData().setFoodLevel(20);
         for(int i=0;i<5;i++)check(Op.swap(p,target).startsWith("Shambles!"),"Five consecutive Shambles at mastery");
         check(Op.swap(p,target).contains("recharging"),"Sixth swap blocked until recharge");
         clock(level,level.getGameTime()+100);check(Op.remaining(p)==5,"Swap charges fully refill after five seconds");
         p.getFoodData().setFoodLevel(20);
+        p.snapTo(-8,y+15,8);p.setYRot(0);target.snapTo(-8,y+15,30);p.getFoodData().setFoodLevel(20);
+        Op.press(p,1);clock(level,level.getGameTime()+7);Op.heartbeat(p);Op.tickPlayer(p);
+        for(int channel=1;channel<=60;channel++){
+            clock(level,level.getGameTime()+1);p.snapTo(-8+channel*.08,y+15,8);target.snapTo(-8,y+15,30+channel*.02);
+            p.setYRot(90);if(channel==15){p.setHealth(18);p.hurtTime=5;}
+            Op.heartbeat(p);Op.tickPlayer(p);
+        }
+        check(Hearts.count(p)==1,"Held extraction completes while caster moves, looks away and takes damage, and victim moves within ROOM");
+        ItemStack channelCube=ItemStack.EMPTY;
+        for(int i=0;i<p.getInventory().getContainerSize();i++)if(!Hearts.token(p.getInventory().getItem(i)).isEmpty()){channelCube=p.getInventory().getItem(i);break;}
+        check(Hearts.giveBack(p,target,channelCube),"Channel-created heart can be returned");
+        p.snapTo(-8,y+15,8);p.setYRot(0);p.hurtTime=0;target.snapTo(-8,y+15,12);
         check(Hearts.extract(p,target),"Heart extraction reserves live target");
         ItemStack cube=ItemStack.EMPTY;
         for(int i=0;i<p.getInventory().getContainerSize();i++)if(!Hearts.token(p.getInventory().getItem(i)).isEmpty()){cube=p.getInventory().getItem(i);break;}
