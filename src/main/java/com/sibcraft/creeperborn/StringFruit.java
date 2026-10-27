@@ -89,7 +89,7 @@ public final class StringFruit {
             s.ready[slot]=now(p)+cooldown(p,hold?160:15);credit(p);return god?"God Thread!":hold?"Overheat!":"Five-Color Slash!";
         }
         if(move==1){
-            if(!hold){if(!fuel(p,1))return "Eat before gliding.";s.gliding=true;s.glideEnds=now(p)+(tier(p)>=3?2400:600);s.route=p.position();s.anchor=p.position().add(p.getLookAngle().scale(8));s.landing=now(p)+100;credit(p);return "String Glide — aim to steer; jump to the next thread; tap X to stop.";}
+            if(!hold){if(!fuel(p,1))return "Eat before gliding.";s.gliding=true;s.glideEnds=now(p)+(long)((tier(p)>=3?2400:600)*bonus(p));s.route=p.position();s.anchor=p.position().add(p.getLookAngle().scale(8));s.landing=now(p)+100;credit(p);return "String Glide — aim to steer; jump to the next thread; tap X to stop.";}
             if(held<20)return "Hold X for one second to attach Parasite.";LivingEntity t=target(p,range(p));if(t==null)return "Aim at a mob or player for Parasite.";
             if(!fuel(p,1))return "Eat before using Parasite.";
             if(!possess(p,t,parasiteTicks(p)))return "That target is already controlled.";
@@ -115,12 +115,15 @@ public final class StringFruit {
         if(controlled(target)||target==p||target.isSpectator()||!target.isAlive()||target.level()!=p.level())return false;
         State s=state(p);releaseControl(s);endGlide(s);target.stopRiding();target.ejectPassengers();s.puppet=target;s.controlEnds=now(p)+ticks;s.inputUntil=now(p)+20;s.yaw=target.getYRot();s.pitch=target.getXRot();s.level=(ServerLevel)p.level();
         if(target instanceof Mob mob){s.oldNoAi=mob.isNoAi();mob.setNoAi(true);mob.getNavigation().stop();}
-        for(int i=0;i<3;i++)s.strings.add(beam(s.level,p.getEyePosition(),target.getEyePosition().add((i-1)*.25,0,0),.035f,1));
+        for(int i=0;i<3;i++)s.strings.add(beam(s.level,p.getEyePosition(),target.getEyePosition().add((i-1)*.25,0,0),.035f,isKnight(target)?2:1));
+        if(target instanceof Player victim)victim.sendSystemMessage(Component.literal("Parasite: your movement is being controlled for a limited time."));
         sync(s);return true;
     }
     private static void sync(State s){if(s.owner instanceof ServerPlayer p&&ServerPlayNetworking.canSend(p,StringControlPayload.TYPE))ServerPlayNetworking.send(p,new StringControlPayload(s.puppet==null?-1:s.puppet.getId(),s.gliding&&tier(s.owner)>=3?64:0,s.yaw,s.pitch));}
     private static void releaseControl(State s){if(s.puppet==null)return;LivingEntity target=s.puppet;s.puppet=null;
-        if(target instanceof Mob mob)mob.setNoAi(s.oldNoAi);target.setDeltaMovement(Vec3.ZERO);s.flags=0;s.strings.forEach(Entity::discard);s.strings.clear();sync(s);}
+        if(target instanceof Mob mob)mob.setNoAi(s.oldNoAi);target.setDeltaMovement(Vec3.ZERO);s.flags=0;s.strings.forEach(Entity::discard);s.strings.clear();sync(s);
+        if(s.owner instanceof ServerPlayer sp&&sp.connection!=null&&sp.isAlive())sp.teleportTo((ServerLevel)sp.level(),sp.getX(),sp.getY(),sp.getZ(),Set.of(),sp.getYRot(),sp.getXRot(),false);
+        if(target instanceof Player victim)victim.sendSystemMessage(Component.literal("Parasite control ended."));}
     public static void input(ServerPlayer p,StringControlPayload packet){State s=states.get(p.getUUID());if(s==null)return;if(s.puppet==null){if(packet.entity()==-1&&s.gliding&&packet.valid())s.flags=packet.flags();return;}if(packet.entity()!=s.puppet.getId()||!packet.valid()||s.inputAt==now(p))return;s.inputAt=now(p);s.flags=packet.flags();s.yaw=packet.yaw();s.pitch=Math.max(-90,Math.min(90,packet.pitch()));s.inputUntil=now(p)+15;}
     private static void drive(State s){
         LivingEntity t=s.puppet;Player p=s.owner;if(t==null)return;
@@ -184,11 +187,11 @@ public final class StringFruit {
                     if(dist<144&&now%20==0){flash(s.level,s.knight.getEyePosition(),t.getEyePosition(),.025f,2,6);hit(p,t,4);}}
             }
         }}
-        if(now%20==0){
+        {
             if(now-s.lastDamage>=140&&now>=s.heal&&p.getHealth()<p.getMaxHealth()&&p.getFoodData().getFoodLevel()>6&&!Dark.suppressed(p)&&!WaterRules.suppressed(p)){
                 p.heal(1);p.getFoodData().addExhaustion(1);s.heal=now+Math.round(60/bonus(p));((ServerLevel)p.level()).sendParticles(WHITE,p.getX(),p.getY()+1,p.getZ(),12,.3,.6,.3,0);}
-            boolean active=s.last!=null&&s.last.distanceToSqr(p.position())>.04||now-s.recent<200||s.gliding||s.puppet!=null;s.last=p.position();
-            if(active&&selected(p)){int before=tier(p);Mastery.set(p,"cb_string_time_",Mastery.get(p,"cb_string_time_")+1);if(tier(p)>before)Creeperborn.say(p,"String mastery increased!");}
+            if(now%20==0){boolean active=s.last!=null&&s.last.distanceToSqr(p.position())>.04||now-s.recent<200||s.gliding||s.puppet!=null;s.last=p.position();
+            if(active&&selected(p)){int before=tier(p);Mastery.set(p,"cb_string_time_",Mastery.get(p,"cb_string_time_")+1);if(tier(p)>before)Creeperborn.say(p,"String mastery increased!");}}
         }
     }
     private static void clearKnight(State s){if(s.puppet==s.knight)releaseControl(s);if(s.knight!=null)s.knight.discard();s.knight=null;if(s.knightVisual!=null)s.knightVisual.discard();s.knightVisual=null;}

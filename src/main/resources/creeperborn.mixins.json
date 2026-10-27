@@ -21,7 +21,8 @@
     "OpHeartItemMixin",
     "StringPositionMixin",
     "StringTeleportMixin",
-    "StringConnectionMixin"
+    "StringConnectionMixin",
+    "StringEntityDimensionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -34,6 +35,7 @@
     "PhoenixAvatarMixin",
     "PhoenixHandsMixin",
     "PhoenixNameMixin",
-    "StringClientInteractionMixin"
+    "StringClientInteractionMixin",
+    "StringClientMovementMixin"
   ]
 }

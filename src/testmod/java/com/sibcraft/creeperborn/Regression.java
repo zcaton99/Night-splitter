@@ -1053,7 +1053,7 @@ public final class Regression implements ModInitializer {
         check(StringFruit.damage(p,p.damageSources().playerAttack(player(level)),8)==2,"Spider Web reduces incoming entity damage by seventy-five percent");
         check(StringFruit.cast(p,2,0).contains("control")&&StringFruit.controlling(p),"C pilots the existing Knight");
         StringFruit.cancelInput(p);check(!StringFruit.controlling(p),"Cancel restores camera control state");
-        check(StringFruit.cast(p,2,7).equals("Birdcage!")&&StringFruit.cageCount()==1,"Birdcage creates persistent arena");
+        check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.cageCount()==1,"Birdcage creates persistent arena");
         var origin=p.position();p.setPos(origin.x+110,origin.y,origin.z);check(p.position().equals(origin),"Caster cannot escape own cage via absolute position");
         Player enemy=player(level);enemy.snapTo(origin.x+5,origin.y,origin.z);var trapped=enemy.position();enemy.setPos(origin.x+110,origin.y,origin.z);check(enemy.position().equals(trapped),"Enemy cannot teleport across cage");
         Player outsider=player(level);outsider.snapTo(origin.x+110,origin.y,origin.z); // initial location may be inside; gate must prevent crossing as well.

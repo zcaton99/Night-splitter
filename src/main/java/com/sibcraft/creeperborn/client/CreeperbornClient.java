@@ -23,7 +23,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private static KeyMapping key(String name,int code){return KeyMappingHelper.registerKeyMapping(new KeyMapping("key.creeperborn."+name,InputConstants.Type.KEYBOARD,code,CATEGORY));}
     private void send(int action,int value){if(ClientPlayNetworking.canSend(ControlPayload.TYPE))ClientPlayNetworking.send(new ControlPayload(action,value));}
     private boolean holding(){return held[0]||held[1]||held[2];}
-    private void cancel(){if(holding())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
+    private void cancel(){if(holding()||StringVisuals.controlling())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
     private void changeSelection(){boolean wasHolding=holding();cancel();waitingForRelease=wasHolding;}
     @Override public void onInitializeClient(){
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.PhoenixVisualPayload.TYPE,(payload,context)->PhoenixVisuals.update(payload.entity(),payload.flags()));
