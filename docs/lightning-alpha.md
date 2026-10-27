@@ -1,4 +1,4 @@
-# Lightning Creeper Fruit — alpha.31
+# Lightning Creeper Fruit — alpha.32
 
 Fourth rare fruit; one fruit per player and one living owner of each fruit per world. Ownership and mastery persist across logout/restart. Actual death releases the fruit and resets its progression, retaining elemental progression. Existing fruit saves without a Lightning owner remain compatible. Total Fruitborn spawn chance stays unchanged; available types share it.
 
@@ -6,9 +6,9 @@ Select Lightning with G; B toggles combat controls. Keys remain rebindable.
 
 | Input | Ability | First balance |
 | --- | --- | --- |
-| Tap Z | Lightning Bolt | 8 damage; 30-block aimed reach; chains to at most two hostiles within 5 blocks for 4 damage; 1s cooldown |
+| Tap Z | Lightning Bolt | 8 damage; 30-block aimed reach; chains to at most two hostiles within 5 blocks for 4 damage; 0.5s cooldown |
 | Hold Z 8s, release | Thunder Judgment | Aimed strike up to 50 blocks away, 5-block impact radius, 24 damage; 15s cooldown. Release between .35s and 8s cancels. Charging shows progress. |
-| Tap X | Flash Step | Instant travel up to 20 blocks in aimed direction; body collision, loaded chunks, height and world border limit travel; 3s cooldown |
+| Tap X | Flash Step | Instant travel up to 20 blocks in aimed direction; body collision, loaded chunks, height and world border limit travel; 3 charges (5 with all-four mastery); full refill after 3s without a jump |
 | Hold X .35s | Lightning Rush | Up to 3s of fast aimed movement while held; release ends it; 8s recovery; half a food icon per 2 active seconds |
 | Tap C | Storm Form toggle | Animated storm cloud with flight; 60s duration, 45s recovery, half a food icon per 4 active seconds |
 | Z in Storm | Directed Lightning | Tap strikes deal 14 damage within 2 blocks, aimed up to 50 blocks; charged strikes deal 40 damage within 5 blocks, aimed up to 64 blocks |
@@ -32,3 +32,13 @@ Eat the marked item from `/creeperborn testfruit lightning`. Use `/creeperborn f
 - Compare normal 60s Storm against all-four mastered 90s Storm; check attack damage and PvP immunity bypass.
 - Verify swimming/drowning curse before elemental mastery, and ordinary swimming after mastering all four.
 - Logout/rejoin during Storm and verify no leaked flight permission. Actual death releases Lightning for another player.
+
+## Alpha.32 playtest changes
+
+Tap Z has a half-second recovery and a six-tick branching white/blue bolt from the casting hand to the target, with visible chain arcs. Bolt displays never save to the world and are removed after their animation or owner disconnect.
+
+Judgment requires neither full health nor a minimum hunger level. Low hunger now ends only Storm/Rush; it no longer clears a normal Z charge. Repeated held-key events are ignored by the client, and duplicate server presses preserve the original charge time. The eight-second requirement, water curse and heartbeat cancellation remain.
+
+Storm visuals are three times larger in both horizontal axes; height, duration, movement, damage area and player collision remain unchanged.
+
+Flash Step now has three charges normally and five with all-four elemental mastery. Each accepted jump spends one. All charges refill three seconds after the latest successful jump. Failed placement spends none, and logout cannot reset spent charges.

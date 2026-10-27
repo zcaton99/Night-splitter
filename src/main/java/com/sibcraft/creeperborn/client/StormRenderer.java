@@ -45,6 +45,7 @@ public final class StormRenderer{
     public static void submit(AvatarRenderState state,PoseStack poses,SubmitNodeCollector nodes,int flags){
         float time=state.ageInTicks;
         poses.pushPose();poses.translate(0,Math.sin(time*.1)*.08,0);
+        poses.scale(3,1,3);
         poses.rotate(new Quaternionf().rotationY(time*.012f));
         part(CORE,DARK,poses,nodes,false);
         poses.rotate(new Quaternionf().rotationY(-time*.025f));

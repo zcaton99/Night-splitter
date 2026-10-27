@@ -84,7 +84,7 @@ public final class CreeperbornClient implements ClientModInitializer {
             boolean down=false;for(KeyMapping mapping:moves)down|=mapping.isDown();
             if(waitingForRelease&&!down)waitingForRelease=false;
             for(int i=0;i<3;i++)while(moves[i].consumeClick()){
-                if(!combat||waitingForRelease)continue;
+                if(!combat||waitingForRelease||held[i])continue;
                 int direction=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)
                     |(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0);
                 held[i]=true;send(5,i|(direction<<2));

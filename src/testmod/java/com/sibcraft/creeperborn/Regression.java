@@ -527,6 +527,17 @@ public final class Regression implements ModInitializer {
         check(Lightning.cast(p,0,0).equals("Lightning Bolt!")&&Math.abs(target.getHealth()-12)<.001,"Aimed bolt reaches twelve blocks and deals eight damage");
         check(Math.abs(chain.getHealth()-16)<.001&&Lightning.uses(p)==1,"Lightning chains at half damage and credits one successful cast");
         check(Lightning.cast(p,0,0).contains("recovering"),"Bolt cooldown is enforced");
+        check(LightningBolts.activeCount()==2,"Tap bolt and chained hit create visible lightning arcs");
+        var boltDisplays=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(32)).stream()
+            .filter(d->d.getCustomName()!=null&&LightningBolts.variant(d.getCustomName().getString())>=0).toList();
+        check(boltDisplays.size()==2&&boltDisplays.stream().noneMatch(net.minecraft.world.entity.Entity::shouldBeSaved),"Bolt displays are temporary and excluded from world saves");
+        check(boltDisplays.stream().anyMatch(d->d.position().distanceToSqr(LightningBolts.hand(p))<.0001),"Primary bolt originates at the casting hand");
+        for(int i=0;i<6;i++)LightningBolts.tick();
+        check(LightningBolts.activeCount()==0,"Bolt visual expires after six ticks");
+        clock(level,level.getGameTime()+9);check(Lightning.cast(p,0,0).contains("recovering"),"Tap Z still recovers before half a second");
+        clock(level,level.getGameTime()+1);target.damageCooldownTime=0;
+        check(Lightning.cast(p,0,0).equals("Lightning Bolt!"),"Tap Z recovers at half a second");
+
         target.setHealth(20);chain.setHealth(20);target.damageCooldownTime=chain.damageCooldownTime=0;
         clock(level,level.getGameTime()+21);
         for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,15),Blocks.STONE.defaultBlockState());
@@ -541,8 +552,8 @@ public final class Regression implements ModInitializer {
         Lightning.grant(p,2);
         for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,12),Blocks.STONE.defaultBlockState());
         check(Lightning.flashDestination(p,20).z<11.8,"Flash Step checks full body clearance before a wall");
-        check(Lightning.cast(p,1,0).equals("Flash Step!")&&p.getZ()<11.8&&p.getZ()>8.5,"Flash Step moves to the last clear position");
-        check(Lightning.cast(p,1,0).contains("recovering"),"Flash Step cooldown is enforced");
+        check(Lightning.cast(p,1,0).startsWith("Flash Step!")&&p.getZ()<11.8&&p.getZ()>8.5,"Flash Step moves to the last clear position");
+        check(Lightning.flashCharges(p)==2,"One Flash Step spends one of three normal charges");
         for(int dy=26;dy<=28;dy++)level.setBlockAndUpdate(new BlockPos(-13,(int)y+dy,12),Blocks.AIR.defaultBlockState());
         p.snapTo(-12.5,y+26,8.5);Lightning.press(p,1);clock(level,level.getGameTime()+7);Lightning.heartbeat(p);Lightning.tickPlayer(p);
         check(p.getDeltaMovement().z>1,"Held X starts fast forward Lightning Rush");
@@ -583,6 +594,55 @@ public final class Regression implements ModInitializer {
         target.discard();Lightning.clear();
     }
 
+    private void holdJudgment(ServerLevel level,Player p,int ticks){
+        Lightning.press(p,0);
+        for(int i=1;i<=ticks;i++){
+            clock(level,level.getGameTime()+1);
+            if(i%4==0)Lightning.heartbeat(p);
+            Lightning.press(p,0); // Repeated key-downs cannot restart a held charge.
+            Lightning.tickPlayer(p);
+        }
+    }
+    private void checkLightningChargeAndFlashes(ServerLevel level){
+        Lightning.clear();Player p=player(level);p.snapTo(-12.5,y+28,8.5);p.setYRot(0);p.setXRot(0);
+        check(Lightning.consume(p,Relics.lightningFruit()),"Fresh owner obtains Lightning for charge tests");
+        p.setHealth(6);p.getFoodData().setFoodLevel(0);
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);target.snapTo(-12.5,y+28,20.5);target.setNoAi(true);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);target.setHealth(100);level.addFreshEntity(target);
+        holdJudgment(level,p,159);
+        check(Lightning.chargeTicks(p)==159,"Low health and empty hunger do not reset normal Judgment charge");
+        Lightning.release(p,0);check(target.getHealth()==100,"Judgment still cannot fire one tick early");
+        holdJudgment(level,p,160);check(Lightning.chargeTicks(p)==160,"Normal Judgment reaches full charge with repeated key-downs");
+        Lightning.release(p,0);check(Math.abs(target.getHealth()-76)<.001,"Low-health hungry caster can fire normal Judgment");
+        clock(level,level.getGameTime()+301);Lightning.press(p,0);clock(level,level.getGameTime()+16);Lightning.tickPlayer(p);
+        check(Lightning.chargeTicks(p)==0,"Missing heartbeat still cancels stale held input");
+        p.getFoodData().setFoodLevel(20);Lightning.grant(p,3);
+        check(Lightning.cast(p,2,0).startsWith("Storm Form!"),"Low health does not block Storm Form");
+        target.setHealth(100);target.damageCooldownTime=0;
+        holdJudgment(level,p,160);Lightning.release(p,0);
+        check(Math.abs(target.getHealth()-60)<.001,"Storm Judgment retains its eight-second charge and damage");
+        Lightning.end(p);p.getFoodData().setFoodLevel(20);
+        check(Lightning.flashCapacity(p)==3&&Lightning.flashCharges(p)==3,"Normal Flash Step starts with three charges");
+        for(int i=0;i<3;i++){
+            p.snapTo(-12.5,y+28,8.5);check(Lightning.cast(p,1,0).startsWith("Flash Step!"),"Normal player chains three Flash Steps without delay");
+        }
+        check(Lightning.flashCharges(p)==0&&Lightning.cast(p,1,0).contains("recovering"),"Fourth normal jump waits for recharge");
+        clock(level,level.getGameTime()+59);check(Lightning.flashCharges(p)==0,"Flash charge refill takes three full seconds");
+        clock(level,level.getGameTime()+1);check(Lightning.flashCharges(p)==3,"All normal charges refill after three seconds without jumping");
+        for(Element element:Element.values())Mastery.grant(p,element,3);
+        check(Lightning.flashCapacity(p)==5&&Lightning.flashCharges(p)==5,"All-four mastery grants five Flash Step charges");
+        for(int i=0;i<5;i++){
+            p.snapTo(-12.5,y+28,8.5);check(Lightning.cast(p,1,0).startsWith("Flash Step!"),"Master chains five jumps");
+        }
+        check(Lightning.flashCharges(p)==0,"Sixth mastered jump is unavailable");
+        Lightning.forget(p);FruitClaims.load(server);check(Lightning.flashCharges(p)==0,"Logout cannot reset spent Flash Step charges");
+        clock(level,level.getGameTime()+60);check(Lightning.flashCharges(p)==5,"Mastered Flash Step refills five charges");
+        Mastery.grant(p,Element.EARTH,2);check(Lightning.flashCapacity(p)==3&&Lightning.flashCharges(p)==3,"Losing all-four mastery restores normal charge capacity");
+        check(LightningBolts.variant("cb_lightning_bolt|2|30")==2&&LightningBolts.variant("cb_lightning_bolt|0|NaN")==-1,"Bolt metadata rejects invalid ray lengths");
+        target.discard();FruitClaims.releaseOnDeath(p);Lightning.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -593,6 +653,7 @@ public final class Regression implements ModInitializer {
         checkExplicitFruitCommands(level);
         checkPhoenix(level);
         checkLightning(level);
+        checkLightningChargeAndFlashes(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);

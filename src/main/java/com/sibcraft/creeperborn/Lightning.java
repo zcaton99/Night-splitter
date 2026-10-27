@@ -42,6 +42,11 @@ public final class Lightning {
     public static boolean storm(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.stormUntil>now(p);}
     public static int duration(Player p){return Mastery.harmony(p)?1800:1200;}
     public static int range(Player p,boolean charged){return charged?storm(p)?64:50:storm(p)?50:30;}
+    public static int flashCapacity(Player p){return Mastery.harmony(p)?5:3;}
+    public static int flashCharges(Player p){
+        if(now(p)>=ready(p,"flash"))Mastery.set(p,"cb_lightning_flash_spent_",0);
+        return Math.max(0,flashCapacity(p)-Mastery.get(p,"cb_lightning_flash_spent_"));
+    }
     public static long ready(Player p,String action){
         String prefix="cb_lightning_"+action+"_ready_";
         for(String t:p.entityTags())if(t.startsWith(prefix))try{return Long.parseLong(t.substring(prefix.length()));}catch(NumberFormatException ignored){}
@@ -58,6 +63,9 @@ public final class Lightning {
     public static void press(Player p,int move){
         if(!selected(p)||!p.isAlive()||p.isSpectator()||WaterRules.suppressed(p)||move<0||move>2)return;
         State s=state(p);if(s.held>=0)return;s.held=move;s.press=now(p);s.heartbeat=now(p)+15;s.level=(ServerLevel)p.level();
+    }
+    public static int chargeTicks(Player p){
+        State s=states.get(p.getUUID());return s!=null&&s.held==0?(int)Math.min(160,Math.max(0,now(p)-s.press)):0;
     }
     public static void heartbeat(Player p){State s=states.get(p.getUUID());if(s!=null&&s.held>=0)s.heartbeat=now(p)+15;}
     public static void cancelInput(Player p){State s=states.get(p.getUUID());if(s==null)return;
@@ -78,21 +86,21 @@ public final class Lightning {
             boolean charged=held>=160;
             if(held>=7&&!charged)return "Thunder Judgment cancelled: charge for eight seconds.";
             if(now(p)<s.attackReady)return "Lightning attack recovering.";
-            s.attackReady=now(p)+(charged?300:20);s.flareUntil=now(p)+12;
+            s.attackReady=now(p)+(charged?300:10);s.flareUntil=now(p)+12;
             strike(p,charged);return charged?"THUNDER JUDGMENT!":storm(p)?"Directed Lightning!":"Lightning Bolt!";
         }
         if(move==1){
             if(tier(p)<2)return "Electric movement needs 10 uses + five active minutes.";
             if(p.isPassenger())return "Dismount before using electric movement.";
             if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to use electric movement.";
-            if(now(p)<ready(p,"flash"))return "Flash Step recovering.";
+            if(flashCharges(p)<=0)return "Flash Step recovering: "+((ready(p,"flash")-now(p)+19)/20)+"s.";
             Vec3 from=p.position(),to=flashDestination(p,20);
             if(to.distanceToSqr(from)<.25)return "No clear space to Flash Step.";
             beam((ServerLevel)p.level(),p.getEyePosition(),to.add(0,p.getEyeHeight(),0),30);
             if(p instanceof ServerPlayer sp)sp.teleportTo((ServerLevel)p.level(),to.x,to.y,to.z,Set.of(),p.getYRot(),p.getXRot(),false);
             else p.snapTo(to.x,to.y,to.z);
-            p.setDeltaMovement(Vec3.ZERO);cooldown(p,"flash",60);credit(p);s.flareUntil=now(p)+10;
-            return "Flash Step!";
+            p.setDeltaMovement(Vec3.ZERO);Mastery.set(p,"cb_lightning_flash_spent_",Mastery.get(p,"cb_lightning_flash_spent_")+1);cooldown(p,"flash",60);credit(p);s.flareUntil=now(p)+10;
+            return "Flash Step! "+flashCharges(p)+"/"+flashCapacity(p)+" charges";
         }
         if(move==2){
             if(storm(p)){end(p);return "Storm Form ended.";}
@@ -143,7 +151,10 @@ public final class Lightning {
         if(!level.hasChunkAt(BlockPos.containing(end)))return;
         double strength=storm(p)&&Mastery.harmony(p)?1.25:1;
         float damage=(float)((charged?(storm(p)?40:24):(storm(p)?14:8))*strength);
-        beam(level,from,end,charged?80:40);
+        if(!charged&&!storm(p)){
+            LightningBolts.launch(p,LightningBolts.hand(p),end,true);
+            p.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }else beam(level,from,end,charged?80:40);
         boolean changed=false;
         if(charged||storm(p)){
             LightningBolt visual=EntityTypes.LIGHTNING_BOLT.create(level,EntitySpawnReason.EVENT);
@@ -159,7 +170,7 @@ public final class Lightning {
             nearby.sort(Comparator.comparingDouble(e->e.distanceToSqr(center)));
             int count=0;
             for(LivingEntity e:nearby)if(e!=first&&enemy(p,e)&&e.distanceToSqr(first)<=25&&first.hasLineOfSight(e)){
-                beam(level,first.getEyePosition(),e.getEyePosition(),16);changed|=hit(p,e,damage*.5f);if(++count>=2)break;
+                LightningBolts.launch(p,first.getEyePosition(),e.getEyePosition(),false);changed|=hit(p,e,damage*.5f);if(++count>=2)break;
             }
         }
         if(changed)credit(p);
@@ -248,12 +259,13 @@ public final class Lightning {
         }
         if(storm(p)&&now%5==0){
             Vec3 at=p.position().add(0,1.5,0);
-            ((ServerLevel)p.level()).sendParticles(ParticleTypes.CLOUD,at.x,at.y,at.z,8,1.6,.6,1.6,.01);
-            ((ServerLevel)p.level()).sendParticles(ParticleTypes.ELECTRIC_SPARK,at.x,at.y-.5,at.z,6,1.4,.3,1.4,.02);
+            ((ServerLevel)p.level()).sendParticles(ParticleTypes.CLOUD,at.x,at.y,at.z,16,4.8,.6,4.8,.01);
+            ((ServerLevel)p.level()).sendParticles(ParticleTypes.ELECTRIC_SPARK,at.x,at.y-.5,at.z,12,4.2,.3,4.2,.02);
         }
-        if(p.getFoodData().getFoodLevel()<=6){end(p);cancelInput(p);}
+        if(p.getFoodData().getFoodLevel()<=6){end(p);if(s.rushStart>0||s.held==1)cancelInput(p);}
     }
     public static void tick(MinecraftServer server){
+        LightningBolts.tick();
         for(Player p:server.getPlayerList().getPlayers())tickPlayer(p);
         for(var viewer:server.getPlayerList().getPlayers()){
             if(!ServerPlayNetworking.canSend(viewer,LightningVisualPayload.TYPE))continue;
@@ -269,6 +281,6 @@ public final class Lightning {
             }
         }
     }
-    public static void forget(Player p){end(p);cancelInput(p);states.remove(p.getUUID());sent.remove(p.getUUID());}
-    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);states.clear();sent.clear();}
+    public static void forget(Player p){LightningBolts.cancel(p);end(p);cancelInput(p);states.remove(p.getUUID());sent.remove(p.getUUID());}
+    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);states.clear();sent.clear();LightningBolts.clear();}
 }
