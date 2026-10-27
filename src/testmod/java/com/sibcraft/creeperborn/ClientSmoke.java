@@ -67,7 +67,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 com.sibcraft.creeperborn.client.GravityRenderer.submit(2,new PoseStack(),nodes,15);
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$gravity(1);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$gravity()!=1)throw new AssertionError("Gravity render state missing");
-                if(parts[0]!=125)throw new AssertionError("Expected 125 model submissions, got "+parts[0]);
+                if(parts[0]!=127)throw new AssertionError("Expected 127 model submissions, got "+parts[0]);
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");

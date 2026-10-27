@@ -931,26 +931,41 @@ public final class Regression implements ModInitializer {
         check(Gravity.cast(p,1,0).contains("locked")&&Gravity.cast(p,2,0).contains("locked"),"Gravity X/C require tiers two and three");
         Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(true);
         t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
-        check(Gravity.cast(p,0,0).equals("Gravity Press!")&&t.getHealth()==94&&t.getDeltaMovement().y<0&&t.hasEffect(MobEffects.SLOWNESS),"Gravity Press damages, weighs down and slows aimed target");
+        Zombie group=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);group.snapTo(-5,y+18,18);group.setNoAi(true);level.addFreshEntity(group);
+        Zombie outside=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);outside.snapTo(-8,y+18,41);outside.setNoAi(true);level.addFreshEntity(outside);
+        Zombie hidden=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);hidden.snapTo(-12,y+18,8);hidden.setNoAi(true);level.addFreshEntity(hidden);
+        BlockPos wall=new BlockPos(-10,(int)y+19,8);level.setBlockAndUpdate(wall,Blocks.STONE.defaultBlockState());
+        check(Gravity.range(p)==32&&Gravity.pinTicks(p)==60&&Gravity.waveRange(p)==12&&Gravity.waveDamage(p)==8,"Tier-one Gravity scaling");
+        check(Gravity.cast(p,0,0).equals("Gravity Press!")&&t.getHealth()==94&&t.getDeltaMovement().y<0&&t.hasEffect(MobEffects.SLOWNESS),"Gravity Press damages, weighs down and slows targets");
+        check(Gravity.rooted(t)&&Gravity.rooted(group)&&Shackles.rooted(group)&&group.getHealth()==14,"Press pins multiple visible enemies within range");
+        check(!Gravity.rooted(outside)&&outside.getHealth()==20&&!Gravity.rooted(hidden)&&hidden.getHealth()==20,"Press excludes out-of-range and terrain-shielded enemies");
+        var pinnedPosition=group.position();group.move(net.minecraft.world.entity.MoverType.SELF,new net.minecraft.world.phys.Vec3(1,0,0));
+        check(group.position().equals(pinnedPosition),"Gravity pin uses native movement guard");
+        level.setBlockAndUpdate(wall,Blocks.AIR.defaultBlockState());
         check(Gravity.cast(p,0,0).contains("recovering"),"Gravity Press cooldown enforced");
         t.damageCooldownTime=0;
         check(Gravity.cast(p,0,7).equals("Repulsion Wave!")&&t.getDeltaMovement().z>0,"Held Z repels enemies in front");
         Gravity.grant(p,2);p.getFoodData().setFoodLevel(20);t.damageCooldownTime=0;
+        check(Gravity.range(p)==48&&Gravity.pinTicks(p)==100&&Gravity.waveRange(p)==18&&Gravity.waveDamage(p)==10,"Tier-two Press and Wave grow");
+        check(Gravity.liftHeight(p)==16&&Gravity.liftTicks(p)==80&&Gravity.rideTicks(p)==600,"Tier-two levitation and thirty-second ride");
         check(Gravity.cast(p,1,0).equals("Levitate!"),"Tap X starts targeted levitation");
         Gravity.tickEffects();check(t.getDeltaMovement().y>0,"Levitation repeatedly lifts target");
-        clock(level,level.getGameTime()+60);t.setDeltaMovement(0,0,0);Gravity.tickEffects();
-        check(t.getDeltaMovement().lengthSqr()==0,"Levitation stops applying force after three seconds");
+        clock(level,level.getGameTime()+Gravity.liftTicks(p));t.setDeltaMovement(0,0,0);Gravity.tickEffects();
+        check(t.getDeltaMovement().lengthSqr()==0,"Levitation stops applying force at its tier duration");
         boolean couldFly=p.getAbilities().mayfly;
         Gravity.press(p,1);clock(level,level.getGameTime()+7);Gravity.heartbeat(p);Gravity.tickPlayer(p);
         check(Gravity.riding(p)&&p.getDeltaMovement().z>0&&p.getAbilities().mayfly==couldFly,"Held X steers a temporary rock without granting vanilla flight");
         check(Gravity.immune(p,p.damageSources().fall()),"Rock ride protects its caster from fall damage");
         Gravity.release(p,1);check(!Gravity.riding(p)&&p.getAbilities().mayfly==couldFly,"Releasing X ends ride and preserves flight permissions");
         Gravity.grant(p,3);p.getFoodData().setFoodLevel(20);
+        check(Gravity.range(p)==64&&Gravity.pinTicks(p)==160&&Gravity.waveRange(p)==24&&Gravity.waveDamage(p)==12,"Final-tier Press and Wave scaling");
+        check(Gravity.liftHeight(p)==24&&Gravity.liftTicks(p)==120&&Gravity.rideTicks(p)==2400,"Final-tier levitation reaches 24 blocks for six seconds, rock ride lasts two minutes");
         check(Gravity.cast(p,2,0).equals("Orbit Guard!")&&Gravity.guarding(p),"Tier-three tap C starts orbiting defense");
         Player attacker=player(level);var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.setOwner(attacker);arrow.snapTo(p.getX()+1,p.getY()+1,p.getZ());level.addFreshEntity(arrow);
         p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,p.damageSources().arrow(arrow,attacker),4);
-        check(Math.abs(p.getHealth()-19.2)<.001,"Orbit Guard reduces projectile damage by eighty percent");
-        check(Gravity.damage(p,p.damageSources().playerAttack(attacker),4)==2&&Gravity.damage(p,p.damageSources().generic(),4)==4,"Orbit Guard halves melee while environmental damage remains normal");
+        check(Math.abs(p.getHealth()-19.6)<.001,"Final-tier Orbit Guard reduces projectile damage by ninety percent");
+        check(Math.abs(Gravity.damage(p,p.damageSources().playerAttack(attacker),4)-1.2)<.001&&Gravity.damage(p,p.damageSources().generic(),4)==4,"Final-tier guard reduces melee by seventy percent while environmental damage remains normal");
+        check(Gravity.guardTicks(p)==320&&Gravity.guardRocks(p)==8,"Final-tier guard has eight rocks for sixteen seconds");
         Gravity.tickPlayer(p);check(arrow.isRemoved(),"Orbiting rocks intercept nearby hostile projectiles");
         Dark.suppress(p,20,false);Gravity.tickPlayer(p);
         check(!Gravity.guarding(p)&&Gravity.cast(p,0,0).contains("darkness"),"Darkness suppression ends guard and blocks gravity input");
@@ -958,6 +973,8 @@ public final class Regression implements ModInitializer {
         check(Gravity.cast(p,2,59).contains("cancelled")&&Gravity.meteorCount()==0,"Meteor requires full three-second charge");
         t.setHealth(100);t.damageCooldownTime=0;t.snapTo(-8,y+18,14);
         BlockPos floor=new BlockPos(-8,(int)y+17,14);level.setBlockAndUpdate(floor,Blocks.STONE.defaultBlockState());
+        Zombie blastEdge=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);blastEdge.snapTo(1,y+18,14);blastEdge.setNoAi(true);blastEdge.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);blastEdge.setHealth(100);level.addFreshEntity(blastEdge);
+        Zombie blastOutside=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);blastOutside.snapTo(3,y+18,14);blastOutside.setNoAi(true);level.addFreshEntity(blastOutside);
         Gravity.press(p,2);clock(level,level.getGameTime()+60);Gravity.heartbeat(p);Gravity.tickPlayer(p);Gravity.release(p,2);
         check(Gravity.meteorCount()==1,"Held C release launches a charged meteor");
         var meteor=level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(40)).stream()
@@ -966,9 +983,16 @@ public final class Regression implements ModInitializer {
         clock(level,level.getGameTime()+30);Gravity.tickEffects();
         check(Gravity.meteorCount()==0&&meteor.getFirst().isRemoved()&&t.getHealth()<100,"Meteor impacts, damages and removes its visual");
         check(level.getBlockState(floor).is(Blocks.STONE),"Meteor leaves terrain intact");
-        check(Gravity.range(p)==32&&Gravity.meteorRadius(p)==6,"Base Gravity targeting and blast radius");
+        check(blastEdge.getHealth()<100&&blastOutside.getHealth()==20,"Expanded meteor blast hits nine blocks out and excludes eleven blocks");
+        check(Gravity.range(p)==64&&Gravity.meteorRadius(p)==10,"Final-tier Gravity targeting and expanded blast radius");
+        clock(level,level.getGameTime()+121);p.getFoodData().setFoodLevel(20);
+        Gravity.press(p,1);clock(level,level.getGameTime()+7);Gravity.heartbeat(p);Gravity.tickPlayer(p);
+        check(Gravity.riding(p),"Final-tier long ride starts");
+        clock(level,level.getGameTime()+2399);Gravity.heartbeat(p);Gravity.tickPlayer(p);check(Gravity.riding(p),"Rock ride remains active just before two-minute limit");
+        clock(level,level.getGameTime()+1);Gravity.heartbeat(p);Gravity.tickPlayer(p);check(!Gravity.riding(p),"Rock ride ends at two-minute limit");
         for(Element element:Element.values())Mastery.grant(p,element,3);
-        check(Gravity.range(p)==50&&Gravity.meteorRadius(p)==8,"All-four mastery expands Gravity reach and meteor radius");
+        check(Gravity.range(p)==80&&Gravity.meteorRadius(p)==14&&Gravity.rideTicks(p)==3600&&Gravity.guardTicks(p)==400&&Gravity.guardRocks(p)==10,"All-four mastery expands reach, meteor, ride and guard");
+        check(Math.abs(Gravity.meleeProtection(p)-.8)<.001&&Math.abs(Gravity.projectileProtection(p)-.95)<.001,"All-four mastery strengthens Orbit Guard defense");
         FruitClaims.load(server);check(Gravity.unlocked(p),"Gravity claim survives ownership reload");
         check(Dark.consume(p,Relics.darkFruit()),"Dark can become Gravity owner's second fruit");
         Dark.choose(p,"gravity");Dark.grantFruit(p,"gravity",2);check(Gravity.selected(p)&&Gravity.tier(p)==2&&CombatNetwork.selection(p)==10,"Dark selection and mastery dispatch support captured Gravity");
@@ -976,7 +1000,7 @@ public final class Regression implements ModInitializer {
         var fruitCreeper=EntityTypes.CREEPER.create(level,EntitySpawnReason.EVENT);fruitCreeper.snapTo(-8,y+18,20);FruitCreepers.assignGravity(fruitCreeper);level.addFreshEntity(fruitCreeper);
         fruitCreeper.hurtServer(level,p.damageSources().playerAttack(p),100);
         check(level.getEntitiesOfClass(ItemEntity.class,fruitCreeper.getBoundingBox().inflate(3)).stream().anyMatch(item->Relics.kind(item.getItem()).equals("fruit:gravity")),"Gravity Fruitborn creeper drops its correctly marked fruit");
-        t.discard();Gravity.clear();FruitCreepers.clear();
+        t.discard();group.discard();outside.discard();hidden.discard();blastEdge.discard();blastOutside.discard();Gravity.clear();FruitCreepers.clear();
     }
 
     private void run(ServerLevel level) {
