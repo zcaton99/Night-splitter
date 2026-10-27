@@ -1,4 +1,4 @@
-# Phoenix — alpha.26
+# Phoenix — alpha.27
 
 Phoenix is the third rare fruit in Creeperborn. It follows the existing one-fruit-per-player and one-living-owner-per-fruit rules, preserves ownership across logout/restart, and loses powers/progression on actual death. Elemental unlocks/mastery remain.
 
@@ -52,3 +52,7 @@ Automated server tests cover gameplay and native damage/death paths. The client 
 Wing leading feathers now glow orange over red wings with gold flame tips. Wing Flight and Phoenix Form surround the torso and legs with a dense orange flame mantle and a blue healing-flame core; the partial form keeps the player's head visible. Fire particles trace the flapping wing edges. These are cosmetic flames and do not damage the owner or nearby blocks.
 
 `/creeperborn fruitmastery 1|2|3` now changes the fruit the player actually owns (Rubber, Door or Phoenix), including while an element is selected. It never grants an uneaten fruit. Feedback stays in chat. The fruit-specific mastery commands continue to work.
+
+## Alpha.27 full-bird appearance
+
+The full Phoenix now matches the fiery wings: red head/body, glowing orange crown and animated tail, layered orange cheek/shoulder/body plumage, and gold chest embers, beak and talons. The flame mantle from alpha.26 remains. Tap X is still human Wing Flight; hold X and release is the full bird. This update changes appearance only.

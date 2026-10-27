@@ -12,10 +12,8 @@ import org.joml.Quaternionf;
 
 /** Original articulated model: a body, head, crown, talons, layered wing feathers and a forked tail. */
 public final class PhoenixRenderer{
-    private static final Identifier BLUE=Identifier.withDefaultNamespace("textures/block/blue_concrete.png");
     private static final Identifier RED=Identifier.withDefaultNamespace("textures/block/red_concrete.png");
     private static final Identifier FIRE=Identifier.withDefaultNamespace("textures/block/orange_concrete.png");
-    private static final Identifier CYAN=Identifier.withDefaultNamespace("textures/block/light_blue_concrete.png");
     private static final Identifier GOLD=Identifier.withDefaultNamespace("textures/block/gold_block.png");
     private static final Identifier WHITE=Identifier.withDefaultNamespace("textures/block/white_concrete.png");
     private static final ModelPart BODY=body(),WINGS=wings(false),FEATHERS=wings(true),CREST=crest(),GOLD_PARTS=gold(),EYES=eyes(),FIRE_TIPS=fireTips();
@@ -64,6 +62,13 @@ public final class PhoenixRenderer{
     private static ModelPart crest(){
         MeshDefinition m=new MeshDefinition();var r=m.getRoot();
         for(int i=-1;i<=1;i++)box(r,"crown_"+i,i*1.7f-.5f,25,3-Math.abs(i),1,6-Math.abs(i)*2,2);
+        // Orange flame plumage overlaps the red body, with raised tongues at the shoulders.
+        for(int side:new int[]{-1,1}){
+            for(int i=0;i<3;i++)box(r,"body_flame_"+side+"_"+i,side==1?3.7f:-4.6f,9+i*2,-4+i*2,.9f,5-i,3);
+            box(r,"shoulder_flame_"+side,side==1?3.5f:-5,17,-1,1.5f,6,3);
+            box(r,"cheek_flame_"+side,side==1?2.8f:-3.6f,21,5,.8f,4,4);
+        }
+        box(r,"chest_glow",-2.5f,9,5.8f,5,9,.6f);
         var tail=r.addOrReplaceChild("tail",CubeListBuilder.create(),PartPose.offset(0,10,-5));
         for(int i=-1;i<=1;i++)box(tail,"tail_"+i,i*2.5f-1,-.5f,-22+Math.abs(i)*4,2,1,23-Math.abs(i)*4);
         return bake(m);
@@ -75,7 +80,12 @@ public final class PhoenixRenderer{
             box(r,"leg_"+i,i*2-.6f,3,-.5f,1.2f,6,1.2f);
             for(int j=-1;j<=1;j++)box(r,"talon_"+i+"_"+j,i*2+j*.7f-.3f,2,0,.6f,1,4);
         }
-        box(r,"breast_flame",-1.5f,10,6,3,7,.4f);
+        box(r,"breast_flame",-1.5f,10,6.4f,3,7,.4f);
+        box(r,"heart_ember",-.6f,16,6.45f,1.2f,3,.5f);
+        for(int side:new int[]{-1,1}){
+            box(r,"crown_ember_"+side,side*1.7f-.3f,25.5f,3,.6f,3,1);
+            box(r,"shoulder_ember_"+side,side==1?4:-4.8f,19,-.5f,.8f,5,1.2f);
+        }
         return bake(m);
     }
     private static ModelPart eyes(){
@@ -103,13 +113,13 @@ public final class PhoenixRenderer{
             poses.translate(0,Math.sin(time*.15)*.06,0);
             poses.rotate(new Quaternionf().rotationX((float)Math.toRadians(state.xRot*.45f)));
             if((flags&8)!=0)poses.rotate(new Quaternionf().rotationX(.2f));
-            part(BODY,BLUE,poses,nodes,false);part(CREST,CYAN,poses,nodes,true);
-            part(GOLD_PARTS,GOLD,poses,nodes,false);part(EYES,WHITE,poses,nodes,true);
+            part(BODY,RED,poses,nodes,false);part(CREST,FIRE,poses,nodes,true);
+            part(GOLD_PARTS,GOLD,poses,nodes,true);part(EYES,WHITE,poses,nodes,true);
         }else poses.translate(0,.35,-.12);
         part(WINGS,RED,poses,nodes,false);part(FEATHERS,FIRE,poses,nodes,true);
         part(FIRE_TIPS,GOLD,poses,nodes,true);
         poses.popPose();
     }
     /** Client smoke tests initialize and validate the full mesh without entering a world. */
-    public static void validate(){BODY.getChild("head");WINGS.getChild("left").getChild("outer");FEATHERS.getChild("right");CREST.getChild("tail");FIRE_TIPS.getChild("left").getChild("outer");}
+    public static void validate(){BODY.getChild("head");WINGS.getChild("left").getChild("outer");FEATHERS.getChild("right");CREST.getChild("tail");CREST.getChild("chest_glow");GOLD_PARTS.getChild("heart_ember");FIRE_TIPS.getChild("left").getChild("outer");}
 }
