@@ -931,13 +931,13 @@ public final class Regression implements ModInitializer {
         check(Gravity.cast(p,1,0).contains("locked")&&Gravity.cast(p,2,0).contains("locked"),"Gravity X/C require tiers two and three");
         Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(true);
         t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
-        Zombie group=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);group.snapTo(-5,y+18,18);group.setNoAi(true);level.addFreshEntity(group);
+        Zombie group=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);group.snapTo(-5,y+18,18);group.setNoAi(true);group.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(group);
         Zombie outside=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);outside.snapTo(-8,y+18,41);outside.setNoAi(true);level.addFreshEntity(outside);
         Zombie hidden=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);hidden.snapTo(-12,y+18,8);hidden.setNoAi(true);level.addFreshEntity(hidden);
         BlockPos wall=new BlockPos(-10,(int)y+19,8);level.setBlockAndUpdate(wall,Blocks.STONE.defaultBlockState());
         check(Gravity.range(p)==32&&Gravity.pinTicks(p)==60&&Gravity.waveRange(p)==12&&Gravity.waveDamage(p)==8,"Tier-one Gravity scaling");
         check(Gravity.cast(p,0,0).equals("Gravity Press!")&&t.getHealth()==94&&t.getDeltaMovement().y<0&&t.hasEffect(MobEffects.SLOWNESS),"Gravity Press damages, weighs down and slows targets");
-        check(Gravity.rooted(t)&&Gravity.rooted(group)&&Shackles.rooted(group)&&group.getHealth()==14,"Press pins multiple visible enemies within range");
+        check(Gravity.rooted(t)&&Gravity.rooted(group)&&Shackles.rooted(group)&&group.getHealth()==14,"Press pins multiple visible enemies within range: root="+Gravity.rooted(t)+"/"+Gravity.rooted(group)+" native="+Shackles.rooted(group)+" health="+group.getHealth());
         check(!Gravity.rooted(outside)&&outside.getHealth()==20&&!Gravity.rooted(hidden)&&hidden.getHealth()==20,"Press excludes out-of-range and terrain-shielded enemies");
         var pinnedPosition=group.position();group.move(net.minecraft.world.entity.MoverType.SELF,new net.minecraft.world.phys.Vec3(1,0,0));
         check(group.position().equals(pinnedPosition),"Gravity pin uses native movement guard");
