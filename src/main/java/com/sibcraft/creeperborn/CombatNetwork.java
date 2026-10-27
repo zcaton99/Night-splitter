@@ -19,7 +19,7 @@ public final class CombatNetwork {
     }
     public static void clear() { limits.clear();sentSelection.clear(); }
     public static int selection(Player p){
-        Element e=Progress.selected(p);return Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
+        Element e=Progress.selected(p);return Dark.selected(p)?8:Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
     }
     public static void forget(Player p){limits.remove(p.getUUID());sentSelection.remove(p.getUUID());}
     public static void tick(net.minecraft.server.MinecraftServer server){
@@ -34,6 +34,8 @@ public final class CombatNetwork {
     public static String press(Player p,int packed){
         int move=packed&3;
         if(move>2)return "";
+        if(Dark.suppressed(p)&&selection(p)>=4)return "Fruit powers suppressed by darkness.";
+        if(Dark.selected(p)){Dark.press(p,move);return "";}
         if(DoorSpace.active(p)||DoorFruit.selected(p))return DoorFruit.cast(p,move);
         if(Lightning.selected(p)){Lightning.press(p,move);return "";}
         if(Phoenix.selected(p)){Phoenix.press(p,move);return "";}
@@ -48,6 +50,7 @@ public final class CombatNetwork {
         PayloadTypeRegistry.clientboundPlay().register(WaterStatePayload.TYPE,WaterStatePayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PhoenixVisualPayload.TYPE,PhoenixVisualPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(LightningVisualPayload.TYPE,LightningVisualPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(DarkVisualPayload.TYPE,DarkVisualPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE, (payload, context) -> {
             Player p = context.player();
             if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p) || !allow(p)) return;
@@ -61,22 +64,23 @@ public final class CombatNetwork {
                 Creeperborn.say(p, selected == null ? "Consume an elemental heart first."
                     : selected.title + " — Z/X/C: " + String.join(" / ", selected.moves));
             }
-            if (payload.action() == 2 && !Rubber.selected(p)&&!DoorFruit.selected(p)&&!Phoenix.selected(p)&&!Lightning.selected(p)) {
+            if (payload.action() == 2 && !Rubber.selected(p)&&!DoorFruit.selected(p)&&!Phoenix.selected(p)&&!Lightning.selected(p)&&!Dark.selected(p)) {
                 if (selected == null) Creeperborn.say(p, "Consume an elemental heart first.");
                 else { Creeperborn.ABILITIES.move(p, payload.value()); Creeperborn.say(p, Creeperborn.ABILITIES.cast(p)); }
             }
             if (payload.action() == 4) {
-                Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);
-                if(Lightning.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Lightning — Z: Bolt / hold 8s Judgment | X: Flash / hold Rush | C: Storm Form");}
+                Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);
+                if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
+                else if(Lightning.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Lightning — Z: Bolt / hold 8s Judgment | X: Flash / hold Rush | C: Storm Form");}
                 else if(Phoenix.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Phoenix — Z: Talon / hold Dive | X: Wings / hold Form | C: Healing Circle / hold Ally Blessing");}
                 else if(Rubber.unlocked(p)) { p.addTag("cb_mode_fruit"); Creeperborn.say(p,"Rubber — Z: Stretch Punch | X: Directional dodge / hold Grapple | C: Gear 5 / hold Guard"); }
                 else if(DoorFruit.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Door-Door — Z: Passage | X: Rescue | C: Shared Passage");}
                 else Creeperborn.say(p,"Consume a Devil Fruit first.");
             }
             if(payload.action()==5){String result=press(p,payload.value());if(!result.isEmpty())Creeperborn.say(p,result);}
-            if(payload.action()==6){if(Lightning.selected(p))Lightning.release(p,payload.value());else if(Phoenix.selected(p))Phoenix.release(p,payload.value());else Rubber.release(p,payload.value());}
-            if(payload.action()==7){Rubber.heartbeat(p);Phoenix.heartbeat(p);Lightning.heartbeat(p);}
-            if(payload.action()==8){Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);}
+            if(payload.action()==6){if(Dark.selected(p))Dark.release(p,payload.value());else if(Lightning.selected(p))Lightning.release(p,payload.value());else if(Phoenix.selected(p))Phoenix.release(p,payload.value());else Rubber.release(p,payload.value());}
+            if(payload.action()==7){Rubber.heartbeat(p);Phoenix.heartbeat(p);Lightning.heartbeat(p);Dark.heartbeat(p);}
+            if(payload.action()==8){Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);}
             ServerPlayNetworking.send(context.player(), new ControlPayload(3, selection(p)));
         });
         ServerPlayNetworking.registerGlobalReceiver(CastPayload.TYPE, (payload, context) -> {

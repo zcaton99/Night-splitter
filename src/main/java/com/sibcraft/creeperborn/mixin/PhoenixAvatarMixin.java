@@ -14,6 +14,8 @@ public abstract class PhoenixAvatarMixin{
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$bird(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
         if(state instanceof AvatarRenderState avatar){
+            int dark=DarkVisuals.flags(avatar.id);
+            if((dark&3)!=0){ShadowRenderer.submit(avatar,poses,nodes,dark);ci.cancel();return;}
             int lightning=LightningVisuals.flags(avatar.id);
             if((lightning&1)!=0){StormRenderer.submit(avatar,poses,nodes,lightning);ci.cancel();return;}
             int flags=PhoenixVisuals.flags(avatar.id);

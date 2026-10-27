@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
+        ((BoltVisualState)state).creeperborn$darkVoid(display.getCustomName()!=null&&display.getCustomName().getString().equals("cb_dark_void"));
         PunchVisualState visual=(PunchVisualState)state;visual.creeperborn$punch(null);
         ((BoltVisualState)state).creeperborn$bolt(display.getCustomName()==null?-1:com.sibcraft.creeperborn.LightningBolts.variant(display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$boltLength(display.getCustomName()==null?1:com.sibcraft.creeperborn.LightningBolts.length(display.getCustomName().getString()));
@@ -35,6 +36,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        if(((BoltVisualState)state).creeperborn$darkVoid()){VoidRenderer.submit(poses,collector,state.ageInTicks);ci.cancel();return;}
         int bolt=((BoltVisualState)state).creeperborn$bolt();
         if(bolt>=0){BoltRenderer.submit(bolt,((BoltVisualState)state).creeperborn$boltLength(),poses,collector);ci.cancel();return;}
         var data=((PunchVisualState)state).creeperborn$punch();

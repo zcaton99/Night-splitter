@@ -3,6 +3,7 @@ package com.sibcraft.creeperborn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -51,18 +52,19 @@ public final class Creeperborn implements ModInitializer {
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {DoorSpace.clear();Phoenix.clear();Lightning.clear();});
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {DoorSpace.clear();Phoenix.clear();Lightning.clear();Dark.clear();});
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); Dark.clear(); FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server);
+            DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);
             if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);}
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
+        ServerLivingEntityEvents.AFTER_DEATH.register(Dark::died);
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
         ServerLivingEntityEvents.AFTER_DEATH.register(FruitCreepers::died);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> { if(entity instanceof Player p) FruitClaims.releaseOnDeath(p); });
-        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Lightning.forget(handler.player); Phoenix.forget(handler.player); DoorSpace.forget(handler.player); DoorFruit.forget(handler.player); Rubber.forget(handler.player); WaterRules.forget(handler.player); CombatNetwork.forget(handler.player); });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> { Dark.forget(handler.player); Lightning.forget(handler.player); Phoenix.forget(handler.player); DoorSpace.forget(handler.player); DoorFruit.forget(handler.player); Rubber.forget(handler.player); WaterRules.forget(handler.player); CombatNetwork.forget(handler.player); });
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             for (String tag : oldPlayer.entityTags()) if (tag.startsWith("cb_")) newPlayer.addTag(tag);
             WaterRules.forget(newPlayer); CombatNetwork.forget(newPlayer);
@@ -72,7 +74,9 @@ public final class Creeperborn implements ModInitializer {
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
-            if(kind.equals("fruit:lightning")){
+            if(kind.equals("fruit:dark")){
+                say(player,Dark.consume(player,stack)?"Dark unlocked! G selects fruit; Z Vortex/Grasp; X Mantle/Liberation; C Surge/Void Collapse.":"Dark may already be claimed, or you already own a fruit.");
+            }else if(kind.equals("fruit:lightning")){
                 say(player,Lightning.consume(player,stack)?"Lightning unlocked! G selects fruit; tap Z bolt, hold Z eight seconds Judgment; X electric movement, C Storm Form.":"One Creeper Fruit per player; Lightning may already have an owner.");
             }else if(kind.equals("fruit:phoenix")){
                 say(player,Phoenix.consume(player,stack)?"Phoenix unlocked! G selects fruit; Z attacks, X wings, hold X form, tap C healing circle; hold C ally blessing.":"One fruit per player; Phoenix may already have a living owner.");
@@ -119,12 +123,13 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                String active=Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.33 | Active: "+active+" | Mode: "+p.gameMode());
+                String active=Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
+                chat(p,"Creeperborn 0.1.0-alpha.34 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
-                chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));
+                chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));chat(p,Dark.status(p));
+                chat(p,"Dark claim: "+(FruitClaims.darkAvailable()?"available":FruitClaims.ownsDark(p)?"yours":"another living owner or reserved capture"));
                 chat(p,"Lightning claim: "+(FruitClaims.lightningAvailable()?"available":FruitClaims.ownsLightning(p)?"yours":"another living player"));
                 chat(p,"Phoenix claim: "+(FruitClaims.phoenixAvailable()?"available":FruitClaims.ownsPhoenix(p)?"yours":"another living player"));
                 chat(p,"Door claim: "+(FruitClaims.doorAvailable()?"available":FruitClaims.ownsDoor(p)?"yours":"another living player"));
@@ -205,11 +210,12 @@ public final class Creeperborn implements ModInitializer {
                     DoorFruit.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,DoorFruit.status(p));return 1;
                 })));
             root.then(Commands.literal("testfruit").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .executes(ctx -> { chat(ctx.getSource().getPlayerOrException(),"Usage: /creeperborn testfruit rubber|door|phoenix|lightning"); return 0; })
+                .executes(ctx -> { chat(ctx.getSource().getPlayerOrException(),"Usage: /creeperborn testfruit rubber|door|phoenix|lightning|dark"); return 0; })
                 .then(Commands.literal("rubber").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.fruit());return 1;}))
                 .then(Commands.literal("door").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.doorFruit());return 1;}))
                 .then(Commands.literal("phoenix").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.phoenixFruit());return 1;}))
-                .then(Commands.literal("lightning").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.lightningFruit());return 1;})));
+                .then(Commands.literal("lightning").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.lightningFruit());return 1;}))
+                .then(Commands.literal("dark").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.darkFruit());return 1;})));
             root.then(Commands.literal("lightningmastery").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx->{
                     var p=ctx.getSource().getPlayerOrException();if(!Lightning.unlocked(p))return 0;
@@ -223,7 +229,8 @@ public final class Creeperborn implements ModInitializer {
             root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
                     ServerPlayer p=ctx.getSource().getPlayerOrException();int tier=IntegerArgumentType.getInteger(ctx,"tier");
-                    if(Lightning.unlocked(p)){Lightning.grant(p,tier);chat(p,Lightning.status(p));}
+                    if(Dark.unlocked(p)){Dark.grantFruit(p,Dark.choice(p),tier);chat(p,Dark.status(p));}
+                    else if(Lightning.unlocked(p)){Lightning.grant(p,tier);chat(p,Lightning.status(p));}
                     else if(Phoenix.unlocked(p)){Phoenix.grant(p,tier);chat(p,Phoenix.status(p));}
                     else if(DoorFruit.unlocked(p)){DoorFruit.grant(p,tier);chat(p,DoorFruit.status(p));}
                     else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,Rubber.status(p));}
@@ -231,8 +238,8 @@ public final class Creeperborn implements ModInitializer {
                     return 1;
                 })));
             root.then(Commands.literal("fruit").executes(ctx -> {
-                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p)&&!DoorFruit.unlocked(p)&&!Phoenix.unlocked(p)&&!Lightning.unlocked(p))return 0;
-                p.addTag("cb_mode_fruit");say(p,Lightning.unlocked(p)?Lightning.status(p):Phoenix.unlocked(p)?Phoenix.status(p):DoorFruit.unlocked(p)?DoorFruit.status(p):Rubber.status(p));return 1;
+                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!Rubber.unlocked(p)&&!DoorFruit.unlocked(p)&&!Phoenix.unlocked(p)&&!Lightning.unlocked(p)&&!Dark.unlocked(p))return 0;
+                p.addTag("cb_mode_fruit");say(p,Dark.unlocked(p)?Dark.status(p):Lightning.unlocked(p)?Lightning.status(p):Phoenix.unlocked(p)?Phoenix.status(p):DoorFruit.unlocked(p)?DoorFruit.status(p):Rubber.status(p));return 1;
             }));
             test.then(Commands.literal("rubber").executes(ctx -> {
                 ServerPlayer p=ctx.getSource().getPlayerOrException();ServerLevel level=(ServerLevel)p.level();
@@ -258,6 +265,20 @@ public final class Creeperborn implements ModInitializer {
                 c.snapTo(p.getX()+5,p.getY(),p.getZ());FruitCreepers.assignLightning(c);
                 if(!level.noCollision(c,c.getBoundingBox())||!level.addFreshEntity(c)){FruitCreepers.unload(c);return 0;}return 1;
             }));
+            test.then(Commands.literal("dark").executes(ctx->{
+                var p=ctx.getSource().getPlayerOrException();var level=(ServerLevel)p.level();
+                Creeper c=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);if(c==null)return 0;
+                c.snapTo(p.getX()+5,p.getY(),p.getZ());FruitCreepers.assignDark(c);
+                if(!level.noCollision(c,c.getBoundingBox())||!level.addFreshEntity(c)){FruitCreepers.unload(c);return 0;}return 1;
+            }));
+            var dark=Commands.literal("dark").executes(ctx->{for(var capture:Dark.captures(ctx.getSource().getPlayerOrException()))Dark.show(ctx.getSource().getPlayerOrException(),capture);return 1;});
+            dark.then(Commands.literal("captures").executes(ctx->{for(var capture:Dark.captures(ctx.getSource().getPlayerOrException()))Dark.show(ctx.getSource().getPlayerOrException(),capture);return 1;}));
+            for(String action:new String[]{"eat","materialize"})dark.then(Commands.literal(action)
+                .executes(ctx->{chat(ctx.getSource().getPlayerOrException(),Dark.decide(ctx.getSource().getPlayerOrException(),"",action.equals("eat")));return 1;})
+                .then(Commands.argument("token",StringArgumentType.word()).executes(ctx->{chat(ctx.getSource().getPlayerOrException(),Dark.decide(ctx.getSource().getPlayerOrException(),StringArgumentType.getString(ctx,"token"),action.equals("eat")));return 1;})));
+            root.then(dark);
+            root.then(Commands.literal("darkmastery").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx->{var p=ctx.getSource().getPlayerOrException();if(!Dark.unlocked(p))return 0;Dark.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));chat(p,Dark.status(p));return 1;})));
             root.then(test); root.then(hearts); dispatcher.register(root);
         });
     }

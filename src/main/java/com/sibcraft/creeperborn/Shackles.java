@@ -15,7 +15,7 @@ public final class Shackles {
         return b.target().isAlive()&&!b.target().isRemoved()&&b.caster().isAlive()&&!b.caster().isRemoved()
             &&b.target().level()==b.level()&&b.caster().level()==b.level()&&b.level().getGameTime()<b.expires();
     }
-    public static boolean rooted(LivingEntity target){Binding b=bindings.get(target.getUUID());return b!=null&&valid(b);}
+    public static boolean rooted(LivingEntity target){if(Dark.rooted(target))return true;Binding b=bindings.get(target.getUUID());return b!=null&&valid(b);}
     public static long remaining(LivingEntity target){Binding b=bindings.get(target.getUUID());return b==null||!valid(b)?0:b.expires()-b.level().getGameTime();}
     public static void bind(Player caster,LivingEntity target,int ticks){
         if(!(target instanceof Enemy)||!target.isAlive()||!(caster.level() instanceof ServerLevel level))return;

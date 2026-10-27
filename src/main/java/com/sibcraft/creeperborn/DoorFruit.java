@@ -11,10 +11,10 @@ public final class DoorFruit {
     private static final Map<UUID,Long> credit=new HashMap<>();
     private static final Map<UUID,Vec3> positions=new HashMap<>();
     public static boolean unlocked(Player p){return p.entityTags().contains("cb_fruit_door")&&FruitClaims.ownsDoor(p);}
-    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit");}
+    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,"door");}
     public static boolean consume(Player p,ItemStack item){
-        if(!Relics.kind(item).equals("fruit:door")||item.isEmpty()||!FruitClaims.claimDoor(p))return false;
-        p.addTag("cb_fruit_door");p.addTag("cb_mode_fruit");grant(p,1);item.shrink(1);return true;
+        if(!Relics.kind(item).equals("fruit:door")||item.isEmpty()||!FruitClaims.claimItem(p,item,"door"))return false;
+        p.addTag("cb_fruit_door");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"door");item.shrink(1);return true;
     }
     public static int uses(Player p){return Mastery.get(p,"cb_door_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_door_time_");}
@@ -39,6 +39,7 @@ public final class DoorFruit {
         p.addTag(prefix+(p.level().getGameTime()+cooldown(mode)));
     }
     public static String cast(Player p,int move){
+        if(Dark.suppressed(p))return "Fruit powers suppressed by darkness.";
         if(DoorSpace.active(p)||DoorSpace.ownsSession(p))return DoorSpace.exit(p);
         if(!selected(p))return "Select Door-Door with G first.";
         if(!(p instanceof ServerPlayer sp))return "Door travel requires a connected player.";

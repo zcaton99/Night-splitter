@@ -15,6 +15,24 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME, Component.literal(element.title + " Creeper Heart — right-click to consume"));
         return item;
     }
+    public static ItemStack darkFruit(){
+        ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:dark");
+        item.set(DataComponents.CUSTOM_NAME,Component.literal("Dark Creeper Fruit — right-click to consume"));return item;
+    }
+    public static ItemStack fruit(String type){
+        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();default->ItemStack.EMPTY;};
+    }
+    public static ItemStack captured(String type,String token,int tier){
+        ItemStack item=fruit(type);if(item.isEmpty())return item;
+        CompoundTag tag=item.get(DataComponents.CUSTOM_DATA).copyTag();tag.putString("cb_capture",token);tag.putInt("cb_capture_tier",Math.min(2,Math.max(1,tier)));
+        item.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));return item;
+    }
+    public static String captureToken(ItemStack item){
+        CustomData data=item.get(DataComponents.CUSTOM_DATA);return data==null?"":data.copyTag().getString("cb_capture").orElse("");
+    }
+    public static int captureTier(ItemStack item){
+        CustomData data=item.get(DataComponents.CUSTOM_DATA);return data==null?1:Math.min(2,Math.max(1,data.copyTag().getInt("cb_capture_tier").orElse(1)));
+    }
     public static ItemStack doorFruit(){
         ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:door");
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Door-Door Fruit — right-click to consume"));return item;

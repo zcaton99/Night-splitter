@@ -2,6 +2,7 @@ package com.sibcraft.creeperborn.mixin;
 import com.sibcraft.creeperborn.Rubber;
 import com.sibcraft.creeperborn.Phoenix;
 import com.sibcraft.creeperborn.Lightning;
+import com.sibcraft.creeperborn.Dark;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
@@ -20,6 +21,6 @@ public abstract class RubberDamageMixin {
     }
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
-        return (Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,amount))) : amount;
+        return (Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,amount)))) : amount;
     }
 }

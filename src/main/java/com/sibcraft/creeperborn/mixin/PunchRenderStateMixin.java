@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(BlockDisplayEntityRenderState.class)
 public abstract class PunchRenderStateMixin implements PunchVisualState,com.sibcraft.creeperborn.client.BoltVisualState {
+    @Unique private boolean creeperborn$darkVoid;
+    public boolean creeperborn$darkVoid(){return creeperborn$darkVoid;}
+    public void creeperborn$darkVoid(boolean value){creeperborn$darkVoid=value;}
     @Unique private PunchRenderer.SkinData creeperborn$punch;
     @Unique private float creeperborn$boltLength=1;
     public float creeperborn$boltLength(){return creeperborn$boltLength;}

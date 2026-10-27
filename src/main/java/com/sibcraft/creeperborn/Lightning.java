@@ -27,7 +27,7 @@ public final class Lightning {
     private static State state(Player p){State s=states.computeIfAbsent(p.getUUID(),id->new State());s.owner=p;return s;}
     private static long now(Player p){return p.level().getGameTime();}
     public static boolean unlocked(Player p){return p.entityTags().contains("cb_fruit_lightning")&&FruitClaims.ownsLightning(p);}
-    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit");}
+    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,"lightning");}
     public static int uses(Player p){return Mastery.get(p,"cb_lightning_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_lightning_time_");}
     public static int tier(Player p){return unlocked(p)?Rubber.progressTier(uses(p),seconds(p)):0;}
@@ -36,8 +36,8 @@ public final class Lightning {
         Mastery.set(p,"cb_lightning_time_",tier==3?3600:tier==2?300:0);
     }
     public static boolean consume(Player p,ItemStack item){
-        if(item.isEmpty()||!Relics.kind(item).equals("fruit:lightning")||!FruitClaims.claimLightning(p))return false;
-        p.addTag("cb_fruit_lightning");p.addTag("cb_mode_fruit");grant(p,1);item.shrink(1);return true;
+        if(item.isEmpty()||!Relics.kind(item).equals("fruit:lightning")||!FruitClaims.claimItem(p,item,"lightning"))return false;
+        p.addTag("cb_fruit_lightning");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"lightning");item.shrink(1);return true;
     }
     public static boolean storm(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.stormUntil>now(p);}
     public static int duration(Player p){return Mastery.harmony(p)?1800:1200;}
@@ -79,6 +79,7 @@ public final class Lightning {
         Creeperborn.say(p,cast(p,move,held));
     }
     public static String cast(Player p,int move,long held){
+        if(Dark.suppressed(p))return "Fruit powers suppressed by darkness.";
         if(!selected(p)||!p.isAlive()||p.isSpectator())return "Select Lightning with G first.";
         if(WaterRules.suppressed(p))return "Fruit weakness: Lightning disabled while submerged.";
         State s=state(p);

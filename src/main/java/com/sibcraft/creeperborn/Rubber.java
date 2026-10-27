@@ -43,11 +43,11 @@ public final class Rubber {
     }
     private static long now(Player p) { return p.level().getGameTime(); }
     public static boolean unlocked(Player p) { return p.entityTags().contains("cb_fruit_rubber") && (!(p.level() instanceof ServerLevel) || FruitClaims.owns(p)); }
-    public static boolean selected(Player p) { return unlocked(p) && p.entityTags().contains("cb_mode_fruit"); }
+    public static boolean selected(Player p) { return unlocked(p) && p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,"rubber"); }
     public static boolean consume(Player p, ItemStack stack) {
         if (!Relics.kind(stack).equals("fruit:rubber") || stack.isEmpty() || unlocked(p) || p.isSpectator()) return false;
-        if(!FruitClaims.claim(p))return false;
-        grant(p,1); p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); stack.shrink(1); return true;
+        if(!FruitClaims.claimItem(p,stack,"rubber"))return false;
+        grant(p,Relics.captureTier(stack)); p.addTag("cb_fruit_rubber"); p.addTag("cb_mode_fruit"); if(Dark.unlocked(p))Dark.choose(p,"rubber"); stack.shrink(1); return true;
     }
     public static int uses(Player p) { return Mastery.get(p,"cb_rubber_uses_"); }
     public static int seconds(Player p) { return Mastery.get(p,"cb_rubber_time_"); }
@@ -95,6 +95,7 @@ public final class Rubber {
         String result = cast(p,move,held); if (!result.isEmpty()) Creeperborn.say(p,result);
     }
     public static String cast(Player p, int move, long held) {
+        if(Dark.suppressed(p))return "Fruit powers suppressed by darkness.";
         if (!(p.level() instanceof ServerLevel level) || !selected(p) || !p.isAlive() || p.isSpectator()) return "Select Rubber with G first.";
         if (WaterRules.suppressed(p))return "Fruit weakness: powers are disabled while submerged. Master all four elements to overcome it.";
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";

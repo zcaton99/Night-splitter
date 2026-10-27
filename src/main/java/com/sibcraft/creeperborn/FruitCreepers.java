@@ -10,7 +10,9 @@ import net.minecraft.network.chat.Component;
 
 public final class FruitCreepers {
     private static final Map<UUID,Creeper> loaded=new HashMap<>();
-    public static boolean fruit(Entity c){return c.entityTags().contains("cb_fruitborn_rubber")||door(c)||phoenix(c)||lightning(c);}
+    public static boolean fruit(Entity c){return c.entityTags().contains("cb_fruitborn_rubber")||door(c)||phoenix(c)||lightning(c)||dark(c);}
+    public static boolean dark(Entity c){return c.entityTags().contains("cb_fruitborn_dark");}
+    public static void assignDark(Creeper c){c.addTag("cb_fruitborn_dark");c.addTag("cb_checked");c.addTag("cb_fruit_checked");c.setCustomName(Component.literal("Dark Fruitborn Creeper"));c.setCustomNameVisible(true);loaded.put(c.getUUID(),c);}
     public static boolean lightning(Entity c){return c.entityTags().contains("cb_fruitborn_lightning");}
     public static void assignLightning(Creeper c){c.addTag("cb_fruitborn_lightning");c.addTag("cb_checked");c.addTag("cb_fruit_checked");c.setCustomName(Component.literal("Lightning Fruitborn Creeper"));c.setCustomNameVisible(true);loaded.put(c.getUUID(),c);}
     public static boolean phoenix(Entity c){return c.entityTags().contains("cb_fruitborn_phoenix");}
@@ -25,17 +27,17 @@ public final class FruitCreepers {
         if(c.entityTags().contains("cb_fruit_checked")||c.entityTags().contains("ns_creeper"))return;
         c.addTag("cb_fruit_checked");
         if(ElementalCreepers.element(c)!=null||c.entityTags().contains("cb_checked"))return;
-        if((FruitClaims.available()||FruitClaims.doorAvailable()||FruitClaims.phoenixAvailable()||FruitClaims.lightningAvailable())&&Creeperborn.config().naturalCreepers&&level.getDifficulty()!=net.minecraft.world.Difficulty.PEACEFUL
+        if((FruitClaims.available()||FruitClaims.doorAvailable()||FruitClaims.phoenixAvailable()||FruitClaims.lightningAvailable()||FruitClaims.darkAvailable())&&Creeperborn.config().naturalCreepers&&level.getDifficulty()!=net.minecraft.world.Difficulty.PEACEFUL
             &&level.getRandom().nextDouble()<Creeperborn.config().fruitChance&&!nearby(c)){
-            List<String> choices=new ArrayList<>();if(FruitClaims.available())choices.add("rubber");if(FruitClaims.doorAvailable())choices.add("door");if(FruitClaims.phoenixAvailable())choices.add("phoenix");if(FruitClaims.lightningAvailable())choices.add("lightning");
-            switch(choices.get(level.getRandom().nextInt(choices.size()))){case "lightning"->assignLightning(c);case "door"->assignDoor(c);case "phoenix"->assignPhoenix(c);default->assign(c);}
+            List<String> choices=new ArrayList<>();if(FruitClaims.available())choices.add("rubber");if(FruitClaims.doorAvailable())choices.add("door");if(FruitClaims.phoenixAvailable())choices.add("phoenix");if(FruitClaims.lightningAvailable())choices.add("lightning");if(FruitClaims.darkAvailable())choices.add("dark");
+            switch(choices.get(level.getRandom().nextInt(choices.size()))){case "dark"->assignDark(c);case "lightning"->assignLightning(c);case "door"->assignDoor(c);case "phoenix"->assignPhoenix(c);default->assign(c);}
         }
     }
     public static void unload(Entity c){loaded.remove(c.getUUID());}
     public static void clear(){loaded.clear();}
     public static void died(LivingEntity entity,DamageSource source){
-        if((lightning(entity)?!FruitClaims.lightningAvailable():phoenix(entity)?!FruitClaims.phoenixAvailable():door(entity)?!FruitClaims.doorAvailable():!FruitClaims.available())||!fruit(entity)||!(entity instanceof Creeper c)||!(c.level() instanceof ServerLevel level)||!(source.getEntity() instanceof Player)||c.entityTags().contains("cb_fruit_dropped"))return;
-        c.addTag("cb_fruit_dropped");c.spawnAtLocation(level,lightning(c)?Relics.lightningFruit():phoenix(c)?Relics.phoenixFruit():door(c)?Relics.doorFruit():Relics.fruit());unload(c);
+        if((dark(entity)?!FruitClaims.darkAvailable():lightning(entity)?!FruitClaims.lightningAvailable():phoenix(entity)?!FruitClaims.phoenixAvailable():door(entity)?!FruitClaims.doorAvailable():!FruitClaims.available())||!fruit(entity)||!(entity instanceof Creeper c)||!(c.level() instanceof ServerLevel level)||!(source.getEntity() instanceof Player)||c.entityTags().contains("cb_fruit_dropped"))return;
+        c.addTag("cb_fruit_dropped");c.spawnAtLocation(level,dark(c)?Relics.darkFruit():lightning(c)?Relics.lightningFruit():phoenix(c)?Relics.phoenixFruit():door(c)?Relics.doorFruit():Relics.fruit());unload(c);
     }
 }
 

@@ -16,7 +16,8 @@
     "ZombieVillagerCureAccessor",
     "MasteredFreezingMixin",
     "PhoenixRevivalMixin",
-    "PhoenixWaypointMixin"
+    "PhoenixWaypointMixin",
+    "CapturedFruitCleanupMixin"
   ],
   "injectors": {
     "defaultRequire": 1

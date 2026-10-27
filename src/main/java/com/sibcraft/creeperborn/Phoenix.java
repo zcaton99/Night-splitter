@@ -33,7 +33,7 @@ public final class Phoenix {
     private static State state(Player p){State s=states.computeIfAbsent(p.getUUID(),id->new State());s.owner=p;return s;}
     private static long now(Player p){return p.level().getGameTime();}
     public static boolean unlocked(Player p){return p.entityTags().contains("cb_fruit_phoenix")&&FruitClaims.ownsPhoenix(p);}
-    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit");}
+    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,"phoenix");}
     public static int uses(Player p){return Mastery.get(p,"cb_phoenix_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_phoenix_time_");}
     public static int tier(Player p){return unlocked(p)?Rubber.progressTier(uses(p),seconds(p)):0;}
@@ -42,8 +42,8 @@ public final class Phoenix {
         Mastery.set(p,"cb_phoenix_time_",tier==3?3600:tier==2?300:0);
     }
     public static boolean consume(Player p,ItemStack item){
-        if(item.isEmpty()||!Relics.kind(item).equals("fruit:phoenix")||!FruitClaims.claimPhoenix(p))return false;
-        p.addTag("cb_fruit_phoenix");p.addTag("cb_mode_fruit");grant(p,1);item.shrink(1);return true;
+        if(item.isEmpty()||!Relics.kind(item).equals("fruit:phoenix")||!FruitClaims.claimItem(p,item,"phoenix"))return false;
+        p.addTag("cb_fruit_phoenix");p.addTag("cb_mode_fruit");grant(p,Relics.captureTier(item));if(Dark.unlocked(p))Dark.choose(p,"phoenix");item.shrink(1);return true;
     }
     public static boolean form(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.formUntil>now(p);}
     public static boolean wing(Player p){State s=states.get(p.getUUID());return s!=null&&p.isAlive()&&s.wingUntil>now(p);}
@@ -78,6 +78,7 @@ public final class Phoenix {
         String text=cast(p,move,held);if(!text.isEmpty())Creeperborn.say(p,text);
     }
     public static String cast(Player p,int move,long held){
+        if(Dark.suppressed(p))return "Fruit powers suppressed by darkness.";
         if(!selected(p)||!p.isAlive()||p.isSpectator())return "Select Phoenix with G first.";
         if(WaterRules.suppressed(p))return "Fruit weakness: Phoenix powers are disabled while submerged.";
         if(move<0||move>2)return "";
