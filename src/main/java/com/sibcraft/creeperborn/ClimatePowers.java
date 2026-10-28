@@ -88,7 +88,7 @@ public final class ClimatePowers {
         }
         saved(p,key,now(p)+Math.round(cooldown/bonus(p)));p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-(hold?2:1));credit(p,f);return result;
     }
-    private static Vec3 ground(ServerLevel level,Vec3 at,double depth){var h=level.clip(new ClipContext(at.add(0,.2,0),at.add(0,-depth,0),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,null));return h.getType()==HitResult.Type.MISS?null:h.getLocation();}
+    private static Vec3 ground(ServerLevel level,Vec3 at,double depth){var h=level.clip(new ClipContext(at.add(0,.2,0),at.add(0,-depth,0),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,(Entity)null));return h.getType()==HitResult.Type.MISS?null:h.getLocation();}
     private static void shoot(Player p,String f,Vec3 at,Vec3 dir,int kind,float damage,float buildup,double range,float size,double splash,boolean ground){Shot q=new Shot();q.owner=p;q.level=(ServerLevel)p.level();q.fruit=f;q.at=at;q.dir=dir.normalize();q.kind=kind;q.damage=damage;q.frost=buildup;q.remaining=range;q.size=size;q.splash=splash;q.ground=ground;q.ends=now(p)+100;q.visual=display(p,at,kind,100);shots.add(q);}
     private static Field field(Player p,String f,Vec3 center,int kind,double radius,int duration){Field q=new Field();q.owner=p;q.level=(ServerLevel)p.level();q.fruit=f;q.center=center;q.kind=kind;q.radius=radius;q.starts=now(p);q.ends=now(p)+duration;q.visual=display(p,center,kind,duration+1);fields.add(q);return q;}
     private static void removeField(Field q){if(q==null)return;if(q.visual!=null)q.visual.discard();fields.remove(q);State s=states.get(q.owner.getUUID());if(s!=null){if(s.age==q){s.age=null;if(s.armor!=null)s.armor.discard();s.armor=null;}if(s.pool==q)s.pool=null;}}
