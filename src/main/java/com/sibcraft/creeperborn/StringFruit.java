@@ -24,7 +24,7 @@ public final class StringFruit {
         final long[] ready=new long[6]; boolean gliding; Vec3 last,anchor,route; Zombie knight; Display.BlockDisplay knightVisual,web; LivingEntity puppet; boolean oldNoAi,attackQueued;Vec3 chargeAim;final List<ChargeThread> charge=new ArrayList<>();
         int flags;float yaw,pitch; final List<Display.BlockDisplay> strings=new ArrayList<>();
     }
-    private static final class Cage {Player owner;ServerLevel level;Vec3 center;double radius;long closing;Display.BlockDisplay visual;}
+    private static final class Cage {Player owner;ServerLevel level;Vec3 center;double radius;long closing;Display.BlockDisplay visual,rising;final Map<UUID,Entity> occupants=new HashMap<>();}
     private record ChargeThread(Vec3 origin,Display.BlockDisplay display,int index){}
     private record Effect(Display.BlockDisplay display,long ends){}
     private record Spear(Player owner,ServerLevel level,Vec3 origin,Vec3 end,long starts,boolean god,int index,Set<UUID> hit,Display.BlockDisplay display){}
@@ -33,6 +33,7 @@ public final class StringFruit {
     private static final List<Effect> effects=new ArrayList<>();
     private static final List<Spear> spears=new ArrayList<>();
     private static final Set<UUID> moving=new HashSet<>();
+    private static final Map<UUID,Cage> pulling=new HashMap<>();
     private static final DustParticleOptions WHITE=new DustParticleOptions(0xFFFFFF,.7f),PURPLE=new DustParticleOptions(0xA354FF,.85f);
     private static State state(Player p){State s=states.computeIfAbsent(p.getUUID(),id->new State());s.owner=p;return s;}
     private static long now(Player p){return p.level().getGameTime();}
@@ -67,7 +68,7 @@ public final class StringFruit {
     public static String cast(Player p,int move,long held){
         if(!usable(p)||move<0||move>2)return "String powers unavailable.";State s=state(p);s.level=(ServerLevel)p.level();boolean hold=held>=7;
         if(tier(p)<move+1)return "String: X unlocks at tier 2; C and Awakening at tier 3.";
-        if(move==2&&hold&&cages.containsKey(p.getUUID())){Cage c=cages.get(p.getUUID());if(c.closing==0)c.closing=now(p);return "Birdcage closing — dissolves in 10 seconds.";}
+        if(move==2&&hold&&cages.containsKey(p.getUUID())){Cage c=cages.get(p.getUUID());if(c.closing==0){c.closing=now(p);collectOccupants(c);c.occupants.put(p.getUUID(),p);}return "Birdcage closing — pulls to 50 blocks across, merges, then rises.";}
         if(move==1&&!hold&&s.gliding){endGlide(s);return "String Glide ended.";}
         if(move==2&&!hold&&s.knight!=null&&s.knight.isAlive()){if(s.puppet!=null)releaseControl(s);else possess(p,s.knight,Math.max(1,s.cloneEnds-now(p)));return "Black Knight control — C or X to return.";}
         int slot=move*2+(hold?1:0);if(now(p)<s.ready[slot])return "String move recovering.";
@@ -117,7 +118,7 @@ public final class StringFruit {
         s.guard=now(p)+(long)(80*bonus(p));s.web=display((ServerLevel)p.level(),p.position().add(0,1,0),"cb_string_web",2);
         s.ready[slot]=now(p)+knightTicks(p)+cooldown(p,200);credit(p);return "Black Knight summoned — web protection for four seconds; tap C to pilot.";
     }
-    public static boolean awakened(Player p){Cage c=cages.get(p.getUUID());return tier(p)>=3&&c!=null&&c.level==p.level()&&p.position().distanceTo(c.center)<c.radius;}
+    public static boolean awakened(Player p){Cage c=cages.get(p.getUUID());return tier(p)>=3&&c!=null&&c.level==p.level()&&p.position().distanceTo(c.center)<boundary(c);}
     /** Select real exposed building/ground surfaces around the aimed point; never alter terrain. */
     public static Vec3 terrainOrigin(Player p,Vec3 end,int index,int count){
         ServerLevel level=(ServerLevel)p.level();double angle=index*Math.PI*2/count;
@@ -145,7 +146,7 @@ public final class StringFruit {
             if(floor.getType()==HitResult.Type.MISS)return null;origin=floor.getLocation().add(0,.08,0);
         }
         Cage cage=cages.get(p.getUUID());
-        return cage!=null&&origin.distanceTo(cage.center)<cage.radius-1?origin:null;
+        return cage!=null&&origin.distanceTo(cage.center)<boundary(cage)-1?origin:null;
     }
     private static void clearCharge(State s){
         for(ChargeThread t:s.charge)if(t.display()!=null)t.display().discard();
@@ -211,7 +212,7 @@ public final class StringFruit {
         for(int i=0;i<s.strings.size();i++)positionBeam(s.strings.get(i),p.getEyePosition(),t.getEyePosition().add((i-1)*.25,0,0),.035f);
         if(now(p)%10==0)Creeperborn.say(p,(t==s.knight?"Black Knight":"Parasite")+" control "+(s.controlEnds-now(p)+19)/20+"s | WASD + attack | X/C: return");
     }
-    public static boolean insideCage(Entity e){for(Cage c:cages.values())if(c.level==e.level()&&e.position().distanceTo(c.center)<c.radius)return true;return false;}
+    public static boolean insideCage(Entity e){for(Cage c:cages.values())if(c.level==e.level()&&e.position().distanceTo(c.center)<boundary(c))return true;return false;}
     public static boolean crosses(Vec3 a,Vec3 b,Vec3 center,double radius){
         double da=a.distanceTo(center),db=b.distanceTo(center);boolean ia=da<radius,ib=db<radius;if(ia!=ib)return true;
         if(!ia){Vec3 delta=b.subtract(a);double n=delta.lengthSqr();if(n>1e-8){double t=Math.max(0,Math.min(1,center.subtract(a).dot(delta)/n));return a.add(delta.scale(t)).distanceTo(center)<radius;}}return false;
@@ -220,9 +221,16 @@ public final class StringFruit {
     public static boolean blocked(Entity e,Vec3 destination){
         if(!(e.level() instanceof ServerLevel)||e.isRemoved()||!(e instanceof LivingEntity)&&!e.isVehicle())return false;
         if(e instanceof LivingEntity l&&locked(l)&&e.position().distanceToSqr(destination)>.0001)return true;
-        for(Cage c:cages.values())if(e.level()==c.level&&crosses(e.position(),destination,c.center,c.radius))return true;return false;
+        for(Cage c:cages.values()){
+            if(e.level()!=c.level||pulling.get(e.getUUID())==c)continue;double r=boundary(c);if(r<=0)continue;
+            double before=e.position().distanceTo(c.center),after=destination.distanceTo(c.center);
+            if(c.closing>0&&c.occupants.containsKey(e.getUUID())&&before>=r-.01){
+                if(after>before+.0001)return true;continue;
+            }
+            if(crosses(e.position(),destination,c.center,r))return true;
+        }return false;
     }
-    public static boolean canTeleport(Entity e,ServerLevel level,Vec3 to){if(e.level()!=level)return !insideCage(e)&&cages.values().stream().noneMatch(c->c.level==level&&to.distanceTo(c.center)<c.radius);return !blocked(e,to);}
+    public static boolean canTeleport(Entity e,ServerLevel level,Vec3 to){if(e.level()!=level)return !insideCage(e)&&cages.values().stream().noneMatch(c->c.level==level&&to.distanceTo(c.center)<boundary(c));return !blocked(e,to);}
     private static void moveImpulse(Player p,Vec3 v){Rubber.impulse(p,v);}
     private static void endGlide(State s){if(!s.gliding)return;s.gliding=false;s.flags=0;s.landing=now(s.owner)+100;moveImpulse(s.owner,Vec3.ZERO);sync(s);}
     public static boolean immune(Player p,DamageSource source){State s=states.get(p.getUUID());return s!=null&&unlocked(p)&&source.is(DamageTypeTags.IS_FALL)&&(s.gliding||now(p)<s.landing);}
@@ -268,10 +276,64 @@ public final class StringFruit {
         }
     }
     private static void clearKnight(State s){if(s.puppet==s.knight)releaseControl(s);if(s.knight!=null)s.knight.discard();s.knight=null;if(s.knightVisual!=null)s.knightVisual.discard();s.knightVisual=null;}
-    private static void removeCage(Cage c){State s=states.get(c.owner.getUUID());if(s!=null)clearCharge(s);cages.remove(c.owner.getUUID());if(c.visual!=null)c.visual.discard();}
+    private static void removeCage(Cage c){State s=states.get(c.owner.getUUID());if(s!=null)clearCharge(s);cages.remove(c.owner.getUUID());if(c.visual!=null)c.visual.discard();if(c.rising!=null)c.rising.discard();c.occupants.clear();}
+
+    private static double boundary(Cage c){
+        if(c.closing==0)return c.radius;long age=now(c.owner)-c.closing;
+        if(age>=220)return 0;return c.radius+(25-c.radius)*Math.min(1,age/200.0);
+    }
+    public static double activeCageRadius(Player p){Cage c=cages.get(p.getUUID());return c==null?0:boundary(c);}
+    private static void collectOccupants(Cage c){
+        double r=boundary(c);
+        for(Entity e:c.level.getEntitiesOfClass(Entity.class,new AABB(c.center,c.center).inflate(c.radius+2))){
+            if((e instanceof LivingEntity||e.isVehicle())&&e.position().distanceTo(c.center)<r)c.occupants.put(e.getUUID(),e);
+        }
+    }
+    /** Collision-respecting pull; no teleport through terrain and no crushing damage. */
+    private static void pullOccupants(Cage c){
+        double radius=boundary(c)-1;
+        for(Entity e:List.copyOf(c.occupants.values())){
+            if(!e.isAlive()||e.isRemoved()||e.level()!=c.level||e.isPassenger()||e.position().distanceTo(c.center)<=radius)continue;
+            Vec3 toward=c.center.subtract(e.position()).normalize(),before=e.position(),motion=toward.scale(.65);
+            if(!c.level.hasChunkAt(BlockPos.containing(before.add(motion))))continue;
+            moving.add(e.getUUID());pulling.put(e.getUUID(),c);
+            try{
+                e.move(MoverType.SELF,motion);
+                if(e.position().distanceToSqr(before)<.001){
+                    Vec3 step=new Vec3(toward.x*.45,1,toward.z*.45);
+                    if(c.level.noCollision(e,e.getBoundingBox().move(step)))e.move(MoverType.SELF,step);
+                    else{
+                        double sign=(e.getUUID().getLeastSignificantBits()&1)==0?1:-1;
+                        Vec3 side=new Vec3(-toward.z,0,toward.x);
+                        if(side.lengthSqr()<.01)side=new Vec3(1,0,0);
+                        side=side.normalize().scale(.45*sign).add(toward.multiply(.15,0,.15));
+                        if(c.level.noCollision(e,e.getBoundingBox().move(side)))e.move(MoverType.SELF,side);
+                    }
+                }
+                if(e instanceof Player p)p.setIgnoreFallDamageFromCurrentImpulse(true,p.position());
+                if(e instanceof ServerPlayer sp&&sp.connection!=null&&e.position().distanceToSqr(before)>.00001)
+                    sp.teleportTo(c.level,e.getX(),e.getY(),e.getZ(),Set.of(),sp.getYRot(),sp.getXRot(),false);
+            }finally{moving.remove(e.getUUID());pulling.remove(e.getUUID());}
+        }
+    }
+
     public static void strongSuppress(Player p){forget(p);}
     public static void tickEffects(){
-        for(Cage c:List.copyOf(cages.values())){if(!valid(c.owner,c.level)){removeCage(c);continue;}if(c.closing>0){double t=(now(c.owner)-c.closing)/200.0;if(t>=1){removeCage(c);continue;}scale(c.visual,(float)(c.radius+(10-c.radius)*t));}}
+        for(Cage c:List.copyOf(cages.values())){
+            if(!valid(c.owner,c.level)){removeCage(c);continue;}
+            if(c.closing>0){
+                long age=now(c.owner)-c.closing;
+                if(age>=260){removeCage(c);continue;}
+                if(age<200){scale(c.visual,(float)boundary(c));collectOccupants(c);pullOccupants(c);}
+                else if(age<220){scale(c.visual,(float)(25*(1-(age-200)/20.0)));pullOccupants(c);}
+                else{
+                    if(c.visual!=null){c.visual.discard();c.visual=null;}
+                    double lift=(age-220)*1.2;Vec3 base=c.center.add(0,lift,0);
+                    if(c.rising==null)c.rising=beam(c.level,base,base.add(0,30,0),.65f,9);
+                    else positionBeam(c.rising,base,base.add(0,30,0),.65f);
+                }
+            }
+        }
         for(Effect e:List.copyOf(effects))if(e.display().isRemoved()||e.display().level().getGameTime()>=e.ends()){e.display().discard();effects.remove(e);}
         for(Spear s:List.copyOf(spears)){
             if(!valid(s.owner(),s.level())||Dark.suppressed(s.owner())){removeSpear(s);continue;}long age=now(s.owner())-s.starts();if(age<0)continue;
@@ -295,5 +357,5 @@ public final class StringFruit {
     public static String status(Player p){State s=states.get(p.getUUID());return "String "+(unlocked(p)?"tier "+tier(p)+"/3 | Parasite "+parasiteTicks(p)/20+"s | Knight "+knightTicks(p)/20+"s | Awakening "+(tier(p)>=3)+" | Cage "+cages.containsKey(p.getUUID())+(s!=null&&s.puppet!=null?" | controlling "+s.puppet.getName().getString():""):"locked");}
     public static void tick(MinecraftServer server){for(var p:server.getPlayerList().getPlayers())if(unlocked(p)||states.containsKey(p.getUUID()))tickPlayer(p);tickEffects();}
     public static void forget(Player p){State s=states.remove(p.getUUID());if(s!=null){s.held=-1;clearCharge(s);releaseControl(s);endGlide(s);clearKnight(s);if(s.web!=null)s.web.discard();}Cage c=cages.get(p.getUUID());if(c!=null)removeCage(c);for(State other:List.copyOf(states.values()))if(other.puppet==p)releaseControl(other);for(Spear spear:List.copyOf(spears))if(spear.owner()==p)removeSpear(spear);}
-    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Cage c:List.copyOf(cages.values()))removeCage(c);for(Effect e:effects)e.display().discard();effects.clear();moving.clear();}
+    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Cage c:List.copyOf(cages.values()))removeCage(c);for(Effect e:effects)e.display().discard();effects.clear();moving.clear();pulling.clear();}
 }

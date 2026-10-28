@@ -1069,7 +1069,7 @@ public final class Regression implements ModInitializer {
         check(StringFruit.activeGodSpears(p)==charging&&StringFruit.chargeThreadCount(p)==0,"God Thread launches the gathered environment bundles and clears charge displays");
         for(int i=0;i<26;i++){clock(level,level.getGameTime()+1);StringFruit.tickEffects();}
         check(t.getHealth()<100&&t.getHealth()>=76,"God Thread is a real bounded damaging spear barrage");
-        StringFruit.cast(p,2,7);clock(level,level.getGameTime()+200);StringFruit.tickEffects();
+        StringFruit.cast(p,2,7);clock(level,level.getGameTime()+260);StringFruit.tickEffects();
         check(!StringFruit.awakened(p),"Closing cage returns Z to normal attacks");
         Zombie parasiteVictim=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);parasiteVictim.snapTo(t.getX(),t.getY(),t.getZ()+2);parasiteVictim.setNoAi(true);parasiteVictim.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(parasiteVictim);
         t.setYHeadRot(180);check(StringFruit.possess(p,t,100),"Parasite attack test takes control");
@@ -1093,7 +1093,19 @@ public final class Regression implements ModInitializer {
         Player outsider=player(level);outsider.snapTo(origin.x+110,origin.y,origin.z); // initial location may be inside; gate must prevent crossing as well.
         check(StringFruit.crosses(origin.add(-110,0,0),origin.add(110,0,0),origin,100),"Teleport across entire cage cannot bypass boundary");
         check(!StringFruit.canTeleport(enemy,server.getLevel(net.minecraft.world.level.Level.NETHER),enemy.position()),"Cage blocks dimension escape");
-        check(StringFruit.cast(p,2,7).contains("closing"),"Hold C starts ten-second closing phase");clock(level,level.getGameTime()+199);StringFruit.tickEffects();check(StringFruit.cageCount()==1,"Cage persists throughout closing animation");clock(level,level.getGameTime()+1);StringFruit.tickEffects();check(StringFruit.cageCount()==0,"Cage dissolves after ten seconds");
+        Zombie roofVictim=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
+        for(int x=58;x<=62;x++)for(int z=-2;z<=2;z++)level.setBlockAndUpdate(BlockPos.containing(origin.x+x,origin.y+7,origin.z+z),Blocks.STONE.defaultBlockState());
+        roofVictim.snapTo(origin.x+60,origin.y+8,origin.z);roofVictim.setNoAi(true);level.addFreshEntity(roofVictim);
+        var rooftop=roofVictim.position();float roofHealth=roofVictim.getHealth();
+        check(StringFruit.cast(p,2,7).contains("closing"),"Hold C starts physical cage closing");
+        for(int i=0;i<200;i++){clock(level,level.getGameTime()+1);StringFruit.tickEffects();}
+        check(StringFruit.cageCount()==1&&Math.abs(StringFruit.activeCageRadius(p)-25)<.001,"Cage stops pulling at fifty blocks across");
+        check(roofVictim.position().distanceTo(origin)<25.5&&roofVictim.position().distanceTo(rooftop)>30,"Closing cage drags rooftop mob inward using actual movement");
+        check(roofVictim.getHealth()==roofHealth&&level.getBlockState(BlockPos.containing(origin.x+60,origin.y+7,origin.z)).is(Blocks.STONE),"Cage pull preserves buildings and does not crush targets");
+        clock(level,level.getGameTime()+19);StringFruit.tickEffects();check(StringFruit.activeCageRadius(p)==25,"Merge animation keeps the fifty-block holding boundary");
+        clock(level,level.getGameTime()+1);StringFruit.tickEffects();check(StringFruit.cageCount()==1&&StringFruit.activeCageRadius(p)==0,"Merged thread releases occupants and rises");
+        clock(level,level.getGameTime()+39);StringFruit.tickEffects();check(StringFruit.cageCount()==1,"Single rising thread has its own exit animation");
+        clock(level,level.getGameTime()+1);StringFruit.tickEffects();check(StringFruit.cageCount()==0,"Rising thread cleans up after thirteen seconds total");roofVictim.discard();
         clock(level,level.getGameTime()+700);p.getFoodData().setFoodLevel(20);StringFruit.cast(p,2,7);Dark.suppress(p,60,true);check(StringFruit.cageCount()==0&&!StringFruit.controlling(p),"Nullifying Grasp immediately collapses cage and possession");
         clock(level,level.getGameTime()+61);for(Element e:Element.values())Mastery.grant(p,e,3);
         check(StringFruit.parasiteTicks(p)==460&&StringFruit.knightTicks(p)==1380&&Math.abs(StringFruit.range(p)-46)<.001,"All-four mastery boosts String duration and range fifteen percent");
