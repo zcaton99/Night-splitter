@@ -1,4 +1,5 @@
 package com.sibcraft.creeperborn;
+import net.minecraft.world.phys.Vec3;
 
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
