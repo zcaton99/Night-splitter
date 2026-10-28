@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
+        ((BoltVisualState)state).creeperborn$pairKind(PairRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$tremorKind(TremorRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$pawKind(PawRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$stringKind(StringRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
@@ -43,6 +44,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        int pairKind=((BoltVisualState)state).creeperborn$pairKind();if(pairKind>0){PairRenderer.submit(pairKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int tremorKind=((BoltVisualState)state).creeperborn$tremorKind();if(tremorKind>0){TremorRenderer.submit(tremorKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int pawKind=((BoltVisualState)state).creeperborn$pawKind();if(pawKind>0){PawRenderer.submit(pawKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int stringKind=((BoltVisualState)state).creeperborn$stringKind();if(stringKind>0){StringRenderer.submit(stringKind,poses,collector,state.ageInTicks);ci.cancel();return;}
