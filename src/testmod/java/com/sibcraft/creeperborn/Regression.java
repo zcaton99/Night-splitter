@@ -1141,6 +1141,14 @@ public final class Regression implements ModInitializer {
         for(int[] offset:new int[][]{{0,3},{0,-3},{3,0},{-3,0},{0,6}}){Zombie mob=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);mob.snapTo(-8+offset[0],y+18,8+offset[1]);mob.setNoAi(true);mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(mob);shockTargets.add(mob);}
         check(Paw.cast(p,0,40).equals("Ursus Shock!"),"Shock releases around caster");
         for(int i=0;i<shockTargets.size();i++){check(shockTargets.get(i).getHealth()==(i<4?12:20),"Shock hits front/back/both sides and respects radius: "+i);shockTargets.get(i).discard();}
+        for(int rank:new int[]{2,3}){
+            clock(level,level.getGameTime()+220);Paw.grant(p,rank);p.getFoodData().setFoodLevel(20);p.snapTo(-8,y+32,8);int radius=rank==2?10:20;
+            java.util.List<Zombie> targets=new java.util.ArrayList<>();
+            for(double offset:new double[]{radius-.5,radius+.5}){var mob=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);mob.snapTo(-8,y+32,8+offset);mob.setNoAi(true);mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);mob.setHealth(100);level.addFreshEntity(mob);targets.add(mob);}
+            check(Paw.cast(p,0,40).equals("Ursus Shock!")&&targets.get(0).getHealth()<100&&targets.get(1).getHealth()==100,"Shock tier "+rank+" actual damage boundary has radius "+radius);
+            for(var mob:targets)mob.discard();
+        }
+        Paw.grant(p,1);p.snapTo(-8,y+18,8);p.getFoodData().setFoodLevel(20);
         var orphan=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);orphan.setCustomName(net.minecraft.network.chat.Component.literal("cb_paw_1"));orphan.snapTo(-8,y+18,12);level.addFreshEntity(orphan);orphan.tickCount=3;orphan.baseTick();check(orphan.isRemoved(),"Native display tick cleans legacy untracked paws without the new tag");
         var ordinary=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);ordinary.setCustomName(net.minecraft.network.chat.Component.literal("player artwork"));ordinary.tickCount=3;ordinary.baseTick();check(!ordinary.isRemoved(),"Paw watchdog preserves unrelated displays");ordinary.discard();
 
