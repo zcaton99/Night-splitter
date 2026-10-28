@@ -1131,7 +1131,7 @@ public final class Regression implements ModInitializer {
         check(Paw.cast(p,0,0).equals("Paw Cannon!"),"Paw Cannon fires");for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
         check(t.getHealth()==96&&Paw.cast(p,0,0).contains("recovering"),"Cannon actually damages aimed target and respects cooldown");
         check(Paw.cast(p,0,39).contains("two-second"),"Ursus Shock needs full compression");
-        t.snapTo(-8,y+18,20);t.damageCooldownTime=0;check(Paw.cast(p,0,40).equals("Ursus Shock!")&&t.getHealth()==88,"Fully compressed Ursus Shock deals actual area damage");t.snapTo(-8,y+18,14);
+        Zombie shockTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);shockTarget.snapTo(-8,y+18,20);shockTarget.setNoAi(true);shockTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(shockTarget);String shockResult=Paw.cast(p,0,40);check(shockResult.equals("Ursus Shock!")&&shockTarget.getHealth()==12,"Fully compressed Ursus Shock deals actual area damage: "+shockResult+" health="+shockTarget.getHealth()+" sight="+p.hasLineOfSight(shockTarget));shockTarget.discard();
         Player attacker=player(level);attacker.snapTo(-8,y+18,10);check(Paw.cast(p,2,0).contains("Guard"),"Paw guard opens timed window");
         var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.snapTo(-8,y+19,10);arrow.setOwner(attacker);arrow.setDeltaMovement(0,0,-1);level.addFreshEntity(arrow);
         check(Paw.reflect(p,arrow)&&arrow.getOwner()==p&&arrow.getDeltaMovement().z>1,"Repel Guard reverses incoming projectile and assigns attacker ownership");
