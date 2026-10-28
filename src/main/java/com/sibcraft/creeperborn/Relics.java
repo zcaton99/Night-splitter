@@ -30,6 +30,7 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME, Component.literal(element.title + " Creeper Heart — right-click to consume"));
         return item;
     }
+    public static ItemStack tremorFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:tremor");item.set(DataComponents.CUSTOM_NAME,Component.literal("Tremor-Tremor Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack pawFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:paw");item.set(DataComponents.CUSTOM_NAME,Component.literal("Paw-Paw Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack stringFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:string");item.set(DataComponents.CUSTOM_NAME,Component.literal("String Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack gravityFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:gravity");item.set(DataComponents.CUSTOM_NAME,Component.literal("Gravity Creeper Fruit — right-click to consume"));return item;}
@@ -39,7 +40,7 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Dark Creeper Fruit — right-click to consume"));return item;
     }
     public static ItemStack fruit(String type){
-        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();case "paw"->pawFruit();case "string"->stringFruit();case "gravity"->gravityFruit();default->ItemStack.EMPTY;};
+        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();case "tremor"->tremorFruit();case "paw"->pawFruit();case "string"->stringFruit();case "gravity"->gravityFruit();default->ItemStack.EMPTY;};
     }
     public static ItemStack captured(String type,String token,int tier){
         ItemStack item=fruit(type);if(item.isEmpty())return item;

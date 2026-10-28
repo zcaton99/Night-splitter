@@ -1,5 +1,6 @@
 package com.sibcraft.creeperborn;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.InteractionHand;
 
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
@@ -1201,6 +1202,31 @@ public final class Regression implements ModInitializer {
         t.discard();Paw.clear();System.out.println("CREEPERBORN_PAW_REGRESSION_PASSED");
     }
 
+    private Zombie tremorTarget(ServerLevel level,double x,double yy,double z){var e=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);e.snapTo(x,yy,z);e.setNoAi(true);e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(200);e.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);e.setHealth(200);level.addFreshEntity(e);return e;}
+    private void tremorTicks(ServerLevel level,int ticks){for(int i=0;i<ticks;i++){clock(level,level.getGameTime()+1);Tremor.tickEffects();}}
+    private void checkTremor(ServerLevel level){
+        Tremor.clear();Player p=player(level);p.snapTo(40,y+12,40);p.setYRot(0);p.setXRot(0);p.setYHeadRot(0);
+        for(int x=14;x<=66;x++)for(int z=14;z<=80;z++)for(int dy=11;dy<=30;dy++)level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),dy==11?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState());
+        check(Tremor.consume(p,Relics.tremorFruit())&&Tremor.tier(p)==1&&CombatNetwork.selection(p)==13,"Tremor unique consumption and server controls");
+        check(!Tremor.consume(player(level),Relics.tremorFruit())&&WaterRules.vulnerable(p),"Tremor ownership and water rules");FruitClaims.load(server);check(Tremor.unlocked(p),"Tremor claim survives world reload");
+        Zombie punch=tremorTarget(level,40,y+12,44);check(Tremor.cast(p,0,0).contains("Quake Punch")&&punch.getHealth()==193,"Quake punch damages real aimed target");check(Tremor.cast(p,0,0).contains("recovering"),"Punch cooldown enforced");punch.discard();
+        clock(level,level.getGameTime()+25);p.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(Items.TRIDENT));Zombie weapon=tremorTarget(level,40,y+12,44);check(Tremor.cast(p,0,0).contains("Kabutowari")&&weapon.getHealth()==193,"Weapon-coated quake strike hits");weapon.discard();p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
+        check(Tremor.cast(p,0,19).contains("one second"),"Gekishin requires compression");Zombie close=tremorTarget(level,42,y+12,42);check(Tremor.cast(p,0,20).equals("Gekishin!")&&close.getHealth()==188,"Gekishin damages immediate area");close.discard();
+        Zombie ball=tremorTarget(level,40,y+12,52);check(Tremor.cast(p,1,0).equals("Shock Ball!"),"Shock Ball cast");tremorTicks(level,15);check(ball.getHealth()==193,"Traveling vibration sphere actually hits");ball.discard();
+        p.getFoodData().setFoodLevel(20);Zombie sea=tremorTarget(level,40,y+12,52);check(Tremor.cast(p,1,20).contains("Seaquake"),"Tier one Seaquake");tremorTicks(level,45);check(sea.getHealth()==190&&Tremor.pulseCount()==0,"Forward Seaquake hits and ends");sea.discard();
+        clock(level,level.getGameTime()+600);Tremor.grant(p,3);p.getFoodData().setFoodLevel(20);Zombie left=tremorTarget(level,30,y+12,52),right=tremorTarget(level,50,y+12,52);BlockPos build=new BlockPos(40,(int)y+12,64),water=new BlockPos(41,(int)y+12,64);level.setBlockAndUpdate(build,Blocks.GOLD_BLOCK.defaultBlockState());level.setBlockAndUpdate(water,Blocks.WATER.defaultBlockState());
+        check(Tremor.cast(p,1,20).contains("twin tsunamis")&&Tremor.pulseCount()==2,"Mastered Seaquake creates exactly two opposing waves");tremorTicks(level,45);check(left.getHealth()<200&&right.getHealth()<200&&Tremor.pulseCount()==0,"Opposing waves sweep and hit enemies on both sides");check(level.getBlockState(build).is(Blocks.GOLD_BLOCK)&&level.getBlockState(water).is(Blocks.WATER),"Tsunamis leave builds and real fluids unchanged");left.discard();right.discard();
+        p.getFoodData().setFoodLevel(20);Zombie island=tremorTarget(level,48,y+12,40);check(Tremor.cast(p,2,39).contains("two seconds"),"Island grab needs full charge");check(Tremor.cast(p,2,40).contains("Island Shaking")&&island.getHealth()==176,"Island Shaking applies real radial quake damage");island.discard();
+        Zombie slam=tremorTarget(level,42,y+12,40);var origin=p.position();check(Tremor.cast(p,2,0).contains("Gurash")&&Tremor.airborne(p),"Gurash takes bounded server flight authority");p.move(net.minecraft.world.entity.MoverType.SELF,new Vec3(4,0,0));check(p.position().equals(origin),"Native movement cannot interrupt quake launch");check(Tremor.immune(p,p.damageSources().fall()),"Gurash grants temporary fall immunity");tremorTicks(level,30);check(!Tremor.airborne(p)&&slam.getHealth()==182&&p.position().distanceTo(origin)<1.2,"Gurash rises and strikes real ground without breaking floor");slam.discard();
+        p.getFoodData().setFoodLevel(20);Tremor.press(p,0);for(int i=0;i<10;i++){clock(level,level.getGameTime()+1);Tremor.heartbeat(p);Tremor.tickPlayer(p);}check(Tremor.visualCount()>0,"Held quake creates charge geometry");Tremor.cancelInput(p);tremorTicks(level,50);check(Tremor.visualCount()==0,"Quake, wave and canceled-charge geometry fully expires");
+        Tremor.forget(p);check(Tremor.cast(p,1,20).contains("recovering"),"Logout cannot reset powerful quake cooldowns");
+        p.addTag("cb_fruit_suppressed_"+(level.getGameTime()+100));check(Tremor.cast(p,0,0).contains("unavailable"),"Dark nullification disables Tremor");for(String tag:java.util.Set.copyOf(p.entityTags()))if(tag.startsWith("cb_fruit_suppressed_"))p.removeTag(tag);
+        check(Dark.fruitTier(p,"tremor")==3&&Relics.kind(Relics.captured("tremor",java.util.UUID.randomUUID().toString(),2)).equals("fruit:tremor"),"Dark capture recognizes Tremor mastery and artwork");
+        FruitClaims.releaseOnDeath(p);check(FruitClaims.owner("tremor")==null&&!Tremor.unlocked(p),"Death releases Tremor for natural spawning");
+        var creeper=EntityTypes.CREEPER.create(level,EntitySpawnReason.EVENT);creeper.snapTo(40,y+12,45);FruitCreepers.assignTremor(creeper);level.addFreshEntity(creeper);check(FruitCreepers.fruit(creeper)&&FruitCreepers.tremor(creeper),"Tremor Fruitborn variant tracks correctly");FruitCreepers.died(creeper,p.damageSources().playerAttack(p));check(creeper.entityTags().contains("cb_fruit_dropped"),"Unclaimed Tremor Fruitborn drops fruit once");creeper.discard();
+        Tremor.clear();System.out.println("CREEPERBORN_TREMOR_REGRESSION_PASSED");
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1218,7 +1244,7 @@ public final class Regression implements ModInitializer {
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
-        checkStringFruit(level);checkPaw(level);
+        checkStringFruit(level);checkPaw(level);checkTremor(level);
         checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);

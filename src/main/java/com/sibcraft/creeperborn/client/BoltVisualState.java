@@ -1,5 +1,6 @@
 package com.sibcraft.creeperborn.client;
 public interface BoltVisualState{
+    int creeperborn$tremorKind();void creeperborn$tremorKind(int kind);
     int creeperborn$pawKind();
     void creeperborn$pawKind(int kind);
     int creeperborn$stringKind();
