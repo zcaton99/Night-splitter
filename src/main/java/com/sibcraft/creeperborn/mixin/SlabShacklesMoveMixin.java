@@ -15,6 +15,7 @@ public abstract class SlabShacklesMoveMixin {
     @Inject(method="move",at=@At("HEAD"),cancellable=true)
     private void creeperborn$blockCustomMovement(MoverType type,Vec3 movement,CallbackInfo ci){
         Entity self=(Entity)(Object)this;
+        if(self instanceof LivingEntity l&&com.sibcraft.creeperborn.Paw.locked(l)){self.setDeltaMovement(Vec3.ZERO);ci.cancel();return;}
         if(com.sibcraft.creeperborn.StringFruit.blocked(self,self.position().add(movement))){self.setDeltaMovement(Vec3.ZERO);ci.cancel();return;}
         if(type==MoverType.SELF&&(Object)this instanceof LivingEntity target&&Shackles.rooted(target)){
             target.setDeltaMovement(0,0,0);ci.cancel();

@@ -25,6 +25,11 @@ public final class StormRenderer{
             double a=i*Math.PI/4;float x=(float)Math.cos(a)*(rim?23:20),z=(float)Math.sin(a)*(rim?23:20);
             box(root,"puff_"+i,x-9,rim?18+(i%3):9+(i%3)*2,z-9,18,rim?8:15,18);
         }
+        for(int layer=0;layer<3;layer++)for(int i=0;i<7;i++){
+            double a=i*Math.PI*2/7+layer*.55;float radius=layer==1?20:14;
+            float x=(float)Math.cos(a)*radius,z=(float)Math.sin(a)*radius,y=22+layer*18;
+            box(root,"tower_"+layer+"_"+i,x-11,y,z-11,22,20,22);
+        }
         return LayerDefinition.create(m,16,16).bakeRoot();
     }
     private static ModelPart bolts(){
@@ -56,5 +61,5 @@ public final class StormRenderer{
         }
         poses.popPose();
     }
-    public static void validate(){CORE.getChild("puff_7");RIM.getChild("center");BOLTS.getChild("bolt_4").getChild("bend").getChild("tip");}
+    public static void validate(){CORE.getChild("puff_7");CORE.getChild("tower_2_6");RIM.getChild("center");BOLTS.getChild("bolt_4").getChild("bend").getChild("tip");}
 }

@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
+        ((BoltVisualState)state).creeperborn$pawKind(PawRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$stringKind(StringRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         String gravityName=display.getCustomName()==null?"":display.getCustomName().getString();
         ((BoltVisualState)state).creeperborn$gravity(gravityName.equals("cb_gravity_meteor")?1:gravityName.equals("cb_gravity_rock")?2:0);
@@ -41,6 +42,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        int pawKind=((BoltVisualState)state).creeperborn$pawKind();if(pawKind>0){PawRenderer.submit(pawKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int stringKind=((BoltVisualState)state).creeperborn$stringKind();if(stringKind>0){StringRenderer.submit(stringKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int gravity=((BoltVisualState)state).creeperborn$gravity();if(gravity>0){GravityRenderer.submit(gravity,poses,collector,state.ageInTicks);ci.cancel();return;}
         if(((BoltVisualState)state).creeperborn$opRoom()){RoomRenderer.submit(poses,collector);ci.cancel();return;}

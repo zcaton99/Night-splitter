@@ -1117,6 +1117,46 @@ public final class Regression implements ModInitializer {
         t.discard();StringFruit.clear();System.out.println("CREEPERBORN_STRING_REGRESSION_PASSED");
     }
 
+
+    private void checkPaw(ServerLevel level){
+        Paw.clear();Player p=player(level);p.snapTo(-8,y+18,8);p.setYRot(0);p.setXRot(0);
+        check(Paw.consume(p,Relics.pawFruit())&&Paw.tier(p)==1&&CombatNetwork.selection(p)==12,"Paw fruit claims unique server-authoritative controls");
+        check(WaterRules.vulnerable(p)&&!Paw.consume(player(level),Relics.pawFruit()),"Paw water curse and unique ownership");
+        FruitClaims.load(server);check(Paw.unlocked(p),"Paw ownership persists in legacy-compatible world save");
+        for(int i=0;i<2100;i++)check(Paw.launchDistance(p,i)>=20&&Paw.launchDistance(p,i)<=30,"Tier one Paw launch distance");
+        Paw.grant(p,2);for(int i=0;i<2100;i++)check(Paw.launchDistance(p,i)>=60&&Paw.launchDistance(p,i)<=80,"Tier two Paw launch distance");
+        Paw.grant(p,3);for(int i=0;i<2100;i++){int n=Paw.launchDistance(p,i);check(n>=200&&n<=220||n==300,"Mastered Paw launch range includes rare three hundred");}
+        check(Paw.launchDistance(p,0)==300,"Rare mastered launch reaches three hundred");Paw.grant(p,1);
+        Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(true);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
+        check(Paw.cast(p,0,0).equals("Paw Cannon!"),"Paw Cannon fires");for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+        check(t.getHealth()==96&&Paw.cast(p,0,0).contains("recovering"),"Cannon actually damages aimed target and respects cooldown");
+        check(Paw.cast(p,0,39).contains("two-second"),"Ursus Shock needs full compression");
+        Player attacker=player(level);attacker.snapTo(-8,y+18,10);check(Paw.cast(p,2,0).contains("Guard"),"Paw guard opens timed window");
+        var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.snapTo(-8,y+19,10);arrow.setOwner(attacker);arrow.setDeltaMovement(0,0,-1);level.addFreshEntity(arrow);
+        check(Paw.reflect(p,arrow)&&arrow.getOwner()==p&&arrow.getDeltaMovement().z>1,"Repel Guard reverses incoming projectile and assigns attacker ownership");
+        check(!Paw.reflect(p,arrow),"Guard cannot reflect its own returned projectile");float hp=p.getHealth();p.hurtServer(level,p.damageSources().playerAttack(attacker),5);check(p.getHealth()==hp,"Repel Guard blocks actual nearby melee damage");arrow.discard();
+        clock(level,level.getGameTime()+50);Paw.grant(p,3);p.setHealth(7);p.getFoodData().setFoodLevel(2);
+        p.setYRot(180);p.setYHeadRot(180);Paw.press(p,2);for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);Paw.heartbeat(p);Paw.tickPlayer(p);}
+        check(p.getHealth()==p.getMaxHealth()&&p.getFoodData().getFoodLevel()==20&&p.getAbsorptionAmount()==6,"Pain extraction fills health and hunger and grants three temporary hearts at mastery");
+        check(p.hasEffect(MobEffects.ABSORPTION)&&Math.abs(Paw.bubbleDamage(p)-15.6)<.01,"Pain damage derives only from actual health restored");
+        var bubble=Paw.bubblePosition(p);check(bubble!=null,"Holding C creates a real pain bubble");p.setYRot(90);p.setYHeadRot(90);
+        for(int i=0;i<5;i++){clock(level,level.getGameTime()+1);Paw.heartbeat(p);Paw.tickPlayer(p);}
+        check(Paw.bubblePosition(p)!=null&&Paw.bubblePosition(p).x<bubble.x-1,"Holding C steers bubble using player aim while body stays free");
+        Zombie painTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);var at=Paw.bubblePosition(p).add(p.getLookAngle().scale(3));painTarget.snapTo(at.x,at.y,at.z);painTarget.setNoAi(true);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(painTarget);
+        Paw.release(p,2);check(Paw.bubblePosition(p)==null&&Paw.extract(p).contains("recovering"),"Release fires bubble and saved heal cooldown prevents immediate refill");
+        for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}check(painTarget.getHealth()<20&&painTarget.getHealth()>=4,"Released guided pain bubble actually hits with bounded damage");painTarget.discard();
+        var before=p.position();check(Paw.cast(p,1,0).equals("Paw Step!"),"Paw Step starts self repulsion");for(int i=0;i<25;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+        check(p.position().distanceTo(before)>19&&!Paw.airborne(p),"Mastered Paw Step moves the real player and ends cleanly");
+        Zombie launched=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);launched.snapTo(-8,y+18,18);launched.setNoAi(true);level.addFreshEntity(launched);p.setYRot(0);p.setYHeadRot(0);var origin=launched.position();
+        check(Paw.startFlight(p,launched,20,false)&&Paw.locked(launched),"Paw Launch takes bounded flight authority without changing no-gravity state");
+        float launchHealth=launched.getHealth();launched.hurtServer(level,p.damageSources().fall(),50);check(launched.getHealth()==launchHealth,"Launched mobs have actual fall damage immunity");double maxY=origin.y;
+        for(int i=0;i<160&&Paw.airborne(launched);i++){clock(level,level.getGameTime()+1);Paw.tickEffects();maxY=Math.max(maxY,launched.getY());}
+        check(maxY>origin.y+8&&launched.getZ()>origin.z+19&&!Paw.airborne(launched)&&!launched.isNoGravity(),"Real launch ascends, travels in facing direction, descends and restores native motion");launched.discard();
+        clock(level,level.getGameTime()+1300);Paw.extract(p);check(Paw.bubbleDamage(p)==0,"Full-health extraction cannot create free damaging pain");Paw.forget(p);check(Paw.unlocked(p)&&Paw.bubblePosition(p)==null,"Logout cleans temporary Paw effects while retaining fruit claim");
+        check(Paw.extract(p).contains("recovering"),"Pain healing cooldown survives logout state cleanup");FruitClaims.releaseOnDeath(p);check(FruitClaims.owner("paw")==null&&!Paw.unlocked(p),"Death releases Paw for natural spawning");
+        t.discard();Paw.clear();System.out.println("CREEPERBORN_PAW_REGRESSION_PASSED");
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1134,7 +1174,7 @@ public final class Regression implements ModInitializer {
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
-        checkStringFruit(level);
+        checkStringFruit(level);checkPaw(level);
         checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);

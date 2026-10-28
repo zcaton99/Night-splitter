@@ -92,7 +92,7 @@ public final class StringFruit {
                     Vec3 offset=right.scale((i-2)*.55).add(0,(i-2)*.16,0);
                     Vec3 a=awakened?terrainOrigin(p,end,i,5):from.add(offset);
                     if(a==null)continue;Vec3 b=end.add(offset.scale(.5));
-                    flash((ServerLevel)p.level(),a,b,.065f,awakened?0:3+i,12);
+                    flash((ServerLevel)p.level(),a,b,.065f,3+i,12);
                     for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(a,b).inflate(.6)))
                         if(enemy(p,e)&&e.getBoundingBox().inflate(.6).clip(a,b).isPresent()&&struck.add(e.getUUID()))hit(p,e,6);
                 }
