@@ -75,7 +75,7 @@ public final class Dark{
         Rubber.cancelInput(victim);Phoenix.cancelInput(victim);Lightning.cancelInput(victim);Op.cancelInput(victim);Gravity.cancelInput(victim);Paw.cancelInput(victim);Tremor.cancelInput(victim);PairPowers.cancelInput(victim);cancelInput(victim);
         if(strong)stopForms(victim);
     }
-    private static void stopForms(Player p){Paw.forget(p);Tremor.forget(p);PairPowers.forget(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
+    private static void stopForms(Player p){Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
     public static boolean rooted(LivingEntity target){
         Tether t=tethers.get(target.getUUID());return t!=null&&target.isAlive()&&t.owner().isAlive()&&target.level()==t.level()&&t.owner().level()==t.level()&&now(t.owner())<t.ends();
     }

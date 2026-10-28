@@ -36,7 +36,7 @@ public final class CombatNetwork {
         if(StringFruit.controlled(p)||PairPowers.rooted(p))return "You are restrained.";
         if(move>2)return "";
         if(Dark.suppressed(p)&&selection(p)>=4)return "Fruit powers suppressed by darkness.";
-        if(!PairPowers.current(p).isEmpty()){PairPowers.press(p,move);return "";}
+        if(!PairPowers.current(p).isEmpty()){PairPowers.press(p,move,packed>>>2);return "";}
         if(Tremor.selected(p)){Tremor.press(p,move);return "";}
         if(Paw.selected(p)){Paw.press(p,move);return "";}
         if(StringFruit.selected(p)){StringFruit.press(p,move);return "";}

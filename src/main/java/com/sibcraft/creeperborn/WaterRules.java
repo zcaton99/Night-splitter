@@ -57,7 +57,7 @@ public final class WaterRules {
         if(Mastery.harmony(p)){p.clearFire();p.setTicksFrozen(0);}
         if(mastered(p)){p.setAirSupply(p.getMaxAirSupply());return;}
         if(!suppressed(p))return;
-        Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.forget(p);
+        Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);
         p.setSwimming(false);p.setSprinting(false);
         p.setDeltaMovement(sinkingVelocity(p.getDeltaMovement()));
         if(p instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(p));
