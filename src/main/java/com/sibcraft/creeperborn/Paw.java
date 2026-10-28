@@ -73,6 +73,11 @@ public final class Paw {
         saved(p,"cb_paw_step_cap_",cap);saved(p,"cb_paw_step_charges_",n);saved(p,"cb_paw_step_refill_",refill);return n;
     }
     public static int guardTicks(Player p){return scale(p,20,40,100);}
+    /** Runs from the native display tick, independently of owner/effect bookkeeping. */
+    public static void tickVisual(Entity e){
+        if(!(e.level() instanceof ServerLevel)||!(e instanceof Display.BlockDisplay)||e.getCustomName()==null||!e.getCustomName().getString().matches("cb_paw_[1-6]"))return;
+        Visual v=visuals.get(e.getUUID());if((v==null&&e.tickCount>2)||(v!=null&&now(e)>=v.expires())){e.discard();visuals.remove(e.getUUID());}
+    }
     public static int visualCount(){return visuals.size();}
     public static int launchDistance(Player p,int roll){return tier(p)>=3?(Math.floorMod(roll,100)==0?300:200+Math.floorMod(roll,21)):tier(p)==2?60+Math.floorMod(roll,21):20+Math.floorMod(roll,11);}
     public static boolean airborne(LivingEntity e){return flights.containsKey(e.getUUID());}
@@ -90,8 +95,8 @@ public final class Paw {
         if(!(move==1&&!hold)&&now(p)<s.ready[slot])return "Paw move recovering.";
         if(move==0){
             if(hold&&held<40)return "Ursus Shock needs a two-second charge.";if(!fuel(p,hold?3:1))return "Eat before using Paw.";
-            if(hold){LivingEntity focus=target(p,scale(p,12,18,24));Vec3 end=focus==null?aim(p,scale(p,12,18,24)):focus.getEyePosition();double radius=scale(p,4,7,10);flash(s.level,end,p.getLookAngle(),(float)radius,2,18);
-                for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(end,end).inflate(radius)))if(enemy(p,e)&&e.position().distanceToSqr(end)<radius*radius&&p.hasLineOfSight(e)){hit(p,e,scale(p,8,12,18));e.setDeltaMovement(e.position().subtract(end).normalize().scale(1.2).add(0,.45,0));}
+            if(hold){Vec3 center=p.position().add(0,p.getBbHeight()/2,0);double radius=scale(p,4,7,10);flash(s.level,center,new Vec3(0,0,1),(float)radius*2,6,12);
+                for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(center,center).inflate(radius)))if(enemy(p,e)&&e.getBoundingBox().getCenter().distanceToSqr(center)<radius*radius&&p.hasLineOfSight(e)){hit(p,e,scale(p,8,12,18));e.setDeltaMovement(e.position().subtract(p.position()).normalize().scale(1.2).add(0,.45,0));}
             }else shoot(p,p.getEyePosition().add(p.getLookAngle().scale(.7)),p.getLookAngle(),scale(p,4,6,8),false,scale(p,24,32,40));
             s.ready[slot]=now(p)+cooldown(p,hold?200:12);credit(p);return hold?"Ursus Shock!":"Paw Cannon!";
         }
@@ -135,7 +140,7 @@ public final class Paw {
         if(s.held==2&&now-s.press>=20&&s.bubble==null&&!s.extracting){String result=extract(p);if(s.bubble==null)s.extracting=true;Creeperborn.say(p,result);}
         if(s.held==2&&s.bubble!=null&&now-s.press>=7)s.guiding=true;guide(s);
         if(s.held==0&&now-s.press>=7&&now>=s.ready[1]){
-            float size=(float)(3.2-2.5*Math.min(1,(now-s.press)/40.0));Vec3 at=p.getEyePosition().add(p.getLookAngle().scale(1.8));
+            double charge=Math.min(1,(now-s.press)/40.0);float size=(float)(.7+2.5*(charge<.5?charge*2:(1-charge)*2));Vec3 at=p.getEyePosition().add(p.getLookAngle().scale(1.8));
             if(s.charge==null)s.charge=display(s.level,at,p.getLookAngle(),size,2);else position(s.charge,at,p.getLookAngle(),size);
             if(now%5==0)Creeperborn.say(p,"Ursus Shock "+Math.min(100,(now-s.press)*100/40)+"% — release Z");
         }

@@ -1137,7 +1137,13 @@ public final class Regression implements ModInitializer {
         check(Paw.cast(p,0,0).equals("Paw Cannon!"),"Paw Cannon fires");for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
         check(t.getHealth()==96&&Paw.cast(p,0,0).contains("recovering"),"Cannon actually damages aimed target and respects cooldown");
         t.discard();check(Paw.cast(p,0,39).contains("two-second"),"Ursus Shock needs full compression");
-        Zombie shockTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);shockTarget.snapTo(-8,y+18,20);shockTarget.setNoAi(true);shockTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(shockTarget);String shockResult=Paw.cast(p,0,40);check(shockResult.equals("Ursus Shock!")&&shockTarget.getHealth()==12,"Fully compressed Ursus Shock deals actual area damage: "+shockResult+" health="+shockTarget.getHealth()+" sight="+p.hasLineOfSight(shockTarget));shockTarget.discard();
+        java.util.List<Zombie> shockTargets=new java.util.ArrayList<>();
+        for(int[] offset:new int[][]{{0,3},{0,-3},{3,0},{-3,0},{0,6}}){Zombie mob=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);mob.snapTo(-8+offset[0],y+18,8+offset[1]);mob.setNoAi(true);mob.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(mob);shockTargets.add(mob);}
+        check(Paw.cast(p,0,40).equals("Ursus Shock!"),"Shock releases around caster");
+        for(int i=0;i<shockTargets.size();i++){check(shockTargets.get(i).getHealth()==(i<4?12:20),"Shock hits front/back/both sides and respects radius: "+i);shockTargets.get(i).discard();}
+        var orphan=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);orphan.setCustomName(net.minecraft.network.chat.Component.literal("cb_paw_1"));orphan.snapTo(-8,y+18,12);level.addFreshEntity(orphan);orphan.tickCount=3;orphan.baseTick();check(orphan.isRemoved(),"Native display tick cleans legacy untracked paws without the new tag");
+        var ordinary=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.EVENT);ordinary.setCustomName(net.minecraft.network.chat.Component.literal("player artwork"));ordinary.tickCount=3;ordinary.baseTick();check(!ordinary.isRemoved(),"Paw watchdog preserves unrelated displays");ordinary.discard();
+
         Player attacker=player(level);attacker.snapTo(-8,y+18,10);check(Paw.cast(p,2,0).contains("Guard"),"Paw guard opens timed window");
         var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.snapTo(-8,y+19,10);arrow.setOwner(attacker);arrow.setDeltaMovement(0,0,-1);level.addFreshEntity(arrow);
         check(Paw.reflect(p,arrow)&&arrow.getOwner()==p&&arrow.getDeltaMovement().z>1,"Repel Guard reverses incoming projectile and assigns attacker ownership");
