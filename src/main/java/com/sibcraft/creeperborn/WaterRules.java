@@ -21,7 +21,7 @@ public final class WaterRules {
     public static void clearClient(){clientPlayer=null;clientFlags=0;}
     public static int flags(Player p){
         if(!(p.level() instanceof ServerLevel))return p.getUUID().equals(clientPlayer)?clientFlags:0;
-        return ((Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
+        return ((Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand")||ClimatePowers.unlocked(p,"ice")||ClimatePowers.unlocked(p,"magma"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
     }
     public static boolean fruitOwner(Player p){return (flags(p)&1)!=0;}
     public static boolean mastered(Player p){return (flags(p)&2)!=0;}
@@ -57,7 +57,7 @@ public final class WaterRules {
         if(Mastery.harmony(p)){p.clearFire();p.setTicksFrozen(0);}
         if(mastered(p)){p.setAirSupply(p.getMaxAirSupply());return;}
         if(!suppressed(p))return;
-        Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);
+        Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);
         p.setSwimming(false);p.setSprinting(false);
         p.setDeltaMovement(sinkingVelocity(p.getDeltaMovement()));
         if(p instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(p));

@@ -17,7 +17,8 @@ public record ControlPayload(int action, int value) implements CustomPacketPaylo
             || (action == 2 || action == 6) && value >= 0 && value < 3
             || action == 5 && value >= 0 && value < 64 && (value & 3) < 3
             || (action == 4 || action == 7 || action == 8) && value == 0
-            || action == 9 && (value == 0 || value == 1);
+            || action == 9 && (value == 0 || value == 1)
+            || action == 10 && value>=0&&value<=127;
     }
 }
 

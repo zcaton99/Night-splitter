@@ -184,7 +184,7 @@ public final class StringFruit {
     public static boolean controlled(LivingEntity target){return states.values().stream().anyMatch(s->s.puppet==target);}
     public static boolean locked(LivingEntity e){return !moving.contains(e.getUUID())&&(controlled(e)||e instanceof Player p&&controlling(p));}
     public static boolean possess(Player p,LivingEntity target,long ticks){
-        if(PairPowers.rooted(target)||controlled(target)||target==p||target.isSpectator()||!target.isAlive()||target.level()!=p.level())return false;
+        if(ClimatePowers.rooted(target)||PairPowers.rooted(target)||controlled(target)||target==p||target.isSpectator()||!target.isAlive()||target.level()!=p.level())return false;
         State s=state(p);releaseControl(s);endGlide(s);target.stopRiding();target.ejectPassengers();s.puppet=target;s.controlEnds=now(p)+ticks;s.inputUntil=now(p)+20;s.yaw=target.getYRot();s.pitch=target.getXRot();s.level=(ServerLevel)p.level();
         if(target instanceof Mob mob){s.oldNoAi=mob.isNoAi();mob.setNoAi(true);mob.getNavigation().stop();}
         for(int i=0;i<3;i++)s.strings.add(beam(s.level,p.getEyePosition(),target.getEyePosition().add((i-1)*.25,0,0),.035f,isKnight(target)?2:1));
