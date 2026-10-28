@@ -17,7 +17,7 @@ import net.minecraft.world.phys.*;
 
 /** Quakes never edit blocks, fluids or explosions. All geometry is temporary display data. */
 public final class Tremor {
-    private static final class State {Player owner;ServerLevel level;int held=-1;long press,heartbeat,recent=-1000;Vec3 last;Display.BlockDisplay charge;}
+    private static final class State {Player owner;ServerLevel level;int held=-1;long press,heartbeat,recent=-1000;Vec3 last;Display.BlockDisplay charge,chargeOther;}
     private static final class Pulse {Player owner;ServerLevel level;Vec3 from,to,normal;int age,duration,kind;double radius,width,height;float damage;Set<UUID> hit=new HashSet<>();Display.BlockDisplay visual;}
     private static final class Slam {Player owner;ServerLevel level;int age;long ends;}
     private static final class Carry {Player owner;LivingEntity target;ServerLevel level;Vec3 center;long ends,arrived=-1;}
@@ -53,7 +53,7 @@ public final class Tremor {
     private static Vec3 aim(Player p,double range){Vec3 a=p.getEyePosition(),b=a.add(p.getLookAngle().scale(range));var h=p.level().clip(new ClipContext(a,b,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));return h.getType()==HitResult.Type.MISS?b:h.getLocation();}
     public static void press(Player p,int move){if(!usable(p)||move<0||move>2)return;State s=state(p);if(s.held>=0)return;s.held=move;s.press=now(p);s.heartbeat=now(p)+15;}
     public static void heartbeat(Player p){State s=states.get(p.getUUID());if(s!=null)s.heartbeat=now(p)+15;}
-    public static void cancelInput(Player p){State s=states.get(p.getUUID());if(s!=null){s.held=-1;if(s.charge!=null)s.charge.discard();s.charge=null;}}
+    public static void cancelInput(Player p){State s=states.get(p.getUUID());if(s!=null){s.held=-1;if(s.charge!=null)s.charge.discard();if(s.chargeOther!=null)s.chargeOther.discard();s.charge=null;s.chargeOther=null;}}
     public static void release(Player p,int move){State s=states.get(p.getUUID());if(s==null||s.held!=move)return;long held=now(p)-s.press;cancelInput(p);Creeperborn.say(p,cast(p,move,held));}
     public static String cast(Player p,int move,long held){
         if(!usable(p)||move<0||move>2)return "Tremor powers unavailable.";boolean hold=held>=7;int slot=move*2+(hold?1:0);String key="cb_tremor_ready_"+slot+"_";
@@ -92,8 +92,16 @@ public final class Tremor {
     public static boolean locked(LivingEntity p){return airborne(p)&&!moving.contains(p.getUUID());}
     public static boolean immune(LivingEntity p,DamageSource source){return source.is(DamageTypeTags.IS_FALL)&&(airborne(p)||now(p)<landing.getOrDefault(p.getUUID(),0L));}
     public static int pulseCount(){return pulses.size();}public static int visualCount(){return visuals.size();}
+    public static int chargeCount(Player p){State s=states.get(p.getUUID());return s==null?0:(s.charge!=null&&!s.charge.isRemoved()?1:0)+(s.chargeOther!=null&&!s.chargeOther.isRemoved()?1:0);}
+    public static java.util.List<Vec3> chargePositions(Player p){State s=states.get(p.getUUID());if(s==null)return java.util.List.of();var list=new java.util.ArrayList<Vec3>();if(s.charge!=null)list.add(s.charge.position());if(s.chargeOther!=null)list.add(s.chargeOther.position());return list;}
     public static void tickPlayer(Player p){State s=state(p);if(!valid(p,s.level)){forget(p);return;}if(s.held>=0&&now(p)>s.heartbeat)cancelInput(p);
-        if(s.held>=0&&now(p)-s.press>=7){Vec3 at=p.getEyePosition().add(p.getLookAngle().scale(1.3));if(s.charge==null)s.charge=display(p,at,p.getLookAngle(),5);if(s.charge!=null){float growth=.6f+Math.min(1,(now(p)-s.press)/40f)*1.4f;transform(s.charge,at,p.getLookAngle(),growth,growth,growth);visuals.put(s.charge.getUUID(),new Visual(s.charge,now(p)+40));}if(now(p)%10==0)Creeperborn.say(p,s.held==2?"Grab the air — Island Shaking "+Math.min(100,(now(p)-s.press)*100/40)+"%":"Quake charge "+Math.min(100,(now(p)-s.press)*100/20)+"%");}
+        if(s.held>=0&&now(p)-s.press>=7){
+            Vec3 side=new Vec3(heading(p).z,0,-heading(p).x);Vec3 hands=p.getEyePosition().add(p.getLookAngle().scale(.7)).add(0,-.45,0);boolean dual=s.held==0||s.held==1;Vec3 at=dual?hands.add(side.scale(.55)):p.getEyePosition().add(p.getLookAngle().scale(1.3));
+            if(s.charge==null)s.charge=display(p,at,p.getLookAngle(),5);float growth=.4f+Math.min(1,(now(p)-s.press)/20f)*.7f;
+            if(s.charge!=null){transform(s.charge,at,p.getLookAngle(),growth,growth,growth);visuals.put(s.charge.getUUID(),new Visual(s.charge,now(p)+40));}
+            if(dual){Vec3 other=hands.add(side.scale(-.55));if(s.chargeOther==null)s.chargeOther=display(p,other,p.getLookAngle(),5);if(s.chargeOther!=null){transform(s.chargeOther,other,p.getLookAngle(),growth,growth,growth);visuals.put(s.chargeOther.getUUID(),new Visual(s.chargeOther,now(p)+40));}}
+            if(now(p)%10==0)Creeperborn.say(p,s.held==2?"Grab the air — Island Shaking "+Math.min(100,(now(p)-s.press)*100/40)+"%":"Both hands — tremor charge "+Math.min(100,(now(p)-s.press)*100/20)+"%");}
+
         if(now(p)%20==0){if(s.recent+200>now(p)||s.last!=null&&s.last.distanceToSqr(p.position())>.04)Mastery.set(p,"cb_tremor_time_",Mastery.get(p,"cb_tremor_time_")+1);s.last=p.position();}}
     public static void tickEffects(){
         for(Pulse q:List.copyOf(pulses)){

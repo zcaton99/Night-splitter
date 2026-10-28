@@ -21,7 +21,7 @@ public final class TremorRenderer {
     public static void submit(int kind,PoseStack poses,SubmitNodeCollector nodes,float age){poses.pushPose();
         if(kind==6){float lift=(float)Math.sin(Math.min(1,age/30)*Math.PI);poses.translate(0,lift*.7f,0);poses.rotate(new Quaternionf().rotationXYZ(lift*.3f,0,lift*.2f));draw(GROUND,Identifier.withDefaultNamespace("textures/block/stone.png"),poses,nodes);}
         else if(kind==1){float growth=Math.min(1,.15f+age/5);poses.scale(growth,growth,1);draw(CRACK,WHITE,poses,nodes);}
-        else if(kind==3){draw(CRACK,WHITE,poses,nodes);poses.pushPose();poses.translate(0,-.2f,0);poses.scale(1,.45f,1);draw(RING,WHITE,poses,nodes);poses.popPose();}
+        else if(kind==3){poses.translate((float)Math.sin(age*2)*.012f,(float)Math.sin(age*1.6)*.035f,0);draw(CRACK,WHITE,poses,nodes);poses.pushPose();poses.translate(0,-.2f,0);poses.scale(1,.45f,1);draw(RING,WHITE,poses,nodes);poses.popPose();}
         else{float pulse=kind==4?Math.min(1,.05f+age/20):1+(float)Math.sin(age*.45)*.08f;poses.scale(pulse,pulse,pulse);draw(RING,WHITE,poses,nodes);poses.pushPose();poses.rotate(new Quaternionf().rotationY((float)Math.PI/2));draw(RING,BLUE,poses,nodes);poses.popPose();if(kind==2||kind==5){poses.pushPose();poses.rotate(new Quaternionf().rotationX((float)Math.PI/2));draw(RING,WHITE,poses,nodes);poses.popPose();}}
         poses.popPose();}
     public static void validate(){GROUND.getChild("tile22");CRACK.getChild("crack0");WAVE.getChild("water11");RING.getChild("ring39");for(int i=1;i<=6;i++)if(kind("cb_tremor_"+i)!=i)throw new AssertionError("Tremor visual mapping");}
