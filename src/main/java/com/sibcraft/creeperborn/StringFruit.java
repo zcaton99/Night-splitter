@@ -156,7 +156,7 @@ public final class StringFruit {
         moving.add(t.getUUID());try{t.setDeltaMovement(velocity.add(0,vy,0));t.move(MoverType.SELF,t.getDeltaMovement());if(t instanceof ServerPlayer sp)sp.teleportTo((ServerLevel)t.level(),t.getX(),t.getY(),t.getZ(),Set.of(),s.yaw,s.pitch,false);}finally{moving.remove(t.getUUID());}
         if((s.attackQueued||(s.flags&32)!=0)&&now(p)>=s.attackReady){s.attackQueued=false;s.attackReady=now(p)+15;Vec3 from=t.getEyePosition(),end=from.add(t.getLookAngle().scale(t==s.knight?12:3));LivingEntity victim=null;double nearest=Double.MAX_VALUE;
             for(var e:t.level().getEntitiesOfClass(LivingEntity.class,new AABB(from,end).inflate(.7))){if(!enemy(p,e)||e==t||!t.hasLineOfSight(e))continue;var h=e.getBoundingBox().inflate(.4).clip(from,end);if(h.isPresent()&&h.get().distanceTo(from)<nearest){victim=e;nearest=h.get().distanceTo(from);}}
-            if(victim!=null){t.swing(net.minecraft.world.InteractionHand.MAIN_HAND);hit(p,victim,t==s.knight?4:3);flash(s.level,from,victim.getEyePosition(),.035f,t==s.knight?2:1,5);}}
+            if(victim!=null){t.swing(net.minecraft.world.InteractionHand.MAIN_HAND,net.minecraft.world.item.component.SwingAnimation.DEFAULT,true);hit(p,victim,t==s.knight?4:3);flash(s.level,from,victim.getEyePosition(),.035f,t==s.knight?2:1,5);}}
         for(int i=0;i<s.strings.size();i++)positionBeam(s.strings.get(i),p.getEyePosition(),t.getEyePosition().add((i-1)*.25,0,0),.035f);
         if(now(p)%10==0)Creeperborn.say(p,(t==s.knight?"Black Knight":"Parasite")+" control "+(s.controlEnds-now(p)+19)/20+"s | WASD + attack | X/C: return");
     }

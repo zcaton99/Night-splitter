@@ -1066,7 +1066,7 @@ public final class Regression implements ModInitializer {
         check(!StringFruit.awakened(p),"Closing cage returns Z to normal attacks");
         Zombie victim=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);victim.snapTo(t.getX(),t.getY(),t.getZ()+2);victim.setNoAi(true);victim.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(victim);
         check(StringFruit.possess(p,t,100),"Parasite attack test takes control");
-        StringFruit.input(p,new StringControlPayload(t.getId(),32,0,0));float hp=victim.getHealth();StringFruit.tickPlayer(p);
+        StringFruit.input(p,new StringControlPayload(t.getId(),0,0,0));StringFruit.input(p,new StringControlPayload(t.getId(),32,0,0));float hp=victim.getHealth();StringFruit.tickPlayer(p);
         check(victim.getHealth()<hp,"Parasite attack input damages aimed enemy");StringFruit.cancelInput(p);victim.discard();
         p.getFoodData().setFoodLevel(20);check(StringFruit.cast(p,2,0).contains("summoned"),"Black Knight and Spider Web summon together");
         check(StringFruit.damage(p,p.damageSources().playerAttack(player(level)),8)==2,"Spider Web reduces incoming entity damage by seventy-five percent");
