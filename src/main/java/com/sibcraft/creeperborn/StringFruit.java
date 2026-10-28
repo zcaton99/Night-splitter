@@ -80,10 +80,10 @@ public final class StringFruit {
                 Set<UUID> struck=new HashSet<>();int count=god?(s.charge.isEmpty()?24:s.charge.size()):1;
                 for(int i=0;i<count;i++){
                     Vec3 origin=from.add((i-count/2.0)*.55,1+(i%2)*.4,0).subtract(p.getLookAngle().scale(1.5));
-                    if(god){origin=s.charge.isEmpty()?gatherOrigin(p,end,i):s.charge.get(i).origin();if(origin==null)continue;}
+                    if(god){origin=s.charge.isEmpty()?gatherOrigin(p,end,i):s.charge.get(i).origin();if(origin==null)continue;if(!s.charge.isEmpty()){ChargeThread t=s.charge.get(i);origin=t.origin().lerp(s.chargeAim,.18).add(0,5+t.index()%4,0);}}
                     spears.add(new Spear(p,(ServerLevel)p.level(),origin,end,now(p)+(god?i%6:i)*2,god,god?i%6:i,struck,beam((ServerLevel)p.level(),origin,origin.add(0,.01,0),god?.8f:.12f,god?9:0)));
                 }
-                clearCharge(s);
+                if(god)releaseCharge(s);else clearCharge(s);
             }else{
                 Set<UUID> struck=new HashSet<>();
                 Vec3 right=new Vec3(p.getLookAngle().z,0,-p.getLookAngle().x).normalize();
@@ -149,6 +149,10 @@ public final class StringFruit {
     }
     private static void clearCharge(State s){
         for(ChargeThread t:s.charge)if(t.display()!=null)t.display().discard();
+        s.charge.clear();s.chargeAim=null;
+    }
+    private static void releaseCharge(State s){
+        for(ChargeThread t:s.charge)effects.add(new Effect(t.display(),now(s.owner)+26));
         s.charge.clear();s.chargeAim=null;
     }
     public static int chargeThreadCount(Player p){State s=states.get(p.getUUID());return s==null?0:s.charge.size();}
