@@ -14,6 +14,7 @@ public abstract class PhoenixAvatarMixin{
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$bird(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
         if(state instanceof AvatarRenderState avatar){
+            int azure=AzureVisuals.flags(avatar.id);if((azure&3)==2){ci.cancel();return;}if((azure&3)==1){AzureRenderer.avatar(avatar,poses,nodes,azure);ci.cancel();return;}
             int dark=DarkVisuals.flags(avatar.id);
             if((dark&3)!=0){ShadowRenderer.submit(avatar,poses,nodes,dark);ci.cancel();return;}
             int lightning=LightningVisuals.flags(avatar.id);
@@ -24,7 +25,7 @@ public abstract class PhoenixAvatarMixin{
     }
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("TAIL"))
     private void creeperborn$wings(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
-        if(state instanceof AvatarRenderState avatar){int flags=PhoenixVisuals.flags(avatar.id);
+        if(state instanceof AvatarRenderState avatar){int azure=AzureVisuals.flags(avatar.id);if((azure&128)!=0&&(azure&3)==0)AzureRenderer.avatar(avatar,poses,nodes,azure);int flags=PhoenixVisuals.flags(avatar.id);
             if((flags&1)!=0&&(flags&2)==0)PhoenixRenderer.submit(avatar,poses,nodes,flags,false);
         }
     }

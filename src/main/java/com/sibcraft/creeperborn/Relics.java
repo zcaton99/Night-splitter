@@ -30,6 +30,7 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME, Component.literal(element.title + " Creeper Heart — right-click to consume"));
         return item;
     }
+    public static ItemStack azureFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:azure");item.set(DataComponents.CUSTOM_NAME,Component.literal("Fish-Fish: Azure Dragon Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack iceFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:ice");item.set(DataComponents.CUSTOM_NAME,Component.literal("Ice-Ice Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack magmaFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:magma");item.set(DataComponents.CUSTOM_NAME,Component.literal("Magma-Magma Creeper Fruit — right-click to consume"));return item;}
     public static ItemStack loveFruit(){ItemStack item=new ItemStack(Items.CHORUS_FRUIT);mark(item,"fruit:love");item.set(DataComponents.CUSTOM_NAME,Component.literal("Love-Love Creeper Fruit — right-click to consume"));return item;}
@@ -44,7 +45,7 @@ public final class Relics {
         item.set(DataComponents.CUSTOM_NAME,Component.literal("Dark Creeper Fruit — right-click to consume"));return item;
     }
     public static ItemStack fruit(String type){
-        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();case "ice"->iceFruit();case "magma"->magmaFruit();case "love"->loveFruit();case "sand"->sandFruit();case "tremor"->tremorFruit();case "paw"->pawFruit();case "string"->stringFruit();case "gravity"->gravityFruit();default->ItemStack.EMPTY;};
+        return switch(type){case "rubber"->fruit();case "door"->doorFruit();case "phoenix"->phoenixFruit();case "lightning"->lightningFruit();case "dark"->darkFruit();case "op"->opFruit();case "azure"->azureFruit();case "ice"->iceFruit();case "magma"->magmaFruit();case "love"->loveFruit();case "sand"->sandFruit();case "tremor"->tremorFruit();case "paw"->pawFruit();case "string"->stringFruit();case "gravity"->gravityFruit();default->ItemStack.EMPTY;};
     }
     public static ItemStack captured(String type,String token,int tier){
         ItemStack item=fruit(type);if(item.isEmpty())return item;

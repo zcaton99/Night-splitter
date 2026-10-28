@@ -89,7 +89,14 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=8;kind++){com.sibcraft.creeperborn.client.TremorRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Tremor pose leak");}
                 for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.PairRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Love/Sand pose leak");}
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
-                if(parts[0]!=222)throw new AssertionError("Expected 222 model submissions, got "+parts[0]);
+                if(parts[0]!=222)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
+                com.sibcraft.creeperborn.client.AzureRenderer.validate();
+                int azureStart=parts[0];
+                for(int tier=1;tier<=3;tier++)for(int flags:new int[]{1|(tier<<2)|128,1|(tier<<2)|16|32|128}){com.sibcraft.creeperborn.client.AzureRenderer.avatar(state,pawPoses,nodes,flags);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Hybrid pose leak");}
+                for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
+                com.sibcraft.creeperborn.client.AzureRenderer.hand(pawPoses,nodes);
+                if(parts[0]-azureStart<60)throw new AssertionError("Azure forms did not submit complete meshes");
+                ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind(12);if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind()!=12)throw new AssertionError("Azure render state missing");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");

@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
+        ((BoltVisualState)state).creeperborn$azureKind(AzureRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$climateKind(ClimateRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$pairKind(PairRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$tremorKind(TremorRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
@@ -45,6 +46,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        int azureKind=((BoltVisualState)state).creeperborn$azureKind();if(azureKind>0){AzureRenderer.submit(azureKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int climateKind=((BoltVisualState)state).creeperborn$climateKind();if(climateKind>0){ClimateRenderer.submit(climateKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int pairKind=((BoltVisualState)state).creeperborn$pairKind();if(pairKind>0){PairRenderer.submit(pairKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int tremorKind=((BoltVisualState)state).creeperborn$tremorKind();if(tremorKind>0){TremorRenderer.submit(tremorKind,poses,collector,state.ageInTicks);ci.cancel();return;}

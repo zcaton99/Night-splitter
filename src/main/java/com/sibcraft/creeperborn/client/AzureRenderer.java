@@ -1,0 +1,65 @@
+package com.sibcraft.creeperborn.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.geom.*;
+import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
+import org.joml.Quaternionf;
+
+/** Original cuboid models: evolving hybrid, kanabo, segmented dragon and animated cloud-clutching claws. */
+public final class AzureRenderer {
+    private static final Identifier BLUE=tex("azure_scales"),TAN=tex("azure_belly"),BLACK=tex("azure_black"),PURPLE=tex("azure_cape"),IVORY=Identifier.withDefaultNamespace("textures/block/bone_block_side.png"),RED=Identifier.withDefaultNamespace("textures/block/red_concrete.png"),GOLD=Identifier.withDefaultNamespace("textures/block/yellow_concrete.png"),FIRE=Identifier.withDefaultNamespace("textures/block/orange_concrete.png");
+    private static final ModelPart[] HYBRID={hybrid(1),hybrid(2),hybrid(3)},HORNS={horns(1),horns(2),horns(3)},CAPES={cape(1),cape(2),cape(3)};
+    private static final ModelPart CHEST=chest(),CLUB=club(),HEAD=head(),JAW=jaw(),MANE=mane(),HORN=dragonHorns(),TEETH=teeth(),EYES=eyes(),WHISKERS=whiskers(),SEGMENT=segment(),BELLY=belly(),RIDGE=ridge(),TAIL=tail(),LEG=leg(),CLAWS=claws(),CLOUD=cloud(),BLADE=blade(),SPARKS=sparks(),RING=ring();
+    private static Identifier tex(String n){return Identifier.fromNamespaceAndPath("creeperborn","textures/entity/"+n+".png");}
+    private static void box(PartDefinition r,String n,float x,float y,float z,float w,float h,float d){r.addOrReplaceChild(n,CubeListBuilder.create().texOffs(0,0).addBox(x,y,z,w,h,d),PartPose.ZERO);}
+    private static ModelPart bake(MeshDefinition m){return LayerDefinition.create(m,16,16).bakeRoot();}
+    private static ModelPart hybrid(int tier){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"torso",-5,10,-2.5f,10,12,5);box(r,"neck",-2.5f,21,-2,5,3,4);box(r,"head",-3.4f,23,-3,6.8f,6.5f,6);box(r,"snout",-2,23.5f,2.8f,4,2.4f,2);for(int side:new int[]{-1,1}){var arm=r.addOrReplaceChild("arm"+side,CubeListBuilder.create(),PartPose.offset(side*6,21,0));box(arm,"upper",-2,-6,-2,4,7,4);box(arm,"lower",-2.2f,-12,-2.2f,4.4f,6,4.4f);box(arm,"knuckles",-2.4f,-13,-2.4f,4.8f,3,4.8f);var leg=r.addOrReplaceChild("leg"+side,CubeListBuilder.create(),PartPose.offset(side*2.6f,11,0));box(leg,"thigh",-2.4f,-5,-2.3f,4.8f,5,4.6f);box(leg,"shin",-1.8f,-10,-1.6f,3.6f,5,3.2f);box(leg,"foot",-2,-11,-1.8f,4,1.5f,5);}
+        var t=r.addOrReplaceChild("tail",CubeListBuilder.create(),PartPose.offset(0,11,-2.5f));for(int i=0;i<4+tier*2;i++){float width=3.8f-i*.29f;var next=t.addOrReplaceChild("next",CubeListBuilder.create(),PartPose.offset(0,i==0?-1:0,-3));box(next,"scale",-width/2,-width/2,-3,width,width,4);t=next;}return bake(m);}
+    private static ModelPart chest(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"pec0",-4.6f,17,2.4f,4.5f,4,.5f);box(r,"pec1",.1f,17,2.4f,4.5f,4,.5f);for(int i=0;i<3;i++)box(r,"abs"+i,-2.8f,11+i*1.8f,2.4f,5.6f,1.5f,.55f);box(r,"face",-2.6f,23.3f,3,5.2f,3.6f,.35f);return bake(m);}
+    private static ModelPart horns(int tier){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1}){for(int i=0;i<3;i++)box(r,"horn"+side+i,side*(3+i*.65f)-.55f,27+i*(tier*.55f),-.7f,1.1f,2.1f,1.1f);for(int i=0;i<3;i++)box(r,"tooth"+side+i,side*.8f+i*.5f,23.5f,4.8f,.35f,.8f,.4f);}box(r,"sash",-5.3f,10,-2.8f,10.6f,1.3f,5.6f);return bake(m);}
+    private static ModelPart cape(int tier){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"collar",-6.5f,20,-3.5f,13,3,3);for(int side:new int[]{-1,1}){var p=r.addOrReplaceChild("panel"+side,CubeListBuilder.create(),PartPose.offset(side*3,21,-3));box(p,"cloth",side<0?-5:0,-14-tier*1.5f,-1,5,15+tier*1.5f,1.4f);}return bake(m);}
+    private static ModelPart club(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"handle",-.6f,-10,-.6f,1.2f,14,1.2f);box(r,"body",-2.2f,3,-2.2f,4.4f,15,4.4f);box(r,"cap",-1.5f,18,-1.5f,3,1.5f,3);for(int i=0;i<4;i++)for(int side:new int[]{-1,1}){box(r,"spikeX"+i+side,side>0?2:-4,5+i*3,-.5f,2,1,1);box(r,"spikeZ"+i+side,-.5f,5+i*3,side>0?2:-4,1,1,2);}return bake(m);}
+    private static ModelPart head(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"skull",-5,-2,-4,10,7,10);box(r,"muzzle",-3.8f,-2,5,7.6f,3.3f,7);box(r,"browL",-5.3f,2.7f,3,4,1.5f,5);box(r,"browR",1.3f,2.7f,3,4,1.5f,5);box(r,"nose",-3,0,11,6,2,2);return bake(m);}
+    private static ModelPart jaw(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"lower",-3.5f,-4.5f,0,7,1.8f,11);return bake(m);}
+    private static ModelPart teeth(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1})for(int i=0;i<6;i++){box(r,"upper"+side+i,side*3.2f-.3f,-3.4f,1+i*1.7f,.6f,1.8f,.6f);box(r,"lower"+side+i,side*2.9f-.25f,-3.1f,1+i*1.7f,.5f,1.1f,.5f);}return bake(m);}
+    private static ModelPart dragonHorns(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1})for(int i=0;i<5;i++){box(r,"horn"+side+i,side*(3.5f+i*.75f)-.6f,4+i*1.3f,-2-i,1.2f,2,1.3f);if(i==2)box(r,"fork"+side,side*(5+i*.7f)-.5f,6,-6,1,4,1);}return bake(m);}
+    private static ModelPart mane(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1})for(int i=0;i<6;i++)box(r,"hair"+side+i,side*(4.2f+i*.3f)-.6f,-3+i, -7-i*.8f,1.5f,4,7);box(r,"beard",-2.5f,-7,0,5,4,2);return bake(m);}
+    private static ModelPart eyes(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1})box(r,"eye"+side,side>0?4.8f:-5.1f,1,4,.3f,2,2.5f);return bake(m);}
+    private static ModelPart whiskers(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1}){var w=r.addOrReplaceChild("whisker"+side,CubeListBuilder.create(),PartPose.offset(side*2,0,11));for(int i=0;i<6;i++)box(w,"w"+i,side*(i*1.6f)-.15f,i>3?(i-3)*.6f:0,i*.7f,.3f,.3f,2);}return bake(m);}
+    private static ModelPart segment(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"core",-5,-4,-5,10,8,10);box(r,"top",-4,4,-4,8,1.5f,8);return bake(m);}
+    private static ModelPart belly(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<4;i++)box(r,"plate"+i,-3.6f,-4.3f,-5+i*2.5f,7.2f,.6f,2.3f);return bake(m);}
+    private static ModelPart ridge(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<3;i++)box(r,"ridge"+i,-.5f,4,-5+i*3,1,4,4);return bake(m);}
+    private static ModelPart tail(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<5;i++)box(r,"tip"+i,-2.5f+i*.5f,-2+i*.4f,-7-i,5-i,4-i*.6f,6);return bake(m);}
+    private static ModelPart leg(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"upper",0,-3,-1,6,2.8f,3);var fore=r.addOrReplaceChild("fore",CubeListBuilder.create(),PartPose.offset(5,-2,0));box(fore,"forearm",-1,-5,-1.3f,2.8f,5,2.6f);var palm=fore.addOrReplaceChild("palm",CubeListBuilder.create(),PartPose.offset(0,-5,0));box(palm,"hand",-1.8f,-1,-1.5f,4.2f,1.5f,3.5f);for(int i=0;i<3;i++){var finger=palm.addOrReplaceChild("finger"+i,CubeListBuilder.create(),PartPose.offset(-1+i*1.35f,-.3f,1.7f));box(finger,"digit",-.5f,-.5f,0,1,1,2.4f);}return bake(m);}
+    private static ModelPart claws(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<3;i++)box(r,"claw"+i,3.5f+i*1.35f,-8.5f,3, .7f,1,2);return bake(m);}
+    private static ModelPart cloud(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<12;i++){double a=i*Math.PI/6;box(r,"puff"+i,(float)Math.cos(a)*3-1,-1+(float)Math.sin(a*2)*.7f,(float)Math.sin(a)*3-1,2.4f,1.5f,2.4f);}return bake(m);}
+    private static ModelPart blade(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<16;i++){double a=(i/15.0-.5)*Math.PI;box(r,"arc"+i,(float)Math.sin(a)*7-.4f,(float)Math.cos(a)*4-.4f,0,.8f,.8f,.6f);}return bake(m);}
+    private static ModelPart sparks(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<16;i++)box(r,"spark"+i,(i%2==0?-1:1)*(1+i*.3f),-7+i,0,.5f,2,.5f);return bake(m);}
+    private static ModelPart ring(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<32;i++){double a=i*Math.PI/16;box(r,"ring"+i,(float)Math.cos(a)*7-.3f,0,(float)Math.sin(a)*7-.3f,.6f,1.4f,.6f);}return bake(m);}
+    private static void draw(ModelPart part,Identifier tex,PoseStack p,SubmitNodeCollector n,boolean glow){n.submitModelPart(part,p,glow?RenderTypes.eyes(tex):RenderTypes.entityTranslucent(tex),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
+    public static void avatar(AvatarRenderState state,PoseStack p,SubmitNodeCollector n,int flags){int form=flags&3,tier=Math.max(1,Math.min(3,(flags>>2)&3));if(form==2)return;float time=state.ageInTicks;boolean moving=(flags&16)!=0,attack=(flags&32)!=0;
+        p.pushPose();p.rotate(new Quaternionf().rotationY((float)Math.toRadians(-state.bodyRot)));
+        if(form==1){float scale=tier==1?.95f:tier==2?1.15f:1.4f;p.scale(scale,scale,scale);var model=HYBRID[tier-1];for(int side:new int[]{-1,1}){model.getChild("arm"+side).xRot=attack?-1.3f:(float)Math.sin(time*.35+side)* (moving?.35f:.04f);model.getChild("leg"+side).xRot=moving?(float)Math.sin(time*.35+side)*.4f:0;CAPES[tier-1].getChild("panel"+side).xRot=.1f+(float)Math.sin(time*.12+side)*.06f;}
+            var tail=model.getChild("tail");for(int i=0;i<4+tier*2;i++){tail=tail.getChild("next");tail.yRot=(float)Math.sin(time*.12-i*.45)*.13f;tail.xRot=.1f;}
+            draw(model,BLUE,p,n,false);draw(CHEST,TAN,p,n,false);draw(HORNS[tier-1],IVORY,p,n,false);if(tier>=2)draw(CAPES[tier-1],PURPLE,p,n,false);
+            p.pushPose();p.translate(-.8,1.05,.1);p.rotate(new Quaternionf().rotationX(attack?-1.5f:-.25f));draw(CLUB,BLACK,p,n,false);if(attack){p.rotate(new Quaternionf().rotationY(time*.6f));draw(SPARKS,RED,p,n,true);}p.popPose();
+        }else{p.translate(-.4,.8,.25);p.scale(.8f,.8f,.8f);p.rotate(new Quaternionf().rotationX(attack?-1.2f:-.2f));draw(CLUB,BLACK,p,n,false);if(attack)draw(SPARKS,RED,p,n,true);}p.popPose();}
+    public static void hand(PoseStack p,SubmitNodeCollector n){p.pushPose();p.translate(.55,-.45,-.9);p.rotate(new Quaternionf().rotationZ(-.25f));p.scale(1.1f,1.1f,1.1f);draw(CLUB,BLACK,p,n,false);p.popPose();}
+    public static int kind(String name){for(int i=1;i<=12;i++)if(name.equals("cb_azure_"+i))return i;return 0;}
+    public static void submit(int kind,PoseStack p,SubmitNodeCollector n,float time){p.pushPose();
+        if(kind==1){draw(HEAD,BLUE,p,n,false);JAW.xRot=(float)Math.sin(time*.1)*.035f;draw(JAW,BLUE,p,n,false);draw(TEETH,IVORY,p,n,false);draw(MANE,BLACK,p,n,false);draw(HORN,IVORY,p,n,false);draw(EYES,GOLD,p,n,true);for(int side:new int[]{-1,1})WHISKERS.getChild("whisker"+side).yRot=(float)Math.sin(time*.13+side)*.12f;draw(WHISKERS,BLACK,p,n,false);}
+        else if(kind==2){draw(SEGMENT,BLUE,p,n,false);draw(BELLY,TAN,p,n,false);draw(RIDGE,BLACK,p,n,false);}
+        else if(kind==7)draw(TAIL,BLACK,p,n,false);
+        else if(kind==8||kind==9||kind==11||kind==12){boolean left=kind==8||kind==11,fly=kind>=11;float grip=fly?(float)(Math.sin(time*.3+(left?0:Math.PI))*.5+.5):.15f;if(left)p.scale(-1,1,1);p.translate(.3,0,0);LEG.getChild("fore").xRot=grip*.35f;var palm=LEG.getChild("fore").getChild("palm");for(int i=0;i<3;i++)palm.getChild("finger"+i).xRot=grip*1.15f;draw(LEG,BLUE,p,n,false);draw(CLAWS,IVORY,p,n,false);p.translate(.32,-.45,.04);p.rotate(new Quaternionf().rotationY(time*.06f));draw(CLOUD,FIRE,p,n,true);p.scale(.7f,.8f,.7f);draw(CLOUD,GOLD,p,n,true);}
+        else if(kind==3||kind==4){p.rotate(new Quaternionf().rotationZ(time*.03f));draw(BLADE,kind==3?RED:BLACK,p,n,true);p.pushPose();p.rotate(new Quaternionf().rotationZ(.18f));p.translate(0,0,.05);draw(BLADE,kind==3?BLACK:RED,p,n,true);p.popPose();draw(SPARKS,RED,p,n,true);}
+        else if(kind==5){draw(CLOUD,FIRE,p,n,true);p.scale(.65f,.65f,1.2f);draw(CLOUD,GOLD,p,n,true);}
+        else if(kind==6){p.rotate(new Quaternionf().rotationZ(time*.15f));draw(SPARKS,RED,p,n,true);p.rotate(new Quaternionf().rotationY(1.4f));draw(SPARKS,BLACK,p,n,true);}
+        else if(kind==10){for(int i=0;i<3;i++){p.pushPose();p.translate(0,i*.2,0);p.rotate(new Quaternionf().rotationY(time*.15f+i));float scale=1-i*.2f;p.scale(scale,1,scale);draw(RING,i%2==0?RED:BLACK,p,n,true);p.popPose();}}
+        p.popPose();}
+    public static void validate(){for(int i=0;i<3;i++){HYBRID[i].getChild("tail").getChild("next");HORNS[i].getChild("horn-10");CAPES[i].getChild("panel1");}HEAD.getChild("nose");LEG.getChild("fore").getChild("palm").getChild("finger2");for(int i=1;i<=12;i++)if(kind("cb_azure_"+i)!=i)throw new AssertionError("Azure visual mapping");}
+}

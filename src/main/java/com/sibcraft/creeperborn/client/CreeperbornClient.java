@@ -26,6 +26,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private void cancel(){if(holding()||StringVisuals.controlling())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
     private void changeSelection(){boolean wasHolding=holding();cancel();waitingForRelease=wasHolding;}
     @Override public void onInitializeClient(){
+        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.AzureVisualPayload.TYPE,(payload,context)->AzureVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.PhoenixVisualPayload.TYPE,(payload,context)->PhoenixVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.LightningVisualPayload.TYPE,(payload,context)->LightningVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.DarkVisualPayload.TYPE,(payload,context)->DarkVisuals.update(payload.entity(),payload.flags()));
@@ -42,8 +43,8 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
-            if(client.player==null||client.getConnection()==null){StringVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
-            StringVisuals.tick(client,ticks);
+            if(client.player==null||client.getConnection()==null){StringVisuals.clear();AzureVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
+            StringVisuals.tick(client,ticks);AzureVisuals.tick(client);
             if(!checkedBindings){
                 checkedBindings=true;
                 boolean legacy=moves[0].matches(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_R))

@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PhoenixHandsMixin{
     @Inject(method="submitHandsWithItems",at=@At("HEAD"),cancellable=true)
     private void creeperborn$birdHands(float partial,PoseStack poses,SubmitNodeCollector nodes,PlayerRenderState player,FirstPersonHandsAndItemsRenderState hands,CallbackInfo ci){
+        if(player.avatarRenderState!=null){int azure=com.sibcraft.creeperborn.client.AzureVisuals.flags(player.avatarRenderState.id);if((azure&128)!=0){if((azure&3)!=2)com.sibcraft.creeperborn.client.AzureRenderer.hand(poses,nodes);ci.cancel();return;}}
         if(player.avatarRenderState!=null&&(DarkVisuals.flags(player.avatarRenderState.id)&3)!=0){if((DarkVisuals.flags(player.avatarRenderState.id)&2)==0)ShadowRenderer.submitHand(poses,nodes);ci.cancel();return;}
         if(player.avatarRenderState!=null&&((PhoenixVisuals.flags(player.avatarRenderState.id)&2)!=0||(LightningVisuals.flags(player.avatarRenderState.id)&1)!=0))ci.cancel();
     }

@@ -19,7 +19,7 @@ public final class CombatNetwork {
     }
     public static void clear() { limits.clear();sentSelection.clear(); }
     public static int selection(Player p){
-        Element e=Progress.selected(p);return ClimatePowers.selected(p,"ice")?16:ClimatePowers.selected(p,"magma")?17:PairPowers.selected(p,"love")?14:PairPowers.selected(p,"sand")?15:Tremor.selected(p)?13:Paw.selected(p)?12:StringFruit.selected(p)?11:Gravity.selected(p)?10:Op.selected(p)?9:Dark.selected(p)?8:Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
+        Element e=Progress.selected(p);return Azure.selected(p)?18:ClimatePowers.selected(p,"ice")?16:ClimatePowers.selected(p,"magma")?17:PairPowers.selected(p,"love")?14:PairPowers.selected(p,"sand")?15:Tremor.selected(p)?13:Paw.selected(p)?12:StringFruit.selected(p)?11:Gravity.selected(p)?10:Op.selected(p)?9:Dark.selected(p)?8:Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
     }
     public static void forget(Player p){limits.remove(p.getUUID());sentSelection.remove(p.getUUID());}
     public static void tick(net.minecraft.server.MinecraftServer server){
@@ -36,6 +36,7 @@ public final class CombatNetwork {
         if(StringFruit.controlled(p)||PairPowers.rooted(p)||ClimatePowers.rooted(p))return "You are restrained.";
         if(move>2)return "";
         if(Dark.suppressed(p)&&selection(p)>=4)return "Fruit powers suppressed by darkness.";
+        if(Azure.selected(p)){Azure.press(p,move);return "";}
         if(!ClimatePowers.current(p).isEmpty()){ClimatePowers.press(p,move);return "";}
         if(!PairPowers.current(p).isEmpty()){PairPowers.press(p,move,packed>>>2);return "";}
         if(Tremor.selected(p)){Tremor.press(p,move);return "";}
@@ -59,6 +60,7 @@ public final class CombatNetwork {
         PayloadTypeRegistry.serverboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ControlPayload.TYPE, ControlPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(WaterStatePayload.TYPE,WaterStatePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(AzureVisualPayload.TYPE,AzureVisualPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(PhoenixVisualPayload.TYPE,PhoenixVisualPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(LightningVisualPayload.TYPE,LightningVisualPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(DarkVisualPayload.TYPE,DarkVisualPayload.CODEC);
@@ -66,7 +68,7 @@ public final class CombatNetwork {
             Player p = context.player();
             if(StringFruit.controlled(p)||PairPowers.rooted(p))return;
             if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p) || !allow(p)) return;
-            if(payload.action()==10){ClimatePowers.input(p,payload.value());return;}
+            if(payload.action()==10){ClimatePowers.input(p,payload.value());Azure.input(p,payload.value());return;}
             if(ClimatePowers.rooted(p))return;
             if(DoorSpace.active(p)){
                 if(payload.action()==5){String result=DoorSpace.exit(p);Creeperborn.say(p,result);}
@@ -79,13 +81,14 @@ public final class CombatNetwork {
                 Creeperborn.say(p, selected == null ? "Consume an elemental heart first."
                     : selected.title + " — Z/X/C: " + String.join(" / ", selected.moves));
             }
-            if (payload.action() == 2 && !Rubber.selected(p)&&!DoorFruit.selected(p)&&!Phoenix.selected(p)&&!Lightning.selected(p)&&!Dark.selected(p)&&!Op.selected(p)&&!Gravity.selected(p)&&!StringFruit.selected(p)&&!Paw.selected(p)&&!Tremor.selected(p)&&PairPowers.current(p).isEmpty()&&ClimatePowers.current(p).isEmpty()) {
+            if (payload.action() == 2 && !Azure.selected(p)&& !Rubber.selected(p)&&!DoorFruit.selected(p)&&!Phoenix.selected(p)&&!Lightning.selected(p)&&!Dark.selected(p)&&!Op.selected(p)&&!Gravity.selected(p)&&!StringFruit.selected(p)&&!Paw.selected(p)&&!Tremor.selected(p)&&PairPowers.current(p).isEmpty()&&ClimatePowers.current(p).isEmpty()) {
                 if (selected == null) Creeperborn.say(p, "Consume an elemental heart first.");
                 else { Creeperborn.ABILITIES.move(p, payload.value()); Creeperborn.say(p, Creeperborn.ABILITIES.cast(p)); }
             }
             if (payload.action() == 4) {
-                Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);
+                Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);Azure.cancelInput(p);
                 if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
+                else if(Azure.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,Azure.status(p));}
                 else if(ClimatePowers.unlocked(p,"ice")){p.addTag("cb_mode_fruit");Creeperborn.say(p,ClimatePowers.status(p,"ice"));}
                 else if(ClimatePowers.unlocked(p,"magma")){p.addTag("cb_mode_fruit");Creeperborn.say(p,ClimatePowers.status(p,"magma"));}
                 else if(PairPowers.unlocked(p,"love")){p.addTag("cb_mode_fruit");Creeperborn.say(p,PairPowers.status(p,"love"));}
@@ -102,9 +105,9 @@ public final class CombatNetwork {
                 else Creeperborn.say(p,"Consume a Devil Fruit first.");
             }
             if(payload.action()==5){String result=press(p,payload.value());if(!result.isEmpty())Creeperborn.say(p,result);}
-            if(payload.action()==6){if(!ClimatePowers.current(p).isEmpty())ClimatePowers.release(p,payload.value());else if(!PairPowers.current(p).isEmpty())PairPowers.release(p,payload.value());else if(Tremor.selected(p))Tremor.release(p,payload.value());else if(Paw.selected(p))Paw.release(p,payload.value());else if(StringFruit.selected(p))StringFruit.release(p,payload.value());else if(Gravity.selected(p))Gravity.release(p,payload.value());else if(Op.selected(p))Op.release(p,payload.value());else if(Dark.selected(p))Dark.release(p,payload.value());else if(Lightning.selected(p))Lightning.release(p,payload.value());else if(Phoenix.selected(p))Phoenix.release(p,payload.value());else Rubber.release(p,payload.value());}
-            if(payload.action()==7){Rubber.heartbeat(p);Phoenix.heartbeat(p);Lightning.heartbeat(p);Dark.heartbeat(p);Op.heartbeat(p);Gravity.heartbeat(p);StringFruit.heartbeat(p);Paw.heartbeat(p);Tremor.heartbeat(p);PairPowers.heartbeat(p);ClimatePowers.heartbeat(p);}
-            if(payload.action()==8){Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);}
+            if(payload.action()==6){if(Azure.selected(p))Azure.release(p,payload.value());else if(!ClimatePowers.current(p).isEmpty())ClimatePowers.release(p,payload.value());else if(!PairPowers.current(p).isEmpty())PairPowers.release(p,payload.value());else if(Tremor.selected(p))Tremor.release(p,payload.value());else if(Paw.selected(p))Paw.release(p,payload.value());else if(StringFruit.selected(p))StringFruit.release(p,payload.value());else if(Gravity.selected(p))Gravity.release(p,payload.value());else if(Op.selected(p))Op.release(p,payload.value());else if(Dark.selected(p))Dark.release(p,payload.value());else if(Lightning.selected(p))Lightning.release(p,payload.value());else if(Phoenix.selected(p))Phoenix.release(p,payload.value());else Rubber.release(p,payload.value());}
+            if(payload.action()==7){Rubber.heartbeat(p);Phoenix.heartbeat(p);Lightning.heartbeat(p);Dark.heartbeat(p);Op.heartbeat(p);Gravity.heartbeat(p);StringFruit.heartbeat(p);Paw.heartbeat(p);Tremor.heartbeat(p);PairPowers.heartbeat(p);ClimatePowers.heartbeat(p);Azure.heartbeat(p);}
+            if(payload.action()==8){Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);Azure.cancelInput(p);}
             ServerPlayNetworking.send(context.player(), new ControlPayload(3, selection(p)));
         });
         ServerPlayNetworking.registerGlobalReceiver(CastPayload.TYPE, (payload, context) -> {
