@@ -1119,7 +1119,10 @@ public final class Regression implements ModInitializer {
 
 
     private void checkPaw(ServerLevel level){
-        Paw.clear();Player p=player(level);p.snapTo(-8,y+18,8);p.setYRot(0);p.setXRot(0);
+        Paw.clear();
+        // Earlier Door tests leave a raised floor at eye height; give Paw a clear-sky fixture.
+        for(int x=-12;x<=-4;x++)for(int z=4;z<=28;z++)for(int dy=18;dy<=38;dy++)level.setBlockAndUpdate(new BlockPos(x,(int)y+dy,z),Blocks.AIR.defaultBlockState());
+        Player p=player(level);p.snapTo(-8,y+18,8);p.setYRot(0);p.setXRot(0);
         check(Paw.consume(p,Relics.pawFruit())&&Paw.tier(p)==1&&CombatNetwork.selection(p)==12,"Paw fruit claims unique server-authoritative controls");
         check(WaterRules.vulnerable(p)&&!Paw.consume(player(level),Relics.pawFruit()),"Paw water curse and unique ownership");
         FruitClaims.load(server);check(Paw.unlocked(p),"Paw ownership persists in legacy-compatible world save");
