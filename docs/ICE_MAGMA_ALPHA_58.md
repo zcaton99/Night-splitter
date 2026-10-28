@@ -32,7 +32,7 @@ Ice Coffin has integrity 120/160/200. A player can hold attack to struggle, remo
 | Tap C | Magma Field | Lava-textured pools, radius 10/25/45, duration 10/25/45s, 4/6/8 damage per second; recovery 20/40/60s |
 | Hold C 1s | Magma Cloak | Absorbs ordinary hits; actual mastered elemental attacks pierce at 50%, Harmony at 100%; controlled ground-fed flight capped 20 blocks above launch ground |
 
-Magma hits leave enemies burning. The fruit resists fire; cloak does not bypass normal fruit drowning, void or administrative kill behavior. Cloak lasts up to 10/20/30s and consumes food while active. Jump starts/rises in flight; Shift descends, WASD steers and releasing inputs hovers. The molten column is a visual effect. Ending flight gives temporary landing protection without permanent gravity or flight-ability changes.
+Magma Field projects down to ground when cast during cloak flight. Partizan converges on the aimed enemy instead of overshooting nearby targets. Magma hits leave enemies burning. The fruit resists fire; cloak does not bypass normal fruit drowning, void or administrative kill behavior. Cloak lasts up to 10/20/30s and consumes food while active. Jump starts/rises in flight; Shift descends, WASD steers and releasing inputs hovers. The molten column is a visual effect. Ending flight gives temporary landing protection without permanent gravity or flight-ability changes.
 
 Cloak counters use an explicit context from real elemental attack damage. A player merely owning mastery, or using a sword while mastered, does not bypass it. Existing elemental projectiles that call the shared strike path inherit this counter. Harmony uses full normally scaled elemental damage.
 
