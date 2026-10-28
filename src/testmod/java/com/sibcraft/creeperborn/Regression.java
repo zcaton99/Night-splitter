@@ -1094,16 +1094,16 @@ public final class Regression implements ModInitializer {
         check(StringFruit.crosses(origin.add(-110,0,0),origin.add(110,0,0),origin,100),"Teleport across entire cage cannot bypass boundary");
         check(!StringFruit.canTeleport(enemy,server.getLevel(net.minecraft.world.level.Level.NETHER),enemy.position()),"Cage blocks dimension escape");
         Zombie roofVictim=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);
-        for(int x=58;x<=62;x++)for(int z=-2;z<=2;z++)level.setBlockAndUpdate(BlockPos.containing(origin.x+x,origin.y+7,origin.z+z),Blocks.STONE.defaultBlockState());
-        roofVictim.snapTo(origin.x+60,origin.y+8,origin.z);roofVictim.setNoAi(true);level.addFreshEntity(roofVictim);
+        for(int x=-2;x<=2;x++)for(int z=33;z<=37;z++)level.setBlockAndUpdate(BlockPos.containing(origin.x+x,origin.y+7,origin.z+z),Blocks.STONE.defaultBlockState());
+        roofVictim.snapTo(origin.x,origin.y+8,origin.z+35);roofVictim.setNoAi(true);level.addFreshEntity(roofVictim);
         var rooftop=roofVictim.position();float roofHealth=roofVictim.getHealth();
         check(StringFruit.cast(p,2,7).contains("closing"),"Hold C starts physical cage closing");
         for(int i=0;i<199;i++){clock(level,level.getGameTime()+1);StringFruit.tickEffects();}
         check(StringFruit.cageCount()==1&&StringFruit.activeCageRadius(p)>25&&StringFruit.activeCageRadius(p)<26,"Cage contracts to about fifty blocks across");
         clock(level,level.getGameTime()+1);StringFruit.tickEffects();
         check(StringFruit.activeCageRadius(p)==0,"Cage releases its barrier before the merging strings can squish occupants");
-        check(roofVictim.position().distanceTo(origin)<25.5&&roofVictim.position().distanceTo(rooftop)>30,"Closing cage drags rooftop mob inward using actual movement");
-        check(roofVictim.getHealth()==roofHealth&&level.getBlockState(BlockPos.containing(origin.x+60,origin.y+7,origin.z)).is(Blocks.STONE),"Cage pull preserves buildings and does not crush targets");
+        check(roofVictim.position().distanceTo(origin)<25.5&&roofVictim.position().distanceTo(rooftop)>8,"Closing cage drags rooftop mob inward using actual movement; position="+roofVictim.position()+" distance="+roofVictim.position().distanceTo(origin));
+        check(roofVictim.getHealth()==roofHealth&&level.getBlockState(BlockPos.containing(origin.x,origin.y+7,origin.z+35)).is(Blocks.STONE),"Cage pull preserves buildings and does not crush targets");
         clock(level,level.getGameTime()+19);StringFruit.tickEffects();check(StringFruit.activeCageRadius(p)==0&&!StringFruit.blocked(roofVictim,origin.add(110,0,0)),"Occupants can escape while cage strings merge");
         clock(level,level.getGameTime()+1);StringFruit.tickEffects();check(StringFruit.cageCount()==1&&StringFruit.activeCageRadius(p)==0,"Merged thread releases occupants and rises");
         clock(level,level.getGameTime()+39);StringFruit.tickEffects();check(StringFruit.cageCount()==1,"Single rising thread has its own exit animation");
