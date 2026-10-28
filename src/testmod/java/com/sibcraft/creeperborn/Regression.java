@@ -1148,9 +1148,13 @@ public final class Regression implements ModInitializer {
         var bubble=Paw.bubblePosition(p);check(bubble!=null,"Holding C creates a real pain bubble");p.setYRot(90);p.setYHeadRot(90);
         for(int i=0;i<5;i++){clock(level,level.getGameTime()+1);Paw.heartbeat(p);Paw.tickPlayer(p);}
         check(Paw.bubblePosition(p)!=null&&Paw.bubblePosition(p).x<bubble.x-1,"Holding C steers bubble using player aim while body stays free");
-        Zombie painTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);var at=p.position().add(p.getLookAngle().scale(14));painTarget.snapTo(at.x,at.y,at.z);painTarget.setNoAi(true);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(painTarget);
+        Zombie painTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);var at=p.position().add(p.getLookAngle().scale(14));painTarget.snapTo(at.x,at.y,at.z);painTarget.setNoAi(true);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);painTarget.setHealth(100);level.addFreshEntity(painTarget);
+        painTarget.hurtServer(level,p.damageSources().playerAttack(p),25);check(painTarget.getHealth()==75,"Pain fixture enters vanilla damage immunity");
         Paw.release(p,2);check(Paw.bubblePosition(p)==null&&Paw.extract(p).contains("recovering"),"Release fires bubble and saved heal cooldown prevents immediate refill");
-        for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}check(painTarget.getHealth()<20&&painTarget.getHealth()>=4,"Released guided pain bubble actually hits with bounded damage");painTarget.discard();
+        for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+        check(painTarget.getHealth()==75,"Pain bubble waits through vanilla immunity instead of losing stored damage");painTarget.damageCooldownTime=0;
+        for(int i=0;i<3;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+        check(Math.abs(painTarget.getHealth()-59.4)<.01,"Off-axis bubble converges on crosshair and retries contact from inside hitbox");painTarget.discard();
         check(Paw.stepCapacity(p)==5&&Paw.stepDistance(p)==50&&Paw.stepCharges(p)==5,"Master has five fifty-block steps");
         var before=p.position();check(Paw.cast(p,1,0).startsWith("Paw Step!"),"Paw Step starts self repulsion");for(int i=0;i<40;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
         check(Math.abs(p.position().distanceTo(before)-50)<.1&&!Paw.airborne(p),"Mastered Paw Step moves the real player and ends cleanly");

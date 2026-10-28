@@ -82,7 +82,8 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=13;kind++)com.sibcraft.creeperborn.client.StringRenderer.submit(kind,new PoseStack(),nodes,10);
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$stringKind(4);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$stringKind()!=4)throw new AssertionError("String state mixin");
-                for(int kind=1;kind<=5;kind++)com.sibcraft.creeperborn.client.PawRenderer.submit(kind,new PoseStack(),nodes,20);
+                PoseStack pawPoses=new PoseStack();org.joml.Matrix4f pawBefore=new org.joml.Matrix4f(pawPoses.last().pose());
+                for(int kind:new int[]{2,1,3,4,5}){com.sibcraft.creeperborn.client.PawRenderer.submit(kind,pawPoses,nodes,20);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Paw renderer leaked rotation/scale from kind "+kind);}
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$pawKind(4);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$pawKind()!=4)throw new AssertionError("Paw state mixin");
                 if(parts[0]!=161)throw new AssertionError("Expected 161 model submissions, got "+parts[0]);
