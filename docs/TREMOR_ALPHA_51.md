@@ -14,7 +14,7 @@ Minecraft 26.3 / Fabric / Java 25. Tenth fruit; preserves all alpha.50 Paw fixes
 
 Tap moves cost one hunger point, held moves three; powers require food above six. Harmony adds 15% damage and shortens cooldowns. Cooldowns persist through logout. Mastery uses existing 10 uses/300s and 40 uses/3600s progression.
 
-Air fractures branch outward at impact; vibration spheres and expanding rings are original model geometry. Tsunamis are curled blue display meshes with white crests. Every effect has a hard lifetime and a native entity-tick orphan check. No attacks edit blocks, place water, create explosions, or damage passive mobs, armor stands or item frames. Solid walls block damage through line-of-sight checks. The waves are supernatural visual effects and also work on dry land.
+Island Shaking briefly lifts and tilts visual ground plates above the existing surface. Air fractures branch outward at impact; vibration spheres and expanding rings are original model geometry. Tsunamis are curled blue display meshes with white crests. Every effect has a hard lifetime and a native entity-tick orphan check. No attacks edit blocks, place water, create explosions, or damage passive mobs, armor stands or item frames. Solid walls block damage through line-of-sight checks. The waves are supernatural visual effects and also work on dry land.
 
 Gurash respects collision, build height and Birdcage, prevents competing movement during its short flight, and gives temporary landing protection. Suppression, water, fruit switching, logout and death clear active effects. No permanent gravity or camera changes.
 
