@@ -21,9 +21,11 @@ public final class Tremor {
     private static final class Pulse {Player owner;ServerLevel level;Vec3 from,to,normal;int age,duration,kind;double radius,width,height;float damage;Set<UUID> hit=new HashSet<>();Display.BlockDisplay visual;}
     private static final class Slam {Player owner;ServerLevel level;int age;long ends;}
     private static final class Carry {Player owner;LivingEntity target;ServerLevel level;Vec3 center;long ends,arrived=-1;}
-    private record Ground(Display.BlockDisplay display,Vec3 base,long starts,int duration,float size){}
+    private record Ground(Display.BlockDisplay display,Vec3 base,long starts,int duration,float size,float lift){}
     private static final Map<UUID,Carry> carries=new HashMap<>();
     private static final List<Ground> groundPieces=new ArrayList<>();
+    private static final class Radial {Player owner;ServerLevel level;Vec3 center;long starts;double radius;int ring;}
+    private static final List<Radial> radials=new ArrayList<>();
     private record Visual(Display.BlockDisplay display,long expires){}
     private static final Map<UUID,State> states=new HashMap<>();
     private static final Map<UUID,Visual> visuals=new HashMap<>();
@@ -69,7 +71,7 @@ public final class Tremor {
             if(!hold){pulse(p,p.getEyePosition().add(p.getLookAngle().scale(1)),p.getLookAngle(),scale(p,24,36,48),24,2,1.4,1.4,scale(p,7,10,14));result="Shock Ball!";cooldown=50;}
             else{flash(p,p.getEyePosition().add(forward.scale(2)),forward,8,1,20);Vec3 side=new Vec3(forward.z,0,-forward.x);Vec3 center=p.position().add(forward.scale(scale(p,6,9,12)));double offset=scale(p,10,15,20);wave(p,center.add(side.scale(offset)),side.scale(-1),offset,40,scale(p,10,16,24),4,scale(p,10,14,18));wave(p,center.add(side.scale(-offset)),side,offset,40,scale(p,10,16,24),4,scale(p,10,14,18));result="Kaishin — opposing ground tremors!";cooldown=500;}
         }else if(!hold){if(Paw.airborne(p)||airborne(p)||StringFruit.locked(p))return "Finish your current flight first.";Slam s=new Slam();s.owner=p;s.level=level;s.ends=now(p)+400;slams.put(p.getUUID(),s);landing.put(p.getUUID(),now(p)+200);result="Gurash — quake descent!";cooldown=120;}
-        else{burst(p,p.position().add(0,1,0),scale(p,8,14,22),scale(p,10,16,24));flash(p,p.position().add(0,.2,0),new Vec3(0,1,0),scale(p,16,28,44),4,30);for(int i=0;i<8;i++){double a=i*Math.PI/4;Vec3 center=p.position().add(Math.cos(a)*scale(p,4,7,11),0,Math.sin(a)*scale(p,4,7,11));for(int dx=-1;dx<=1;dx++)for(int dz=-1;dz<=1;dz++)groundPiece(p,center.add(dx,0,dz),1,30);}result="Shima Yurashi — Island Shaking!";cooldown=600;}
+        else{burst(p,p.position().add(0,1,0),scale(p,8,14,22),scale(p,10,16,24));flash(p,p.position().add(0,.2,0),new Vec3(0,1,0),scale(p,16,28,44),4,30);Radial q=new Radial();q.owner=p;q.level=level;q.center=p.position();q.starts=now(p);q.radius=scale(p,8,14,22);radials.add(q);radialGround(q);result="Shima Yurashi — Island Shaking!";cooldown=600;}
         saved(p,key,now(p)+Math.round(cooldown/bonus(p)));p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-(hold?3:1));credit(p);return result;
     }
     private static void burst(Player p,Vec3 center,double radius,float damage){for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(center,center).inflate(radius)))if(e.getBoundingBox().getCenter().distanceToSqr(center)<=radius*radius)hit(p,e,damage,e.position().subtract(center).multiply(1,0,1).normalize().scale(1.5).add(0,.8,0));flash(p,center,p.getLookAngle(),(float)radius,1,20);flash(p,center,new Vec3(0,1,0),(float)radius*2,4,20);}
@@ -78,16 +80,19 @@ public final class Tremor {
     private static Display.BlockDisplay display(Player p,Vec3 at,Vec3 facing,int kind){ServerLevel level=(ServerLevel)p.level();var d=EntityTypes.BLOCK_DISPLAY.create(level,EntitySpawnReason.TRIGGERED);if(d==null)return null;d.addTag("cb_temporary_rock");d.setCustomName(Component.literal(kind==6?"cb_tremor_ground":"cb_tremor_"+kind));d.setCustomNameVisible(false);d.setBlockState(Blocks.STONE.defaultBlockState());var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(128);a.creeperborn$height(128);a.creeperborn$view(4);d.snapTo(at.x,at.y,at.z);if(!level.addFreshEntity(d))return null;visuals.put(d.getUUID(),new Visual(d,now(p)+40));visualOwners.put(d.getUUID(),p.getUUID());return d;}
     private static void transform(Display.BlockDisplay d,Vec3 at,Vec3 direction,float x,float y,float z){if(d==null)return;d.snapTo(at.x,at.y,at.z);d.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),Paw.orientation(direction),new org.joml.Vector3f(x,y,z),new org.joml.Quaternionf()));}
     private static void flash(Player p,Vec3 at,Vec3 facing,float size,int kind,int duration){var d=display(p,at,facing,kind);if(d!=null){transform(d,at,facing,size,size,size);visuals.put(d.getUUID(),new Visual(d,now(p)+duration));}}
-    private static void groundPiece(Player p,Vec3 center,float size,int duration){
+    private static void radialGround(Radial q){int n=16+q.ring*8;double radius=q.radius*(q.ring+1)/4;for(int i=0;i<n;i++){double a=i*Math.PI*2/n;groundPiece(q.owner,q.center.add(Math.cos(a)*radius,0,Math.sin(a)*radius),1,24,1.8f);}q.ring++;}
+    public static int radialCount(){return radials.size();}
+    private static void groundPiece(Player p,Vec3 center,float size,int duration){groundPiece(p,center,size,duration,.8f);}
+    private static void groundPiece(Player p,Vec3 center,float size,int duration,float lift){
         ServerLevel level=(ServerLevel)p.level();Vec3 above=center.add(0,4,0);if(!level.hasChunkAt(BlockPos.containing(above)))return;
         var hit=level.clip(new ClipContext(above,above.add(0,-16,0),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));if(hit.getType()==HitResult.Type.MISS)return;
         BlockPos block=BlockPos.containing(hit.getLocation().add(0,-.02,0));var state=level.getBlockState(block);if(state.isAir())return;
-        Vec3 base=new Vec3(block.getX()+.5,hit.getLocation().y+.02,block.getZ()+.5);var d=display(p,base,new Vec3(0,0,1),6);if(d==null)return;d.setBlockState(state);visuals.put(d.getUUID(),new Visual(d,now(p)+duration));groundPieces.add(new Ground(d,base,now(p),duration,size));
+        Vec3 base=new Vec3(block.getX()+.5,hit.getLocation().y+.02,block.getZ()+.5);var d=display(p,base,new Vec3(0,0,1),6);if(d==null)return;d.setBlockState(state);visuals.put(d.getUUID(),new Visual(d,now(p)+duration));groundPieces.add(new Ground(d,base,now(p),duration,size,lift));
     }
     public static java.util.List<net.minecraft.world.level.block.state.BlockState> groundStates(){return groundPieces.stream().filter(g->!g.display().isRemoved()).map(g->g.display().getBlockState()).toList();}
     private static void carry(Pulse q,LivingEntity e){Carry old=carries.get(e.getUUID());if(old!=null)return;Carry c=new Carry();c.owner=q.owner;c.target=e;c.level=q.level;c.center=q.to;c.ends=now(q.owner)+70;carries.put(e.getUUID(),c);}
     private static void endCarry(Carry c){carries.remove(c.target.getUUID());c.target.setDeltaMovement(Vec3.ZERO);c.target.resetFallDistance();landing.put(c.target.getUUID(),now(c.target)+40);}
-    public static void tickVisual(Entity e){if(!(e.level() instanceof ServerLevel)||!(e instanceof Display.BlockDisplay)||e.getCustomName()==null||!e.getCustomName().getString().matches("cb_tremor_([1-6]|ground)"))return;Visual v=visuals.get(e.getUUID());if(v==null&&e.tickCount>2||v!=null&&now(e)>=v.expires()){e.discard();visuals.remove(e.getUUID());visualOwners.remove(e.getUUID());}}
+    public static void tickVisual(Entity e){if(!(e.level() instanceof ServerLevel)||!(e instanceof Display.BlockDisplay)||e.getCustomName()==null||!e.getCustomName().getString().matches("cb_tremor_([1-7]|ground)"))return;Visual v=visuals.get(e.getUUID());if(v==null&&e.tickCount>2||v!=null&&now(e)>=v.expires()){e.discard();visuals.remove(e.getUUID());visualOwners.remove(e.getUUID());}}
     public static boolean airborne(LivingEntity p){return slams.containsKey(p.getUUID())||carries.containsKey(p.getUUID());}
     public static boolean locked(LivingEntity p){return airborne(p)&&!moving.contains(p.getUUID());}
     public static boolean immune(LivingEntity p,DamageSource source){return source.is(DamageTypeTags.IS_FALL)&&(airborne(p)||now(p)<landing.getOrDefault(p.getUUID(),0L));}
@@ -96,14 +101,16 @@ public final class Tremor {
     public static java.util.List<Vec3> chargePositions(Player p){State s=states.get(p.getUUID());if(s==null)return java.util.List.of();var list=new java.util.ArrayList<Vec3>();if(s.charge!=null)list.add(s.charge.position());if(s.chargeOther!=null)list.add(s.chargeOther.position());return list;}
     public static void tickPlayer(Player p){State s=state(p);if(!valid(p,s.level)){forget(p);return;}if(s.held>=0&&now(p)>s.heartbeat)cancelInput(p);
         if(s.held>=0&&now(p)-s.press>=7){
-            Vec3 side=new Vec3(heading(p).z,0,-heading(p).x);Vec3 hands=p.getEyePosition().add(p.getLookAngle().scale(.7)).add(0,-.45,0);boolean dual=s.held==0||s.held==1;Vec3 at=dual?hands.add(side.scale(.55)):p.getEyePosition().add(p.getLookAngle().scale(1.3));
-            if(s.charge==null)s.charge=display(p,at,p.getLookAngle(),5);float growth=.4f+Math.min(1,(now(p)-s.press)/20f)*.7f;
-            if(s.charge!=null){transform(s.charge,at,p.getLookAngle(),growth,growth,growth);visuals.put(s.charge.getUUID(),new Visual(s.charge,now(p)+40));}
+            Vec3 side=new Vec3(heading(p).z,0,-heading(p).x);Vec3 hands=p.getEyePosition().add(p.getLookAngle().scale(.7)).add(0,-.45,0);boolean dual=s.held==0||s.held==1;Vec3 at=dual?hands.add(side.scale(.55)):p.position().add(0,.3,0);Vec3 facing=dual?p.getLookAngle():new Vec3(0,1,0);
+            if(s.charge==null)s.charge=display(p,at,facing,dual?5:7);float growth=dual?.4f+Math.min(1,(now(p)-s.press)/20f)*.7f:2+Math.min(1,(now(p)-s.press)/40f)*scale(p,14,26,42);
+            if(s.charge!=null){transform(s.charge,at,facing,growth,growth,growth);visuals.put(s.charge.getUUID(),new Visual(s.charge,now(p)+40));}
             if(dual){Vec3 other=hands.add(side.scale(-.55));if(s.chargeOther==null)s.chargeOther=display(p,other,p.getLookAngle(),5);if(s.chargeOther!=null){transform(s.chargeOther,other,p.getLookAngle(),growth,growth,growth);visuals.put(s.chargeOther.getUUID(),new Visual(s.chargeOther,now(p)+40));}}
             if(now(p)%10==0)Creeperborn.say(p,s.held==2?"Grab the air — Island Shaking "+Math.min(100,(now(p)-s.press)*100/40)+"%":"Both hands — tremor charge "+Math.min(100,(now(p)-s.press)*100/20)+"%");}
 
         if(now(p)%20==0){if(s.recent+200>now(p)||s.last!=null&&s.last.distanceToSqr(p.position())>.04)Mastery.set(p,"cb_tremor_time_",Mastery.get(p,"cb_tremor_time_")+1);s.last=p.position();}}
     public static void tickEffects(){
+        for(Radial q:List.copyOf(radials)){if(!valid(q.owner,q.level)){radials.remove(q);continue;}while(q.ring<4&&now(q.owner)>=q.starts+q.ring*6)radialGround(q);if(q.ring>=4)radials.remove(q);}
+
         for(Pulse q:List.copyOf(pulses)){
             if(!valid(q.owner,q.level)||q.age>=q.duration||q.visual==null||q.visual.isRemoved()){if(q.visual!=null)q.visual.discard();pulses.remove(q);continue;}
             Vec3 from=q.from.lerp(q.to,q.age/(double)q.duration),next=q.from.lerp(q.to,++q.age/(double)q.duration);
@@ -122,7 +129,7 @@ public final class Tremor {
             Vec3 motion=toward.normalize().scale(Math.min(.75,distance));if(!c.level.getWorldBorder().isWithinBounds(BlockPos.containing(e.position().add(motion)))||StringFruit.blocked(e,e.position().add(motion))||!c.level.noCollision(e,e.getBoundingBox().expandTowards(motion))){endCarry(c);continue;}
             moving.add(e.getUUID());try{e.move(MoverType.SELF,motion);e.setDeltaMovement(Vec3.ZERO);e.resetFallDistance();if(e instanceof ServerPlayer sp)sp.teleportTo(c.level,e.getX(),e.getY(),e.getZ(),Set.of(),e.getYRot(),e.getXRot(),false);}finally{moving.remove(e.getUUID());}
         }
-        for(Ground g:List.copyOf(groundPieces)){var d=g.display();if(d.isRemoved()||now(d)-g.starts()>=g.duration()){d.discard();groundPieces.remove(g);continue;}float lift=(float)Math.sin((now(d)-g.starts())/(double)g.duration()*Math.PI);d.snapTo(g.base().x,g.base().y+lift*.8,g.base().z);d.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(-g.size()/2,0,-g.size()/2),new org.joml.Quaternionf().rotationXYZ(lift*.24f,0,lift*.17f),new org.joml.Vector3f(g.size(),.3f,g.size()),new org.joml.Quaternionf()));}
+        for(Ground g:List.copyOf(groundPieces)){var d=g.display();if(d.isRemoved()||now(d)-g.starts()>=g.duration()){d.discard();groundPieces.remove(g);continue;}float lift=(float)Math.sin((now(d)-g.starts())/(double)g.duration()*Math.PI);d.snapTo(g.base().x,g.base().y+lift*g.lift(),g.base().z);d.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(-g.size()/2,0,-g.size()/2),new org.joml.Quaternionf().rotationXYZ(lift*.24f,0,lift*.17f),new org.joml.Vector3f(g.size(),.3f,g.size()),new org.joml.Quaternionf()));}
         for(Slam s:List.copyOf(slams.values())){Player p=s.owner;if(!valid(p,s.level)||now(p)>=s.ends){endSlam(s,false);continue;}Vec3 motion=new Vec3(0,s.age++<8?.55:-1.1,0);boolean blocked=!s.level.noCollision(p,p.getBoundingBox().expandTowards(motion))||StringFruit.blocked(p,p.position().add(motion))||p.getY()+motion.y<s.level.getMinY()||p.getY()+motion.y+p.getBbHeight()>=s.level.getMaxY();
             if(blocked){if(motion.y<0)endSlam(s,true);else s.age=8;continue;}moving.add(p.getUUID());try{p.move(MoverType.SELF,motion);p.setDeltaMovement(Vec3.ZERO);p.resetFallDistance();if(p instanceof ServerPlayer sp)sp.teleportTo(s.level,p.getX(),p.getY(),p.getZ(),Set.of(),p.getYRot(),p.getXRot(),false);}finally{moving.remove(p.getUUID());}
             if(s.age>=320)endSlam(s,false);
@@ -131,8 +138,8 @@ public final class Tremor {
     }
     private static void endSlam(Slam s,boolean impact){slams.remove(s.owner.getUUID());landing.put(s.owner.getUUID(),now(s.owner)+200);s.owner.setDeltaMovement(Vec3.ZERO);s.owner.resetFallDistance();if(impact)burst(s.owner,s.owner.position().add(0,1,0),scale(s.owner,5,8,12),scale(s.owner,8,12,18));}
     public static void tick(MinecraftServer server){for(var p:server.getPlayerList().getPlayers())if(unlocked(p)||states.containsKey(p.getUUID()))tickPlayer(p);tickEffects();landing.entrySet().removeIf(e->server.overworld().getGameTime()>=e.getValue());}
-    public static void forget(Player p){for(Carry c:List.copyOf(carries.values()))if(c.owner==p||c.target==p)endCarry(c);for(var id:List.copyOf(visualOwners.keySet()))if(p.getUUID().equals(visualOwners.get(id))){Visual v=visuals.remove(id);if(v!=null)v.display().discard();visualOwners.remove(id);}
+    public static void forget(Player p){radials.removeIf(q->q.owner==p);for(Carry c:List.copyOf(carries.values()))if(c.owner==p||c.target==p)endCarry(c);for(var id:List.copyOf(visualOwners.keySet()))if(p.getUUID().equals(visualOwners.get(id))){Visual v=visuals.remove(id);if(v!=null)v.display().discard();visualOwners.remove(id);}
         cancelInput(p);states.remove(p.getUUID());Slam s=slams.get(p.getUUID());if(s!=null)endSlam(s,false);for(Pulse q:List.copyOf(pulses))if(q.owner==p){if(q.visual!=null)q.visual.discard();pulses.remove(q);}}
-    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Pulse q:pulses)if(q.visual!=null)q.visual.discard();pulses.clear();slams.clear();for(Carry c:List.copyOf(carries.values()))endCarry(c);carries.clear();groundPieces.clear();for(Visual v:visuals.values())v.display().discard();visuals.clear();visualOwners.clear();landing.clear();moving.clear();}
+    public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Pulse q:pulses)if(q.visual!=null)q.visual.discard();pulses.clear();radials.clear();slams.clear();for(Carry c:List.copyOf(carries.values()))endCarry(c);carries.clear();groundPieces.clear();for(Visual v:visuals.values())v.display().discard();visuals.clear();visualOwners.clear();landing.clear();moving.clear();}
     public static String status(Player p){return unlocked(p)?"Tremor tier "+tier(p)+"/3 | Z Quake Punch/Gekishin | X Shock Ball/Seaquake | C Gurash/Island Shaking":"Tremor locked";}
 }
