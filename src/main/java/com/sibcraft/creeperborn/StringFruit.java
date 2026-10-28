@@ -74,7 +74,7 @@ public final class StringFruit {
             boolean awakened=awakened(p);
             if(hold&&awakened&&held<40)return "God Thread needs a 2-second charge.";
             if(!fuel(p,hold?2:1))return "Eat before using String.";
-            Vec3 from=p.getEyePosition(),end=aim(p,range(p));boolean god=hold&&awakened;
+            LivingEntity aimed=target(p,range(p));Vec3 from=p.getEyePosition(),end=aimed==null?aim(p,range(p)):aimed.getEyePosition();boolean god=hold&&awakened;
             if(hold){
                 Set<UUID> struck=new HashSet<>();int count=god?6:1;Cage cage=cages.get(p.getUUID());
                 for(int i=0;i<count;i++){
