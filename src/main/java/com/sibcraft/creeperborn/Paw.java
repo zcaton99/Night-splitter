@@ -76,7 +76,7 @@ public final class Paw {
         if(now(p)<s.ready[slot])return "Paw move recovering.";
         if(move==0){
             if(hold&&held<40)return "Ursus Shock needs a two-second charge.";if(!fuel(p,hold?3:1))return "Eat before using Paw.";
-            if(hold){Vec3 end=aim(p,scale(p,12,18,24));double radius=scale(p,4,7,10);flash(s.level,end,p.getLookAngle(),(float)radius,2,18);
+            if(hold){LivingEntity focus=target(p,scale(p,12,18,24));Vec3 end=focus==null?aim(p,scale(p,12,18,24)):focus.getEyePosition();double radius=scale(p,4,7,10);flash(s.level,end,p.getLookAngle(),(float)radius,2,18);
                 for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(end,end).inflate(radius)))if(enemy(p,e)&&e.position().distanceToSqr(end)<radius*radius&&p.hasLineOfSight(e)){hit(p,e,scale(p,8,12,18));e.setDeltaMovement(e.position().subtract(end).normalize().scale(1.2).add(0,.45,0));}
             }else shoot(p,p.getEyePosition().add(p.getLookAngle().scale(.7)),p.getLookAngle(),scale(p,4,6,8),false,scale(p,24,32,40));
             s.ready[slot]=now(p)+cooldown(p,hold?200:12);credit(p);return hold?"Ursus Shock!":"Paw Cannon!";

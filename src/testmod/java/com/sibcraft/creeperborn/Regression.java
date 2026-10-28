@@ -1055,6 +1055,8 @@ public final class Regression implements ModInitializer {
         StringFruit.cast(p,1,0);
         for(int x=-24;x<=8;x++)for(int z=0;z<=30;z++)level.setBlockAndUpdate(BlockPos.containing(x,y+17,z),Blocks.STONE.defaultBlockState());
         check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.awakened(p),"Own Birdcage enables awakened attacks");
+        check(StringFruit.cast(p,0,0).equals("Five-Color Slash!"),"Awakened Five-Color Claw casts inside Birdcage");
+        for(int color=3;color<=7;color++){String name="cb_string_beam_"+color;check(level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,p.getBoundingBox().inflate(50)).stream().anyMatch(d->d.getCustomName()!=null&&d.getCustomName().getString().equals(name)),"Awakened claw retains colored strand "+color);}
         var surface=StringFruit.terrainOrigin(p,t.getEyePosition(),0,6);
         check(surface!=null&&surface.y<t.getEyeY(),"Awakened attack anchors to real ground");
         check(StringFruit.cast(p,0,39).contains("2-second"),"God Thread requires full charge in Birdcage");
@@ -1133,7 +1135,7 @@ public final class Regression implements ModInitializer {
         Zombie t=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);t.snapTo(-8,y+18,14);t.setNoAi(true);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(100);t.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);t.setHealth(100);level.addFreshEntity(t);
         check(Paw.cast(p,0,0).equals("Paw Cannon!"),"Paw Cannon fires");for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
         check(t.getHealth()==96&&Paw.cast(p,0,0).contains("recovering"),"Cannon actually damages aimed target and respects cooldown");
-        check(Paw.cast(p,0,39).contains("two-second"),"Ursus Shock needs full compression");
+        t.discard();check(Paw.cast(p,0,39).contains("two-second"),"Ursus Shock needs full compression");
         Zombie shockTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);shockTarget.snapTo(-8,y+18,20);shockTarget.setNoAi(true);shockTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(shockTarget);String shockResult=Paw.cast(p,0,40);check(shockResult.equals("Ursus Shock!")&&shockTarget.getHealth()==12,"Fully compressed Ursus Shock deals actual area damage: "+shockResult+" health="+shockTarget.getHealth()+" sight="+p.hasLineOfSight(shockTarget));shockTarget.discard();
         Player attacker=player(level);attacker.snapTo(-8,y+18,10);check(Paw.cast(p,2,0).contains("Guard"),"Paw guard opens timed window");
         var arrow=EntityTypes.ARROW.create(level,EntitySpawnReason.EVENT);arrow.snapTo(-8,y+19,10);arrow.setOwner(attacker);arrow.setDeltaMovement(0,0,-1);level.addFreshEntity(arrow);
