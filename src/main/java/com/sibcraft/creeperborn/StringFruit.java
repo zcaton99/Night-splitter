@@ -280,7 +280,7 @@ public final class StringFruit {
 
     private static double boundary(Cage c){
         if(c.closing==0)return c.radius;long age=now(c.owner)-c.closing;
-        if(age>=220)return 0;return c.radius+(25-c.radius)*Math.min(1,age/200.0);
+        if(age>=200)return 0;return c.radius+(25-c.radius)*Math.min(1,age/200.0);
     }
     public static double activeCageRadius(Player p){Cage c=cages.get(p.getUUID());return c==null?0:boundary(c);}
     private static void collectOccupants(Cage c){
@@ -291,7 +291,7 @@ public final class StringFruit {
     }
     /** Collision-respecting pull; no teleport through terrain and no crushing damage. */
     private static void pullOccupants(Cage c){
-        double radius=boundary(c)-1;
+        double radius=Math.max(25,boundary(c))-1;
         for(Entity e:List.copyOf(c.occupants.values())){
             if(!e.isAlive()||e.isRemoved()||e.level()!=c.level||e.isPassenger()||e.position().distanceTo(c.center)<=radius)continue;
             Vec3 toward=c.center.subtract(e.position()).normalize(),before=e.position(),motion=toward.scale(.65);
@@ -325,7 +325,7 @@ public final class StringFruit {
                 long age=now(c.owner)-c.closing;
                 if(age>=260){removeCage(c);continue;}
                 if(age<200){scale(c.visual,(float)boundary(c));collectOccupants(c);pullOccupants(c);}
-                else if(age<220){scale(c.visual,(float)(25*(1-(age-200)/20.0)));pullOccupants(c);}
+                else if(age<220){scale(c.visual,(float)(25*(1-(age-200)/20.0)));if(age==200)pullOccupants(c);}
                 else{
                     if(c.visual!=null){c.visual.discard();c.visual=null;}
                     double lift=(age-220)*1.2;Vec3 base=c.center.add(0,lift,0);
