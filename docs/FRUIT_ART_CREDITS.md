@@ -19,3 +19,5 @@ Each fruit has its own Minecraft item model in inventory, in hand and as a dropp
 String: https://onepiecedevilfruits.com/fruit/string-string-fruit/ — original image https://cd-opf.pages.dev/fruits/3e6cecd7-2a21-4429-a0ea-472655935312.webp
 
 Paw-Paw: https://onepiecedevilfruits.com/fruit/paw-paw-fruit/ — original image https://cd-opf.pages.dev/fruits/b19d720c-6991-4445-872b-3580a019c394.webp
+
+Tremor (alpha.51): original code-native vector icon, pale blue spiral fruit with a luminous branching fracture; editable source `docs/fruit-tremor.svg`. Rasterized locally for the Minecraft item texture.
