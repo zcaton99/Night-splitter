@@ -79,10 +79,10 @@ public final class ClientSmoke implements ClientModInitializer{
                 com.sibcraft.creeperborn.client.GravityRenderer.submit(2,new PoseStack(),nodes,15);
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$gravity(1);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$gravity()!=1)throw new AssertionError("Gravity render state missing");
-                for(int kind=1;kind<=11;kind++)com.sibcraft.creeperborn.client.StringRenderer.submit(kind,new PoseStack(),nodes,10);
+                for(int kind=1;kind<=13;kind++)com.sibcraft.creeperborn.client.StringRenderer.submit(kind,new PoseStack(),nodes,10);
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$stringKind(4);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$stringKind()!=4)throw new AssertionError("String state mixin");
-                if(parts[0]!=141)throw new AssertionError("Expected 141 model submissions, got "+parts[0]);
+                if(parts[0]!=153)throw new AssertionError("Expected 153 model submissions, got "+parts[0]);
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");

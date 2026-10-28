@@ -1053,13 +1053,20 @@ public final class Regression implements ModInitializer {
         check(StringFruit.glideVelocity(p,anchor,0,true).lengthSqr()==0,"Glide neutral input hovers");
         check(StringFruit.glideVelocity(p,anchor,1,true).z>.6&&StringFruit.glideVelocity(p,anchor,1,false).lengthSqr()==0,"Glide W moves and stale input stops");
         StringFruit.cast(p,1,0);
-        for(int x=-16;x<=0;x++)for(int z=8;z<=22;z++)level.setBlockAndUpdate(BlockPos.containing(x,y+17,z),Blocks.STONE.defaultBlockState());
+        for(int x=-24;x<=8;x++)for(int z=0;z<=30;z++)level.setBlockAndUpdate(BlockPos.containing(x,y+17,z),Blocks.STONE.defaultBlockState());
         check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.awakened(p),"Own Birdcage enables awakened attacks");
         var surface=StringFruit.terrainOrigin(p,t.getEyePosition(),0,6);
         check(surface!=null&&surface.y<t.getEyeY(),"Awakened attack anchors to real ground");
         check(StringFruit.cast(p,0,39).contains("2-second"),"God Thread requires full charge in Birdcage");
         clock(level,level.getGameTime()+200);t.setHealth(100);t.damageCooldownTime=0;
-        check(StringFruit.cast(p,0,40).equals("God Thread!"),"Awakening upgrades held Z to God Thread");
+        StringFruit.press(p,0);
+        for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);StringFruit.heartbeat(p);StringFruit.tickPlayer(p);}
+        check(StringFruit.chargeThreadCount(p)>=18&&t.getHealth()==100,"God Thread builds many real surface bundles without pre-release damage");
+        int charging=StringFruit.chargeThreadCount(p);
+        for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);StringFruit.heartbeat(p);StringFruit.tickPlayer(p);}
+        check(StringFruit.chargeThreadCount(p)==charging&&charging<=24,"Holding charge reuses a bounded field of threads");
+        StringFruit.release(p,0);
+        check(StringFruit.activeGodSpears(p)==charging&&StringFruit.chargeThreadCount(p)==0,"God Thread launches the gathered environment bundles and clears charge displays");
         for(int i=0;i<26;i++){clock(level,level.getGameTime()+1);StringFruit.tickEffects();}
         check(t.getHealth()<100&&t.getHealth()>=76,"God Thread is a real bounded damaging spear barrage");
         StringFruit.cast(p,2,7);clock(level,level.getGameTime()+200);StringFruit.tickEffects();
@@ -1078,6 +1085,9 @@ public final class Regression implements ModInitializer {
         StringFruit.cancelInput(p);check(!StringFruit.controlling(p),"Cancel restores camera control state");
         clock(level,level.getGameTime()+700);p.getFoodData().setFoodLevel(20);
         check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.cageCount()==1,"Birdcage creates persistent arena");
+        StringFruit.press(p,0);clock(level,level.getGameTime()+8);StringFruit.heartbeat(p);StringFruit.tickPlayer(p);
+        check(StringFruit.chargeThreadCount(p)>0,"A later God Thread charge creates fresh environmental threads");
+        StringFruit.cancelInput(p);check(StringFruit.chargeThreadCount(p)==0,"Cancel removes all gathered threads");
         var origin=p.position();p.setPos(origin.x+110,origin.y,origin.z);check(p.position().equals(origin),"Caster cannot escape own cage via absolute position");
         Player enemy=player(level);enemy.snapTo(origin.x+5,origin.y,origin.z);var trapped=enemy.position();enemy.setPos(origin.x+110,origin.y,origin.z);check(enemy.position().equals(trapped),"Enemy cannot teleport across cage");
         Player outsider=player(level);outsider.snapTo(origin.x+110,origin.y,origin.z); // initial location may be inside; gate must prevent crossing as well.

@@ -14,8 +14,16 @@ public final class StringRenderer {
     private static final Identifier[] SLASH={color("red"),color("yellow"),color("lime"),color("light_blue"),color("magenta")};
     private static Identifier color(String name){return Identifier.withDefaultNamespace("textures/block/"+name+"_concrete.png");}
     private static ModelPart bake(MeshDefinition m){return LayerDefinition.create(m,16,16).bakeRoot();}
-    private static final ModelPart BEAM=beam(false),CORE=beam(true),CAGE=cage(),WEB=web(),KNIGHT=knight(false),OUTLINE=knight(true);
+    private static final ModelPart BEAM=beam(false),CORE=beam(true),CAGE=cage(),WEB=web(),KNIGHT=knight(false),OUTLINE=knight(true),CURVE=curve();
     private static ModelPart beam(boolean core){MeshDefinition m=new MeshDefinition();m.getRoot().addOrReplaceChild("thread",CubeListBuilder.create().texOffs(0,0).addBox(core?-4:-8,0,core?-4:-8,core?8:16,16,core?8:16),PartPose.ZERO);return bake(m);}
+    private static ModelPart curve(){
+        MeshDefinition m=new MeshDefinition();var root=m.getRoot();
+        for(int i=0;i<8;i++){
+            float a=i*2,b=(i+1)*2;
+            line(root,"bend"+i,new Vector3f((float)Math.sin(i*.8)*1.1f,a,(float)Math.cos(i*.8)*.7f),new Vector3f((float)Math.sin((i+1)*.8)*1.1f,b,(float)Math.cos((i+1)*.8)*.7f),.42f);
+        }
+        return bake(m);
+    }
     private static void line(PartDefinition root,String name,Vector3f a,Vector3f b,float width){Vector3f d=new Vector3f(b).sub(a);float length=d.length();Vector3f angles=new Quaternionf().rotationTo(new Vector3f(0,1,0),d.normalize()).getEulerAnglesXYZ(new Vector3f());root.addOrReplaceChild(name,CubeListBuilder.create().texOffs(0,0).addBox(-width/2,0,-width/2,width,length,width),PartPose.offsetAndRotation(a.x,a.y,a.z,angles.x,angles.y,angles.z));}
     private static Vector3f sphere(double a,double b){return new Vector3f((float)(16*Math.sin(b)*Math.cos(a)),(float)(16*Math.cos(b)),(float)(16*Math.sin(b)*Math.sin(a)));}
     private static ModelPart cage(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();int n=0;
@@ -31,11 +39,21 @@ public final class StringRenderer {
         return bake(m);}
     private static void draw(ModelPart model,Identifier texture,PoseStack poses,SubmitNodeCollector nodes,boolean glow){nodes.submitModelPart(model,poses,glow?RenderTypes.eyes(texture):RenderTypes.entityTranslucent(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
     public static void submit(int kind,PoseStack poses,SubmitNodeCollector nodes,float age){
+        if(kind==12||kind==13){
+            for(int i=0;i<6;i++){
+                poses.pushPose();double phase=age*(kind==12?.17:.3)+i*1.047;
+                poses.rotate(new Quaternionf().rotationY(i*1.047f+(float)Math.sin(phase)*.2f));
+                poses.translate(.23,0,0);
+                poses.rotate(new Quaternionf().rotationZ((float)Math.sin(phase)*.075f));
+                draw(CURVE,WHITE,poses,nodes,true);poses.popPose();
+            }
+            return;
+        }
         if(kind>=7&&kind<=11){draw(BEAM,SLASH[kind-7],poses,nodes,true);return;}
         if(kind==4){draw(CAGE,WHITE,poses,nodes,true);return;}if(kind==5){poses.pushPose();poses.rotate(new Quaternionf().rotationY(age*.03f));draw(WEB,WHITE,poses,nodes,true);poses.popPose();return;}
         if(kind==6){draw(OUTLINE,BLACK,poses,nodes,false);draw(KNIGHT,WHITE,poses,nodes,true);return;}
         draw(BEAM,kind==2?PURPLE:kind==3?BLACK:WHITE,poses,nodes,kind!=3);if(kind==2||kind==3)draw(CORE,WHITE,poses,nodes,true);
     }
-    public static int kind(String name){return name.equals("cb_string_cage")?4:name.equals("cb_string_web")?5:name.equals("cb_string_knight")?6:name.equals("cb_string_beam_0")?1:name.equals("cb_string_beam_1")?2:name.equals("cb_string_beam_2")?3:name.equals("cb_string_beam_3")?7:name.equals("cb_string_beam_4")?8:name.equals("cb_string_beam_5")?9:name.equals("cb_string_beam_6")?10:name.equals("cb_string_beam_7")?11:0;}
-    public static void validate(){if(kind("cb_string_cage")!=4||kind("ordinary")!=0)throw new AssertionError("String visual names");for(int i=0;i<5;i++)if(kind("cb_string_beam_"+(i+3))!=7+i)throw new AssertionError("Five slash colors");BEAM.getChild("thread");CAGE.getChild("c0");WEB.getChild("w0");KNIGHT.getChild("weave0");OUTLINE.getChild("outline0");}
+    public static int kind(String name){return name.equals("cb_string_cage")?4:name.equals("cb_string_web")?5:name.equals("cb_string_knight")?6:name.equals("cb_string_beam_0")?1:name.equals("cb_string_beam_1")?2:name.equals("cb_string_beam_2")?3:name.equals("cb_string_beam_3")?7:name.equals("cb_string_beam_4")?8:name.equals("cb_string_beam_5")?9:name.equals("cb_string_beam_6")?10:name.equals("cb_string_beam_7")?11:name.equals("cb_string_beam_8")?12:name.equals("cb_string_beam_9")?13:0;}
+    public static void validate(){if(kind("cb_string_cage")!=4||kind("ordinary")!=0)throw new AssertionError("String visual names");for(int i=0;i<5;i++)if(kind("cb_string_beam_"+(i+3))!=7+i)throw new AssertionError("Five slash colors");if(kind("cb_string_beam_8")!=12||kind("cb_string_beam_9")!=13)throw new AssertionError("Environmental bundle models");CURVE.getChild("bend0");BEAM.getChild("thread");CAGE.getChild("c0");WEB.getChild("w0");KNIGHT.getChild("weave0");OUTLINE.getChild("outline0");}
 }
