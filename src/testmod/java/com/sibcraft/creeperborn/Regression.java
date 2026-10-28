@@ -1065,9 +1065,9 @@ public final class Regression implements ModInitializer {
         StringFruit.cast(p,2,7);clock(level,level.getGameTime()+200);StringFruit.tickEffects();
         check(!StringFruit.awakened(p),"Closing cage returns Z to normal attacks");
         Zombie parasiteVictim=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);parasiteVictim.snapTo(t.getX(),t.getY(),t.getZ()+2);parasiteVictim.setNoAi(true);parasiteVictim.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(parasiteVictim);
-        check(StringFruit.possess(p,t,100),"Parasite attack test takes control");
+        t.setYHeadRot(180);check(StringFruit.possess(p,t,100),"Parasite attack test takes control");
         StringFruit.input(p,new StringControlPayload(t.getId(),0,0,0));StringFruit.input(p,new StringControlPayload(t.getId(),32,0,0));float hp=parasiteVictim.getHealth();StringFruit.tickPlayer(p);
-        check(parasiteVictim.getHealth()<hp,"Parasite attack input damages aimed enemy");StringFruit.cancelInput(p);parasiteVictim.discard();
+        check(t.getLookAngle().z>.99&&t.getYHeadRot()==0,"Puppet head, camera and attack aim follow input yaw");check(parasiteVictim.getHealth()<hp,"Parasite attack input damages aimed enemy");StringFruit.cancelInput(p);parasiteVictim.discard();
         p.getFoodData().setFoodLevel(20);check(StringFruit.cast(p,2,0).contains("summoned"),"Black Knight and Spider Web summon together");
         check(StringFruit.damage(p,p.damageSources().playerAttack(player(level)),8)==2,"Spider Web reduces incoming entity damage by seventy-five percent");
         check(StringFruit.cast(p,2,0).contains("control")&&StringFruit.controlling(p),"C pilots the existing Knight");

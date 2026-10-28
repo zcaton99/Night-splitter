@@ -149,7 +149,7 @@ public final class StringFruit {
     private static void drive(State s){
         LivingEntity t=s.puppet;Player p=s.owner;if(t==null)return;
         if(!t.isAlive()||t.isRemoved()||t.level()!=p.level()||now(p)>=s.controlEnds||now(p)>s.inputUntil||p.distanceToSqr(t)>Math.pow(range(p)*1.5,2)||t instanceof Player tp&&(Dark.suppressed(tp)||WaterRules.suppressed(tp))){releaseControl(s);return;}
-        t.setYRot(s.yaw);t.setXRot(s.pitch);float forward=((s.flags&1)!=0?1:0)-((s.flags&2)!=0?1:0),side=((s.flags&8)!=0?1:0)-((s.flags&4)!=0?1:0);
+        t.setYRot(s.yaw);t.setYHeadRot(s.yaw);t.setYBodyRot(s.yaw);t.setXRot(s.pitch);float forward=((s.flags&1)!=0?1:0)-((s.flags&2)!=0?1:0),side=((s.flags&8)!=0?1:0)-((s.flags&4)!=0?1:0);
         Vec3 velocity=controlDirection(s.yaw,forward,side);
         if(velocity.lengthSqr()>0)velocity=velocity.normalize().scale(.24);
         double vy=t.onGround()?((s.flags&16)!=0?.42:0):Math.max(-.8,t.getDeltaMovement().y-.08);
