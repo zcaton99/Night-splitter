@@ -20,8 +20,8 @@ public final class PawRenderer {
     public static int kind(String name){return name.equals("cb_paw_1")?1:name.equals("cb_paw_2")?2:name.equals("cb_paw_3")?3:name.equals("cb_paw_4")?4:name.equals("cb_paw_5")?5:0;}
     public static void submit(int kind,PoseStack poses,SubmitNodeCollector nodes,float age){
         poses.pushPose();float pulse=kind==4?1+(float)Math.sin(age*.35)*.09f:1;poses.scale(pulse,pulse,pulse);
-        draw(PAW,kind==4?RED:kind==2||kind==5?WHITE:PINK,poses,nodes);
-        if(kind==2||kind==3||kind==4){poses.rotate(new Quaternionf().rotationZ(age*(kind==4?.018f:.05f)));float radius=1+(float)Math.sin(age*.16)*.1f;poses.scale(radius,radius,1);draw(RING,kind==4?RED:WHITE,poses,nodes);}
+        poses.pushPose();draw(PAW,kind==4?RED:kind==2||kind==5?WHITE:PINK,poses,nodes);poses.popPose();
+        if(kind==2||kind==3||kind==4){poses.pushPose();poses.rotate(new Quaternionf().rotationZ(age*(kind==4?.018f:.05f)));float radius=1+(float)Math.sin(age*.16)*.1f;poses.scale(radius,radius,1);draw(RING,kind==4?RED:WHITE,poses,nodes);poses.popPose();}
         poses.popPose();
     }
     public static void validate(){PAW.getChild("palm");PAW.getChild("toe3");RING.getChild("air31");for(int i=1;i<=5;i++)if(kind("cb_paw_"+i)!=i)throw new AssertionError("Paw effect mapping");}

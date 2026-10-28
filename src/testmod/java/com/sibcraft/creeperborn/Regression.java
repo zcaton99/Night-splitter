@@ -1148,11 +1148,24 @@ public final class Regression implements ModInitializer {
         var bubble=Paw.bubblePosition(p);check(bubble!=null,"Holding C creates a real pain bubble");p.setYRot(90);p.setYHeadRot(90);
         for(int i=0;i<5;i++){clock(level,level.getGameTime()+1);Paw.heartbeat(p);Paw.tickPlayer(p);}
         check(Paw.bubblePosition(p)!=null&&Paw.bubblePosition(p).x<bubble.x-1,"Holding C steers bubble using player aim while body stays free");
-        Zombie painTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);var at=Paw.bubblePosition(p).add(p.getLookAngle().scale(3));painTarget.snapTo(at.x,at.y,at.z);painTarget.setNoAi(true);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(painTarget);
+        Zombie painTarget=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);var at=p.position().add(p.getLookAngle().scale(14));painTarget.snapTo(at.x,at.y,at.z);painTarget.setNoAi(true);painTarget.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(painTarget);
         Paw.release(p,2);check(Paw.bubblePosition(p)==null&&Paw.extract(p).contains("recovering"),"Release fires bubble and saved heal cooldown prevents immediate refill");
-        for(int i=0;i<6;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}check(painTarget.getHealth()<20&&painTarget.getHealth()>=4,"Released guided pain bubble actually hits with bounded damage");painTarget.discard();
-        var before=p.position();check(Paw.cast(p,1,0).equals("Paw Step!"),"Paw Step starts self repulsion");for(int i=0;i<25;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
-        check(p.position().distanceTo(before)>19&&!Paw.airborne(p),"Mastered Paw Step moves the real player and ends cleanly");
+        for(int i=0;i<20;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}check(painTarget.getHealth()<20&&painTarget.getHealth()>=4,"Released guided pain bubble actually hits with bounded damage");painTarget.discard();
+        check(Paw.stepCapacity(p)==5&&Paw.stepDistance(p)==50&&Paw.stepCharges(p)==5,"Master has five fifty-block steps");
+        var before=p.position();check(Paw.cast(p,1,0).startsWith("Paw Step!"),"Paw Step starts self repulsion");for(int i=0;i<40;i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+        check(Math.abs(p.position().distanceTo(before)-50)<.1&&!Paw.airborne(p),"Mastered Paw Step moves the real player and ends cleanly");
+        p.getFoodData().setFoodLevel(20);
+        for(int i=0;i<4;i++)check(Paw.cast(p,1,0).startsWith("Paw Step!"),"Stored steps chain in midair");
+        check(Paw.stepCharges(p)==0&&Paw.cast(p,1,0).contains("recovering"),"Five steps exhaust the stored charges");
+        Paw.forget(p);check(Paw.stepCharges(p)==0,"Logout cannot refill Paw Step charges");
+        clock(level,level.getGameTime()+20);check(Paw.stepCharges(p)==1,"One step recharges after three seconds from first spend");
+        clock(level,level.getGameTime()+240);check(Paw.stepCharges(p)==5,"Stored step charges refill to capacity");
+        for(Vec3 direction:new Vec3[]{new Vec3(1,.5,1),new Vec3(-1,.7,-1),new Vec3(0,1,0)}){
+            var q=Paw.orientation(direction);var right=q.transform(new org.joml.Vector3f(1,0,0));var forward=q.transform(new org.joml.Vector3f(0,0,1));
+            check(Math.abs(right.y)<.0001&&forward.distance(new org.joml.Vector3f((float)direction.normalize().x,(float)direction.normalize().y,(float)direction.normalize().z))<.0001,"Paw stays upright and follows aim without roll");
+        }
+        check(Paw.guardTicks(p)==100,"Mastered Repel Guard lasts five seconds");
+        clock(level,level.getGameTime()+200);Paw.tickEffects();check(Paw.visualCount()==0,"All abandoned charge, cannon and impact visuals expire");
         Zombie launched=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);launched.snapTo(-8,y+18,18);launched.setNoAi(true);level.addFreshEntity(launched);p.setYRot(0);p.setYHeadRot(0);var origin=launched.position();
         check(Paw.startFlight(p,launched,20,false)&&Paw.locked(launched),"Paw Launch takes bounded flight authority without changing no-gravity state");
         float launchHealth=launched.getHealth();launched.hurtServer(level,p.damageSources().fall(),50);check(launched.getHealth()==launchHealth,"Launched mobs have actual fall damage immunity");double maxY=origin.y;
