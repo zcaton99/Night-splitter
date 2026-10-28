@@ -21,3 +21,5 @@ String: https://onepiecedevilfruits.com/fruit/string-string-fruit/ — original 
 Paw-Paw: https://onepiecedevilfruits.com/fruit/paw-paw-fruit/ — original image https://cd-opf.pages.dev/fruits/b19d720c-6991-4445-872b-3580a019c394.webp
 
 Tremor (alpha.51): original code-native vector icon, pale blue spiral fruit with a luminous branching fracture; editable source `docs/fruit-tremor.svg`. Rasterized locally for the Minecraft item texture.
+
+Love and Sand (alpha.54): original code-native vector fruit icons, with editable sources `docs/fruit-love.svg` and `docs/fruit-sand.svg`; locally rasterized for item textures. Original heart, statue, sand-vortex and coffin meshes use Minecraft block textures.
