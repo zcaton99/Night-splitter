@@ -113,7 +113,7 @@ public final class Paw {
         if(!selected(p)){cancelInput(p);clearBubble(s);s.guard=0;}if(s.held>=0&&now>s.heartbeat)cancelInput(p);
         if(s.held==2&&now-s.press>=20&&s.bubble==null&&!s.extracting){String result=extract(p);if(s.bubble==null)s.extracting=true;Creeperborn.say(p,result);}
         if(s.held==2&&s.bubble!=null&&now-s.press>=7)s.guiding=true;guide(s);
-        if(s.held==0&&now-s.press>=7&&now<s.ready[1]){}else if(s.held==0&&now-s.press>=7){
+        if(s.held==0&&now-s.press>=7&&now>=s.ready[1]){
             float size=(float)(3.2-2.5*Math.min(1,(now-s.press)/40.0));Vec3 at=p.getEyePosition().add(p.getLookAngle().scale(1.8));
             if(s.charge==null)s.charge=display(s.level,at,p.getLookAngle(),size,2);else position(s.charge,at,p.getLookAngle(),size);
             if(now%5==0)Creeperborn.say(p,"Ursus Shock "+Math.min(100,(now-s.press)*100/40)+"% — release Z");
@@ -137,7 +137,7 @@ public final class Paw {
         else{if(e.onGround()){endFlight(f);return;}motion=new Vec3(0,-Math.min(2.5,e.getY()-f.level.getMinY()+1),0);}
         BlockPos block=BlockPos.containing(e.position().add(motion));if(!f.level.getWorldBorder().isWithinBounds(block)||block.getY()<f.level.getMinY()||block.getY()+e.getBbHeight()>=f.level.getMaxY()){endFlight(f);return;}
         // Short-lived native teleport tickets expire automatically, without persistent forced chunks.
-        f.level.getChunkSource().addTicketWithRadius(TicketType.POST_TELEPORT,new ChunkPos(block),2);f.level.getChunk(block.getX()>>4,block.getZ()>>4);
+        f.level.getChunkSource().addTicketWithRadius(TicketType.POST_TELEPORT,new ChunkPos(block.getX()>>4,block.getZ()>>4),2);f.level.getChunk(block.getX()>>4,block.getZ()>>4);
         if(StringFruit.blocked(e,e.position().add(motion))||!f.level.noCollision(e,e.getBoundingBox().expandTowards(motion))){if(f.phase==2){motion=new Vec3(0,-.15,0);}else{f.phase=2;return;}}
         moving.add(e.getUUID());try{Vec3 before=e.position();e.move(MoverType.SELF,motion);e.setDeltaMovement(Vec3.ZERO);e.resetFallDistance();if(e instanceof ServerPlayer sp)sp.teleportTo(f.level,e.getX(),e.getY(),e.getZ(),Set.of(),e.getYRot(),e.getXRot(),false);if(f.phase==1)f.remaining=Math.max(0,f.remaining-e.position().distanceTo(before));if(f.phase==2&&e.position().distanceToSqr(before)<.0001)endFlight(f);}finally{moving.remove(e.getUUID());}
         if(now(e)%5==0)flash(f.level,e.position().add(0,1,0),f.direction,.8f,5,12);

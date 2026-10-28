@@ -27,6 +27,12 @@ jobs:
       - name: Build mod
         run: bash gradlew build --stacktrace
 
+      - name: Inspect flight chunk ticket API
+        if: failure()
+        run: |
+          CP=$(find "$HOME/.gradle/caches" -type f -name '*.jar' -printf '%p:')
+          javap -classpath "$CP" net.minecraft.server.level.TicketType net.minecraft.server.level.TicketTypes net.minecraft.server.level.ServerChunkCache || true
+
       - name: Run server regression suite
         timeout-minutes: 5
         run: |
