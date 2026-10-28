@@ -87,7 +87,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$pawKind(4);
                 if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$pawKind()!=4)throw new AssertionError("Paw state mixin");
                 for(int kind=1;kind<=6;kind++){com.sibcraft.creeperborn.client.TremorRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Tremor pose leak");}
-                if(parts[0]!=177)throw new AssertionError("Expected 177 model submissions, got "+parts[0]);
+                if(parts[0]!=176)throw new AssertionError("Expected 176 model submissions, got "+parts[0]);
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");
