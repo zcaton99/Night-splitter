@@ -1158,6 +1158,12 @@ public final class Regression implements ModInitializer {
         float launchHealth=launched.getHealth();launched.hurtServer(level,p.damageSources().fall(),50);check(launched.getHealth()==launchHealth,"Launched mobs have actual fall damage immunity");double maxY=origin.y;
         for(int i=0;i<160&&Paw.airborne(launched);i++){clock(level,level.getGameTime()+1);Paw.tickEffects();maxY=Math.max(maxY,launched.getY());}
         check(maxY>origin.y+8&&launched.getZ()>origin.z+19&&!Paw.airborne(launched)&&!launched.isNoGravity(),"Real launch ascends, travels in facing direction, descends and restores native motion");launched.discard();
+        for(int distance:new int[]{200,300}){
+            Zombie far=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);far.snapTo(-8,y+18,18);far.setNoAi(true);level.addFreshEntity(far);var start=far.position();
+            check(Paw.startFlight(p,far,distance,false),"Mastered long flight begins");
+            for(int i=0;i<500&&Paw.airborne(far);i++){clock(level,level.getGameTime()+1);Paw.tickEffects();}
+            check(!Paw.airborne(far)&&Math.abs(far.getZ()-start.z-distance)<.1&&far.isAlive(),"Paw carries real mob "+distance+" blocks across chunk boundaries and lands safely; z="+far.getZ()+" flying="+Paw.airborne(far));far.discard();
+        }
         clock(level,level.getGameTime()+1300);Paw.extract(p);check(Paw.bubbleDamage(p)==0,"Full-health extraction cannot create free damaging pain");Paw.forget(p);check(Paw.unlocked(p)&&Paw.bubblePosition(p)==null,"Logout cleans temporary Paw effects while retaining fruit claim");
         check(Paw.extract(p).contains("recovering"),"Pain healing cooldown survives logout state cleanup");FruitClaims.releaseOnDeath(p);check(FruitClaims.owner("paw")==null&&!Paw.unlocked(p),"Death releases Paw for natural spawning");
         t.discard();Paw.clear();System.out.println("CREEPERBORN_PAW_REGRESSION_PASSED");
