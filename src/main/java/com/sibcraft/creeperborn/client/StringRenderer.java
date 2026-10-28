@@ -8,9 +8,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-/** All string geometry is white, except the black knight silhouette and purple puppet outlines. */
+/** White emissive strings, colored slash strands, and distinct puppet outlines. */
 public final class StringRenderer {
     private static final Identifier WHITE=Identifier.withDefaultNamespace("textures/block/white_concrete.png"),BLACK=Identifier.withDefaultNamespace("textures/block/black_concrete.png"),PURPLE=Identifier.withDefaultNamespace("textures/block/purple_concrete.png");
+    private static final Identifier[] SLASH={color("red"),color("yellow"),color("lime"),color("light_blue"),color("magenta")};
+    private static Identifier color(String name){return Identifier.withDefaultNamespace("textures/block/"+name+"_concrete.png");}
     private static ModelPart bake(MeshDefinition m){return LayerDefinition.create(m,16,16).bakeRoot();}
     private static final ModelPart BEAM=beam(false),CORE=beam(true),CAGE=cage(),WEB=web(),KNIGHT=knight(false),OUTLINE=knight(true);
     private static ModelPart beam(boolean core){MeshDefinition m=new MeshDefinition();m.getRoot().addOrReplaceChild("thread",CubeListBuilder.create().texOffs(0,0).addBox(core?-4:-8,0,core?-4:-8,core?8:16,16,core?8:16),PartPose.ZERO);return bake(m);}
@@ -29,10 +31,11 @@ public final class StringRenderer {
         return bake(m);}
     private static void draw(ModelPart model,Identifier texture,PoseStack poses,SubmitNodeCollector nodes,boolean glow){nodes.submitModelPart(model,poses,glow?RenderTypes.eyes(texture):RenderTypes.entityTranslucent(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
     public static void submit(int kind,PoseStack poses,SubmitNodeCollector nodes,float age){
+        if(kind>=7&&kind<=11){draw(BEAM,SLASH[kind-7],poses,nodes,true);return;}
         if(kind==4){draw(CAGE,WHITE,poses,nodes,true);return;}if(kind==5){poses.pushPose();poses.rotate(new Quaternionf().rotationY(age*.03f));draw(WEB,WHITE,poses,nodes,true);poses.popPose();return;}
         if(kind==6){draw(OUTLINE,BLACK,poses,nodes,false);draw(KNIGHT,WHITE,poses,nodes,true);return;}
         draw(BEAM,kind==2?PURPLE:kind==3?BLACK:WHITE,poses,nodes,kind!=3);if(kind==2||kind==3)draw(CORE,WHITE,poses,nodes,true);
     }
-    public static int kind(String name){return name.equals("cb_string_cage")?4:name.equals("cb_string_web")?5:name.equals("cb_string_knight")?6:name.equals("cb_string_beam_0")?1:name.equals("cb_string_beam_1")?2:name.equals("cb_string_beam_2")?3:0;}
-    public static void validate(){if(kind("cb_string_cage")!=4||kind("ordinary")!=0)throw new AssertionError("String visual names");BEAM.getChild("thread");CAGE.getChild("c0");WEB.getChild("w0");KNIGHT.getChild("weave0");OUTLINE.getChild("outline0");}
+    public static int kind(String name){return name.equals("cb_string_cage")?4:name.equals("cb_string_web")?5:name.equals("cb_string_knight")?6:name.equals("cb_string_beam_0")?1:name.equals("cb_string_beam_1")?2:name.equals("cb_string_beam_2")?3:name.equals("cb_string_beam_3")?7:name.equals("cb_string_beam_4")?8:name.equals("cb_string_beam_5")?9:name.equals("cb_string_beam_6")?10:name.equals("cb_string_beam_7")?11:0;}
+    public static void validate(){if(kind("cb_string_cage")!=4||kind("ordinary")!=0)throw new AssertionError("String visual names");for(int i=0;i<5;i++)if(kind("cb_string_beam_"+(i+3))!=7+i)throw new AssertionError("Five slash colors");BEAM.getChild("thread");CAGE.getChild("c0");WEB.getChild("w0");KNIGHT.getChild("weave0");OUTLINE.getChild("outline0");}
 }
