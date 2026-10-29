@@ -1061,7 +1061,11 @@ public final class Regression implements ModInitializer {
         var anchor=p.position().add(0,0,8);
         check(StringFruit.glideVelocity(p,anchor,0,true).lengthSqr()==0,"Glide neutral input hovers");
         check(StringFruit.glideVelocity(p,anchor,1,true).z>.6&&StringFruit.glideVelocity(p,anchor,1,false).lengthSqr()==0,"Glide W moves and stale input stops");
-        StringFruit.cast(p,1,0);
+        Mastery.grant(p,Element.FIRE,3);Progress.select(p,Element.FIRE);
+        StringFruit.tickPlayer(p);check(StringFruit.gliding(p),"Mastered String Glide persists when selecting elements");
+        Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,1);Creeperborn.ABILITIES.cast(p);StringFruit.tickPlayer(p);
+        check(StringFruit.gliding(p),"Casting Flame Ring preserves mastered String Glide");Creeperborn.ABILITIES.clear();
+        p.addTag("cb_mode_fruit");StringFruit.cast(p,1,0);check(!StringFruit.gliding(p),"Returning to String and tapping X still ends glide");
         for(int x=-24;x<=8;x++)for(int z=0;z<=30;z++)level.setBlockAndUpdate(BlockPos.containing(x,y+17,z),Blocks.STONE.defaultBlockState());
         check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.awakened(p),"Own Birdcage enables awakened attacks");
         check(StringFruit.cast(p,0,0).equals("Five-Color Slash!"),"Awakened Five-Color Claw casts inside Birdcage");

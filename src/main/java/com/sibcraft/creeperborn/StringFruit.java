@@ -232,6 +232,7 @@ public final class StringFruit {
     }
     public static boolean canTeleport(Entity e,ServerLevel level,Vec3 to){if(e.level()!=level)return !insideCage(e)&&cages.values().stream().noneMatch(c->c.level==level&&to.distanceTo(c.center)<boundary(c));return !blocked(e,to);}
     private static void moveImpulse(Player p,Vec3 v){Rubber.impulse(p,v);}
+    public static boolean gliding(Player p){State s=states.get(p.getUUID());return s!=null&&s.gliding;}
     private static void endGlide(State s){if(!s.gliding)return;s.gliding=false;s.flags=0;s.landing=now(s.owner)+100;moveImpulse(s.owner,Vec3.ZERO);sync(s);}
     public static boolean immune(Player p,DamageSource source){State s=states.get(p.getUUID());return s!=null&&unlocked(p)&&source.is(DamageTypeTags.IS_FALL)&&(s.gliding||now(p)<s.landing);}
     public static float damage(Player p,DamageSource source,float amount){State s=states.get(p.getUUID());if(s==null||!unlocked(p)||now(p)>=s.guard||Phoenix.bypass(source))return amount;return source.getEntity() instanceof LivingEntity?amount*(Mastery.harmony(p)?.15f:.25f):amount;}
@@ -254,7 +255,7 @@ public final class StringFruit {
     }
     public static void tickPlayer(Player p){State s=state(p);long now=now(p);
         if(!valid(p,s.level==null?(ServerLevel)p.level():s.level)){forget(p);return;}
-        if(!selected(p)||Dark.suppressed(p)){cancelInput(p);endGlide(s);}if(s.held>=0&&now>s.heartbeat){s.held=-1;clearCharge(s);}chargeGod(s);
+        if(!selected(p)||Dark.suppressed(p)){cancelInput(p);if(tier(p)<3||Dark.suppressed(p))endGlide(s);}if(s.held>=0&&now>s.heartbeat){s.held=-1;clearCharge(s);}chargeGod(s);
         if(s.held==1&&now-s.press>=7&&now%4==0){LivingEntity t=target(p,range(p));if(t!=null)flash((ServerLevel)p.level(),p.getEyePosition(),t.getEyePosition(),.025f,1,5);}
         if(s.held==0&&now-s.press>=7&&now%4==0){Vec3 at=p.getEyePosition();if(!awakened(p))flash((ServerLevel)p.level(),at.add(0,.8,-1),at.add(0,1.4,-1),.07f,0,5);Creeperborn.say(p,(awakened(p)?"God Thread "+Math.min(100,(now-s.press)*100/40)+"%":"Overheat ready")+" — release Z");}
         drive(s);glide(s);if(now%10==0)sync(s);
