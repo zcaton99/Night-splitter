@@ -36,6 +36,7 @@
     "PhoenixHandsMixin",
     "PhoenixNameMixin",
     "StringClientInteractionMixin",
-    "StringClientMovementMixin"
+    "StringClientMovementMixin",
+    "AzureCameraMixin"
   ]
 }
