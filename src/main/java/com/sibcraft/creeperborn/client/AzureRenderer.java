@@ -50,16 +50,17 @@ public final class AzureRenderer {
             p.pushPose();p.translate(-.8,1.05,.1);p.rotate(new Quaternionf().rotationX(attack?-1.5f:-.25f));draw(CLUB,BLACK,p,n,false);if(attack){p.rotate(new Quaternionf().rotationY(time*.6f));draw(SPARKS,RED,p,n,true);}p.popPose();
         }else{p.translate(-.4,.8,.25);p.scale(.8f,.8f,.8f);p.rotate(new Quaternionf().rotationX(attack?-1.2f:-.2f));draw(CLUB,BLACK,p,n,false);if(attack)draw(SPARKS,RED,p,n,true);}p.popPose();}
     public static void hand(PoseStack p,SubmitNodeCollector n){p.pushPose();p.translate(.55,-.45,-.9);p.rotate(new Quaternionf().rotationZ(-.25f));p.scale(1.1f,1.1f,1.1f);draw(CLUB,BLACK,p,n,false);p.popPose();}
-    public static int kind(String name){for(int i=1;i<=12;i++)if(name.equals("cb_azure_"+i))return i;return 0;}
+    public static int kind(String name){for(int i=1;i<=15;i++)if(name.equals("cb_azure_"+i))return i;return 0;}
     public static void submit(int kind,PoseStack p,SubmitNodeCollector n,float time){p.pushPose();
-        if(kind==1){draw(HEAD,BLUE,p,n,false);JAW.xRot=(float)Math.sin(time*.1)*.035f;draw(JAW,BLUE,p,n,false);draw(TEETH,IVORY,p,n,false);draw(MANE,BLACK,p,n,false);draw(HORN,IVORY,p,n,false);draw(EYES,GOLD,p,n,true);for(int side:new int[]{-1,1})WHISKERS.getChild("whisker"+side).yRot=(float)Math.sin(time*.13+side)*.12f;draw(WHISKERS,BLACK,p,n,false);}
-        else if(kind==2){draw(SEGMENT,BLUE,p,n,false);draw(BELLY,TAN,p,n,false);draw(RIDGE,BLACK,p,n,false);}
-        else if(kind==7)draw(TAIL,BLACK,p,n,false);
+        if(kind==1||kind==13){draw(HEAD,BLUE,p,n,false);JAW.xRot=(float)Math.sin(time*.1)*.035f;draw(JAW,BLUE,p,n,false);draw(TEETH,IVORY,p,n,false);draw(MANE,BLACK,p,n,false);draw(HORN,IVORY,p,n,false);draw(EYES,GOLD,p,n,true);for(int side:new int[]{-1,1})WHISKERS.getChild("whisker"+side).yRot=(float)Math.sin(time*.13+side)*.12f;draw(WHISKERS,BLACK,p,n,false);}
+        else if(kind==2||kind==14){draw(SEGMENT,BLUE,p,n,false);draw(BELLY,TAN,p,n,false);draw(RIDGE,BLACK,p,n,false);}
+        else if(kind==7||kind==15)draw(TAIL,BLACK,p,n,false);
         else if(kind==8||kind==9||kind==11||kind==12){boolean left=kind==8||kind==11,fly=kind>=11;float grip=fly?(float)(Math.sin(time*.3+(left?0:Math.PI))*.5+.5):.15f;if(left)p.scale(-1,1,1);p.translate(.3,0,0);LEG.getChild("fore").xRot=grip*.35f;var palm=LEG.getChild("fore").getChild("palm");for(int i=0;i<3;i++)palm.getChild("finger"+i).xRot=grip*1.15f;draw(LEG,BLUE,p,n,false);draw(CLAWS,IVORY,p,n,false);p.translate(.32,-.45,.04);p.rotate(new Quaternionf().rotationY(time*.06f));draw(CLOUD,FIRE,p,n,true);p.scale(.7f,.8f,.7f);draw(CLOUD,GOLD,p,n,true);}
         else if(kind==3||kind==4){p.rotate(new Quaternionf().rotationZ(time*.03f));draw(BLADE,kind==3?RED:BLACK,p,n,true);p.pushPose();p.rotate(new Quaternionf().rotationZ(.18f));p.translate(0,0,.05);draw(BLADE,kind==3?BLACK:RED,p,n,true);p.popPose();draw(SPARKS,RED,p,n,true);}
         else if(kind==5){draw(CLOUD,FIRE,p,n,true);p.scale(.65f,.65f,1.2f);draw(CLOUD,GOLD,p,n,true);}
         else if(kind==6){p.rotate(new Quaternionf().rotationZ(time*.15f));draw(SPARKS,RED,p,n,true);p.rotate(new Quaternionf().rotationY(1.4f));draw(SPARKS,BLACK,p,n,true);}
         else if(kind==10){for(int i=0;i<3;i++){p.pushPose();p.translate(0,i*.2,0);p.rotate(new Quaternionf().rotationY(time*.15f+i));float scale=1-i*.2f;p.scale(scale,1,scale);draw(RING,i%2==0?RED:BLACK,p,n,true);p.popPose();}}
+        if(kind>=13){p.pushPose();p.scale(1.8f,1.8f,1.8f);p.rotate(new Quaternionf().rotationZ(time*.08f));draw(CLOUD,FIRE,p,n,true);p.scale(.8f,.8f,.8f);draw(CLOUD,GOLD,p,n,true);p.popPose();}
         p.popPose();}
-    public static void validate(){for(int i=0;i<3;i++){HYBRID[i].getChild("tail").getChild("next");HORNS[i].getChild("horn-10");CAPES[i].getChild("panel1");}HEAD.getChild("nose");LEG.getChild("fore").getChild("palm").getChild("finger2");for(int i=1;i<=12;i++)if(kind("cb_azure_"+i)!=i)throw new AssertionError("Azure visual mapping");}
+    public static void validate(){for(int i=0;i<3;i++){HYBRID[i].getChild("tail").getChild("next");HORNS[i].getChild("horn-10");CAPES[i].getChild("panel1");}HEAD.getChild("nose");LEG.getChild("fore").getChild("palm").getChild("finger2");for(int i=1;i<=15;i++)if(kind("cb_azure_"+i)!=i)throw new AssertionError("Azure visual mapping");}
 }

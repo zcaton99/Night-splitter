@@ -91,9 +91,10 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
                 if(parts[0]!=222)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
                 com.sibcraft.creeperborn.client.AzureRenderer.validate();
+                System.out.println("AZURE_CAMERA_API "+java.util.Arrays.toString(Class.forName("net.minecraft.client.Camera").getDeclaredMethods()));
                 int azureStart=parts[0];
                 for(int tier=1;tier<=3;tier++)for(int flags:new int[]{1|(tier<<2)|128,1|(tier<<2)|16|32|128}){com.sibcraft.creeperborn.client.AzureRenderer.avatar(state,pawPoses,nodes,flags);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Hybrid pose leak");}
-                for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
+                for(int kind=1;kind<=15;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
                 com.sibcraft.creeperborn.client.AzureRenderer.hand(pawPoses,nodes);
                 if(parts[0]-azureStart<60)throw new AssertionError("Azure forms did not submit complete meshes");
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind(12);if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind()!=12)throw new AssertionError("Azure render state missing");
