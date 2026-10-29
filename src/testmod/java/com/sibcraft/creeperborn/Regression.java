@@ -825,6 +825,12 @@ public final class Regression implements ModInitializer {
         check(WaterRules.vulnerable(p)&&!Op.consume(player(level),Relics.opFruit()),"Op water curse and unique owner");
         check(Op.diameter(p)==30&&Op.duration(p)==600,"Base ROOM is 30 diameter and 30 seconds");
         check(Op.cast(p,1,0).contains("locked")&&Op.cast(p,2,0).contains("locked"),"X tier two and C tier three");
+        Zombie contact=tremorTarget(level,-8,y+15,10.5),distant=tremorTarget(level,-8,y+15,25);float farHealth=distant.getHealth();
+        check(Op.cast(p,0,0).equals("Gamma Knife!")&&contact.getHealth()==190&&Op.coated(p)&&!Op.room(p),"Unarmed Gamma Knife deals damage inside a hand-sized ROOM without opening the large ROOM");
+        check(Op.cast(p,0,0).contains("recovering"),"Coated Gamma Knife preserves its cooldown");clock(level,level.getGameTime()+21);Op.tickPlayer(p);check(!Op.coated(p),"Small coating cleans itself up");
+        BlockPos coatWall=new BlockPos(-8,(int)y+16,9);level.setBlockAndUpdate(coatWall,Blocks.STONE.defaultBlockState());float contactHealth=contact.getHealth();check(Op.cast(p,0,0).contains("nearby")&&contact.getHealth()==contactHealth,"Local ROOM coating cannot attack through solid walls");level.setBlockAndUpdate(coatWall,Blocks.AIR.defaultBlockState());
+        Op.grant(p,2);var sword=new ItemStack(Items.NETHERITE_SWORD);p.setItemInHand(InteractionHand.MAIN_HAND,sword);contact.damageCooldownTime=0;check(Op.cast(p,1,0).equals("Counter Shock!")&&contact.getHealth()<contactHealth&&Op.rooted(contact)&&p.getMainHandItem()==sword,"Weapon-coated Shock damages and stuns without replacing the weapon");check(distant.getHealth()==farHealth&&!Op.rooted(distant),"Local coating cannot shock distant enemies");
+        Op.grant(p,3);check(Op.cast(p,2,0).contains("ROOM")&&Op.cast(p,1,60).contains("ROOM"),"Shambles and Heart Extraction still need the large ROOM");p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);Op.grant(p,1);clock(level,level.getGameTime()+121);p.getFoodData().setFoodLevel(20);Op.tickPlayer(p);contact.discard();distant.discard();
         Op.press(p,0);clock(level,level.getGameTime()+7);Op.heartbeat(p);Op.tickPlayer(p);Op.release(p,0);
         check(Op.room(p),"Tier one held Z opens ROOM through actual press/heartbeat/release route");
         Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.EVENT);

@@ -16,8 +16,8 @@ import net.minecraft.world.phys.*;
 /** Server-authoritative operating room; the shell is visual and never changes terrain. */
 public final class Op {
     private static final class State {
-        Player owner; ServerLevel level; Vec3 center,last; Display.BlockDisplay shell;
-        long ends,press,heartbeat,recent=-1000,charge; int held=-1; LivingEntity target; float health;
+        Player owner; ServerLevel level; Vec3 center,last; Display.BlockDisplay shell,coating;
+        long ends,press,heartbeat,recent=-1000,charge,coatingEnds; int held=-1; LivingEntity target; float health;
     }
     private static final Map<UUID,State> states=new HashMap<>();
     private static final DustParticleOptions BLUE=new DustParticleOptions(0x8DDDFF,.9f);
@@ -63,6 +63,7 @@ public final class Op {
     public static void endRoom(Player p){
         State s=states.get(p.getUUID());if(s==null)return;
         if(s.center!=null)value(p,"cb_op_room_ready_",now(p)+100);
+        if(s.coating!=null)s.coating.discard();s.coating=null;s.coatingEnds=0;
         if(s.shell!=null)s.shell.discard();s.shell=null;s.center=null;cancelInput(p);
     }
     public static void press(Player p,int move){
@@ -91,6 +92,20 @@ public final class Op {
             if(hit.isPresent()&&hit.get().distanceTo(from)<nearest){best=e;nearest=hit.get().distanceTo(from);}
         }return best;
     }
+    /** A weapon-sized ROOM only enables direct contact attacks, never spatial operations. */
+    private static LivingEntity contactTarget(Player p){
+        double reach=p.getMainHandItem().isEmpty()?3.5:4.5;Vec3 from=p.getEyePosition(),end=from.add(p.getLookAngle().scale(reach));
+        var wall=p.level().clip(new ClipContext(from,end,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));if(wall.getType()!=HitResult.Type.MISS)end=wall.getLocation();
+        LivingEntity found=null;double nearest=from.distanceTo(end)+.001;
+        for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(from,end).inflate(.6))){if(!enemy(p,e)||Azure.proxy(e)||!p.hasLineOfSight(e))continue;var hit=e.getBoundingBox().inflate(.25).clip(from,end);if(hit.isPresent()&&from.distanceTo(hit.get())<nearest){nearest=from.distanceTo(hit.get());found=e;}}
+        return found;
+    }
+    private static void coat(Player p){
+        State s=state(p);s.level=(ServerLevel)p.level();s.coatingEnds=now(p)+12;
+        if(s.coating==null||s.coating.isRemoved()){s.coating=EntityTypes.BLOCK_DISPLAY.create(s.level,EntitySpawnReason.TRIGGERED);if(s.coating==null)return;s.coating.addTag("cb_temporary_rock");s.coating.setCustomName(Component.literal("cb_op_room"));s.coating.setCustomNameVisible(false);s.coating.setBlockState(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)s.coating;a.creeperborn$duration(1);a.creeperborn$positionDuration(1);a.creeperborn$width(4);a.creeperborn$height(4);s.level.addFreshEntity(s.coating);}positionCoating(p,s);
+    }
+    private static void positionCoating(Player p,State s){boolean armed=!p.getMainHandItem().isEmpty();Vec3 direction=p.getLookAngle(),at=LightningBolts.hand(p).add(direction.scale(armed?.55:.15));s.coating.snapTo(at.x,at.y,at.z);s.coating.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),Paw.orientation(direction),new org.joml.Vector3f(armed?.16f:.24f,armed?.16f:.24f,armed?.85f:.4f),new org.joml.Quaternionf()));}
+    public static boolean coated(Player p){State s=states.get(p.getUUID());return s!=null&&s.coating!=null&&!s.coating.isRemoved()&&now(p)<s.coatingEnds;}
     private static void impulse(LivingEntity e,Vec3 motion){if(e instanceof ServerPlayer sp)Rubber.impulse(sp,motion);else e.setDeltaMovement(motion);}
     private static boolean hurt(Player p,LivingEntity e,float amount){boolean hit=e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),(float)(amount*Mastery.multiplier(p)));if(hit)credit(p);return hit;}
     public static int remaining(Player p){
@@ -124,21 +139,22 @@ public final class Op {
         boolean hold=held>=7;if(move<0||move>2)return "";
         if(move==0&&hold)return toggle(p);
         if(tier(p)<move+1)return "Move locked: X needs tier 2; C needs tier 3.";
-        if(!valid(p))return "You and your target must be inside ROOM.";
+        boolean local=!valid(p);if(local&&(hold||move==2))return "You and your target must be inside ROOM.";
         if(now(p)<value(p,"cb_op_ready_"+move+"_"+hold+"_"))return "Move recovering.";
         if(move==0){
-            LivingEntity t=target(p,diameter(p));if(t==null)return "No enemy in your aim inside ROOM.";
+            LivingEntity t=local?contactTarget(p):target(p,diameter(p));if(t==null)return local?"Aim at a nearby enemy for a coated Gamma Knife.":"No enemy in your aim inside ROOM.";
             if(!fuel(p))return "Eat before attacking.";
-            line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
+            coat(p);line((ServerLevel)p.level(),LightningBolts.hand(p),t.getEyePosition());
             // Two attacks split the strike between ordinary damage and armor-bypassing magic.
             hurt(p,t,5);t.damageCooldownTime=0;t.hurtServer((ServerLevel)p.level(),p.damageSources().magic(),(float)(5*Mastery.multiplier(p)));
             credit(p);value(p,"cb_op_ready_0_false_",now(p)+20);return "Gamma Knife!";
         }
         if(move==1&&hold)return held>=60?"Hold X steadily on an enemy for three seconds.":"Heart Extraction needs a three-second channel.";
         if(move==1){
-            if(!fuel(p))return "Eat before Counter Shock.";
+            LivingEntity contact=local?contactTarget(p):null;if(local&&contact==null)return "Aim at a nearby enemy for a coated Counter Shock.";
+            if(!fuel(p))return "Eat before Counter Shock.";coat(p);
             for(var t:p.level().getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(diameter(p))))
-                if(enemy(p,t)&&inside(p,t)){hurt(p,t,6);stuns.put(t.getUUID(),new Stun(p,t,now(p)+20));impulse(t,Vec3.ZERO);line((ServerLevel)p.level(),p.getEyePosition(),t.getEyePosition());}
+                if(enemy(p,t)&&(local?t==contact:inside(p,t))){hurt(p,t,6);stuns.put(t.getUUID(),new Stun(p,t,now(p)+20));impulse(t,Vec3.ZERO);line((ServerLevel)p.level(),p.getEyePosition(),t.getEyePosition());}
             value(p,"cb_op_ready_1_false_",now(p)+120);credit(p);return "Counter Shock!";
         }
         if(!hold){LivingEntity t=target(p,diameter(p));return t==null?"Aim at an enemy inside ROOM.":swap(p,t);}
@@ -151,6 +167,7 @@ public final class Op {
     public static void tickPlayer(Player p){
         State s=state(p);long now=now(p);
         if(!unlocked(p)||!p.isAlive()||p.isSpectator()||s.level!=null&&s.level!=p.level()||WaterRules.suppressed(p)||Dark.suppressed(p)){endRoom(p);return;}
+        if(s.coating!=null){if(now>=s.coatingEnds||!selected(p)){s.coating.discard();s.coating=null;}else positionCoating(p,s);}
         if(s.center!=null){
             if(now>=s.ends){endRoom(p);return;}
             scale(s,diameter(p)/2);
