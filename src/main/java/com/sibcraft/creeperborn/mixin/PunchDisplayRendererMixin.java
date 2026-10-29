@@ -18,8 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
-        ((BoltVisualState)state).creeperborn$azureKind(AzureRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
+        int azure=AzureRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString());var cameraClient=Minecraft.getInstance();if((azure==2||azure==7||azure==14||azure==15)&&cameraClient.player!=null&&(AzureVisuals.flags(cameraClient.player.getId())&3)==2&&display.getCustomName()!=null&&display.getCustomName().getString().endsWith("|"+cameraClient.player.getUUID())&&display.position().distanceToSqr(cameraClient.gameRenderer.getMainCamera().position())<9)azure=17;((BoltVisualState)state).creeperborn$azureKind(azure);
         ((BoltVisualState)state).creeperborn$climateKind(ClimateRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
+        ClimateRenderer.followOwner(display,state,partial);
         ((BoltVisualState)state).creeperborn$pairKind(PairRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$tremorKind(TremorRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$pawKind(PawRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
