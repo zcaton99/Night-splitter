@@ -146,15 +146,20 @@ public final class ClimatePowers {
     public static boolean beforeMove(Entity entity,Vec3 motion){
         if(!(entity instanceof Player p)||moving.contains(p.getUUID())||p.isPassenger()||motion.y>=0)return false;
         boolean server=p.level() instanceof ServerLevel;State s=server?states.get(p.getUUID()):null;
-        if(server&&Boolean.getBoolean("creeperborn.debugIceCatch"))System.out.println("ICE_CATCH from="+p.position()+" motion="+motion+" usable="+usable(p,"ice")+" slide="+(s!=null&&s.slide)+" keys="+(s==null?0:s.keys)+" ready="+saved(p,"cb_ice_catch_ready_")+" now="+now(p));
         if(server){if(!usable(p,"ice")||s!=null&&(s.slide||(s.keys&32)!=0&&s.inputUntil>=now(p))||now(p)<saved(p,"cb_ice_catch_ready_"))return false;}
         else if(!p.getUUID().equals(clientPlayer)||(clientFlags&64)==0||clientSliding()||(clientKeys&32)!=0||now(p)<clientCatchReady)return false;
         int steps=Math.min(256,Math.max(1,(int)Math.ceil(motion.length()/.15)));
-        for(int i=0;i<=steps;i++){Vec3 sample=p.position().add(motion.scale(i/(double)steps)).add(0,-.05,0);BlockPos block=BlockPos.containing(sample);if(!p.level().hasChunkAt(block))continue;var fluid=p.level().getFluidState(block);if(!fluid.is(FluidTags.WATER))continue;double surface=block.getY()+fluid.getHeight(p.level(),block);Vec3 end=new Vec3(sample.x,surface+.04,sample.z);if(server&&Boolean.getBoolean("creeperborn.debugIceCatch"))System.out.println("ICE_CATCH water="+block+" surface="+surface+" clear="+p.level().noCollision(p,p.getBoundingBox().move(end.subtract(p.position())))+" end="+end);
+        for(int i=0;i<=steps;i++){Vec3 sample=p.position().add(motion.scale(i/(double)steps)).add(0,-.05,0);BlockPos block=BlockPos.containing(sample);if(!p.level().hasChunkAt(block))continue;var fluid=p.level().getFluidState(block);if(!fluid.is(FluidTags.WATER))continue;double surface=block.getY()+fluid.getHeight(p.level(),block);Vec3 end=new Vec3(sample.x,surface+.04,sample.z);
             if(p.getY()<surface-.08||p.getY()+motion.y>surface+.12||!p.level().noCollision(p,p.getBoundingBox().move(end.subtract(p.position()))))continue;
-            if(server){s=state(p,"ice");if(!moveTo(p,end))continue;s.slide=true;s.slideEnds=tier(p,"ice")>=3?Long.MAX_VALUE:now(p)+scale(p,"ice",160,300,600);s.platform=display(p,end.add(0,-.03,0),4,40);}
-            else{moving.add(p.getUUID());try{p.move(MoverType.SELF,end.subtract(p.position()));p.setDeltaMovement(Vec3.ZERO);p.resetFallDistance();clientFlags|=1;}finally{moving.remove(p.getUUID());}}return true;
+            if(server){s=state(p,"ice");if(!catchMove(p,end))continue;s.slide=true;s.slideEnds=tier(p,"ice")>=3?Long.MAX_VALUE:now(p)+scale(p,"ice",160,300,600);s.platform=display(p,end.add(0,-.03,0),4,40);}
+            else{if(!catchMove(p,end))continue;clientFlags|=1;}return true;
         }return false;
+    }
+    /** Sweep the actual diagonal path rather than the large enclosing box at a shoreline. */
+    private static boolean catchMove(Player p,Vec3 end){
+        Vec3 start=p.position(),delta=end.subtract(start);int steps=Math.max(1,(int)Math.ceil(delta.length()/.15));Vec3 step=delta.scale(1.0/steps);
+        for(int i=1;i<=steps;i++){Vec3 at=start.add(step.scale(i));if(!p.level().hasChunkAt(BlockPos.containing(at))||!p.level().getWorldBorder().isWithinBounds(BlockPos.containing(at))||StringFruit.blocked(p,at)||!p.level().noCollision(p,p.getBoundingBox().move(step.scale(i-1)).expandTowards(step)))return false;}
+        moving.add(p.getUUID());try{for(int i=0;i<steps;i++)p.move(MoverType.SELF,step);p.setDeltaMovement(Vec3.ZERO);p.resetFallDistance();if(p instanceof ServerPlayer sp)sp.teleportTo((ServerLevel)p.level(),p.getX(),p.getY(),p.getZ(),Set.of(),p.getYRot(),p.getXRot(),false);return true;}finally{moving.remove(p.getUUID());}
     }
     private static boolean moveTo(Player p,Vec3 end){return moveTo(p,end,true);}
     private static boolean moveTo(Player p,Vec3 end,boolean sync){ServerLevel level=(ServerLevel)p.level();Vec3 delta=end.subtract(p.position());if(!level.hasChunkAt(BlockPos.containing(end))||!level.getWorldBorder().isWithinBounds(BlockPos.containing(end))||end.y<level.getMinY()||end.y+p.getBbHeight()>=level.getMaxY()||StringFruit.blocked(p,end)||sync&&!level.noCollision(p,p.getBoundingBox().expandTowards(delta)))return false;moving.add(p.getUUID());try{p.move(MoverType.SELF,delta);p.setDeltaMovement(Vec3.ZERO);p.resetFallDistance();if(sync&&p instanceof ServerPlayer sp)sp.teleportTo(level,p.getX(),p.getY(),p.getZ(),Set.of(),p.getYRot(),p.getXRot(),false);return true;}finally{moving.remove(p.getUUID());}}
