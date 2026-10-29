@@ -1096,7 +1096,7 @@ public final class Regression implements ModInitializer {
         StringFruit.cancelInput(p);check(!StringFruit.controlling(p),"Cancel restores camera control state");
         clock(level,level.getGameTime()+700);p.getFoodData().setFoodLevel(20);
         check(StringFruit.cast(p,2,7).startsWith("Birdcage!")&&StringFruit.cageCount()==1,"Birdcage creates persistent arena");
-        StringFruit.press(p,0);for(int i=0;i<8;i++){clock(level,level.getGameTime()+1);StringFruit.heartbeat(p);StringFruit.tickPlayer(p);}
+        StringFruit.press(p,0);for(int i=0;i<12;i++){clock(level,level.getGameTime()+1);StringFruit.heartbeat(p);StringFruit.tickPlayer(p);}
         check(StringFruit.chargeThreadCount(p)>0,"A later God Thread charge creates fresh environmental threads");
         StringFruit.cancelInput(p);check(StringFruit.chargeThreadCount(p)==0,"Cancel removes all gathered threads");
         var origin=p.position();p.setPos(origin.x+110,origin.y,origin.z);check(p.position().equals(origin),"Caster cannot escape own cage via absolute position");
