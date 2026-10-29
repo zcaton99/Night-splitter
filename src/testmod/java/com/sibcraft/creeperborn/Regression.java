@@ -1696,9 +1696,9 @@ public final class Regression implements ModInitializer {
             Mastery.grant(p,Element.WATER,3);if(mastered)for(Element e:Element.values())Mastery.grant(p,e,3);
             Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);
             Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);
-            target.snapTo(-12,y+5,6);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+            target.snapTo(-12,y+5,26);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
             Creeperborn.ABILITIES.cast(p);
-            check((target.getHealth()<target.getMaxHealth())==mastered,"Only all-four mastery reaches a target twenty blocks away with elemental Z");target.discard();
+            check((target.getHealth()<target.getMaxHealth())==mastered,"Harmony extends elemental Z beyond tier-three range to forty blocks");target.discard();
             p.snapTo(-14,y+5,-14);p.setYRot(-45);
             Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.rocks.throwBoulder(p,1);
             for(int tick=0;tick<26;tick++)Creeperborn.ABILITIES.rocks.tick();
