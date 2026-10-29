@@ -34,6 +34,7 @@ public final class CreeperbornClient implements ClientModInitializer {
         KeyMapping toggle=key("toggle",InputConstants.KEY_B),cycle=key("cycle",InputConstants.KEY_R),fruits=key("fruit",InputConstants.KEY_G);
         KeyMapping[] moves={key("move1",InputConstants.KEY_Z),key("move2",InputConstants.KEY_X),key("move3",InputConstants.KEY_C)};
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
+            if(payload.action()==12)com.sibcraft.creeperborn.ClimatePowers.clientFloor(payload.value());
             if(payload.action()==11&&net.minecraft.client.Minecraft.getInstance().player!=null)com.sibcraft.creeperborn.ClimatePowers.clientState(net.minecraft.client.Minecraft.getInstance().player.getUUID(),payload.value());
             if(payload.action()==3){fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
         });
@@ -68,7 +69,7 @@ public final class CreeperbornClient implements ClientModInitializer {
                     client.player.sendSystemMessage(Component.literal("Creeperborn updated old controls: R elements, G fruits, Z/X/C moves. Custom bindings remain available in Controls."));
                 }
             }
-            if(ticks%4==0||com.sibcraft.creeperborn.ClimatePowers.clientSliding()){int flags=0;if(client.gui.screen()==null&&!client.isPaused()){flags=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);}send(10,flags);}
+            if(ticks%4==0||com.sibcraft.creeperborn.ClimatePowers.clientNeedsInput()){int flags=0;if(client.gui.screen()==null&&!client.isPaused()){flags=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);}send(10,flags);}
             if(ticks%4==0)send(9,client.gui.screen()==null&&!client.isPaused()&&client.options.keyUse.isDown()&&client.options.keyShift.isDown()?1:0);
             if(WaterRules.suppressed(client.player))cancel();
             if(client.gui.screen()!=null||client.isPaused()){
