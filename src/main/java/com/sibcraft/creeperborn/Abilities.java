@@ -31,9 +31,9 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
-    public void clear() { WaterAnimations.clear(); cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
+    public void clear() { FireAnimations.clear(); WaterAnimations.clear(); cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
     public void tick() {
-        rocks.tick(); Shackles.tick(); vortices.tick(); WaterAnimations.tick();
+        rocks.tick(); Shackles.tick(); vortices.tick(); WaterAnimations.tick(); FireAnimations.tick();
         Iterator<Push> iterator = pushes.values().iterator();
         while (iterator.hasNext()) {
             Push push = iterator.next(); LivingEntity t = push.target;
@@ -89,7 +89,7 @@ public final class Abilities {
                 }
             }
             case FIRE -> {
-                if (move == 1) pulse(level, p, e, 4, (float)(5 * power), 4 * power);
+                if (move == 1) {FireAnimations.ring(p,4+4*power);pulse(level, p, e, 4, (float)(5 * power), 4 * power);}
                 else {
                     int protection=(int)Math.round(160 * power * harmony);
                     float before=p.getHealth();p.heal((float)(10*harmony));
@@ -144,6 +144,7 @@ public final class Abilities {
             }
         }
         if(e==Element.WATER)WaterAnimations.whip(p,origin.add(direction.scale(closest)));
+        else if(e==Element.FIRE)FireAnimations.fireball(p,origin.add(direction.scale(closest)));
         else for (double d = 0; d < closest; d += 0.5) particles(level, e, origin.add(direction.scale(d)), 1);
         if (best != null) strike(level, p, best, e, (float)((e == Element.AIR ? 2 : 6) * power), (e == Element.AIR ? 1.1 : .35) * power);
     }

@@ -1486,6 +1486,8 @@ public final class Regression implements ModInitializer {
             check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
             if (e == Element.EARTH && slot == 0) for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
             if(e==Element.AIR&&slot==2)Creeperborn.ABILITIES.vortices.tick();
+            if(slot==1&&e==Element.FIRE)check(FireAnimations.activeCount()>0,"Flame Ring creates an expanding circle model");
+            if(slot==0&&e==Element.FIRE)check(FireAnimations.activeCount()>0,"Fire Z creates a fireball and trail model");
             if(slot==0&&e==Element.WATER)check(WaterAnimations.activeCount()>0,"Water Whip creates a flowing model effect");
             if (slot == 0 || (slot == 2 && e == Element.AIR) || (slot == 1 && e == Element.FIRE))
                 check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);

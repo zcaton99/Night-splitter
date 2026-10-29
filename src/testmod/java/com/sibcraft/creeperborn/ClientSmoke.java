@@ -90,6 +90,11 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.PairRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Love/Sand pose leak");}
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
                 if(parts[0]!=225)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
+                com.sibcraft.creeperborn.client.FireRenderer.validate();
+                for(int frame:new int[]{0,3,6,9,11}){com.sibcraft.creeperborn.client.FireRenderer.submit(16,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Fireball leaked a pose");}
+                ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$fireKind(1);((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$fireballLength(16);
+                if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$fireKind()!=1||((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$fireballLength()!=16)throw new AssertionError("Fireball render state missing");
+                for(int frame:new int[]{0,4,12,21,27}){com.sibcraft.creeperborn.client.FireRenderer.submitRing(8,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Flame Ring leaked a pose");}
                 com.sibcraft.creeperborn.client.WaterRenderer.validate();
                 for(int kind:new int[]{1,2})for(int frame:new int[]{0,6,12,20,30}){com.sibcraft.creeperborn.client.WaterRenderer.submit(kind,16,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Water animation leaked a pose");}
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterKind(2);((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterLength(16);

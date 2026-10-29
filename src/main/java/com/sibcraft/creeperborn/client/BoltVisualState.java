@@ -1,5 +1,7 @@
 package com.sibcraft.creeperborn.client;
 public interface BoltVisualState{
+    int creeperborn$fireKind();void creeperborn$fireKind(int value);
+    float creeperborn$fireballLength();void creeperborn$fireballLength(float length);
     int creeperborn$waterKind();void creeperborn$waterKind(int kind);
     float creeperborn$waterLength();void creeperborn$waterLength(float length);
     int creeperborn$azureKind();void creeperborn$azureKind(int kind);
