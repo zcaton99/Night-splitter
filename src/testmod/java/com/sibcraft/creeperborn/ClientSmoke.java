@@ -90,6 +90,10 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.PairRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Love/Sand pose leak");}
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
                 if(parts[0]!=225)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
+                com.sibcraft.creeperborn.client.WaterRenderer.validate();
+                for(int kind:new int[]{1,2})for(int frame:new int[]{0,6,12,20,30}){com.sibcraft.creeperborn.client.WaterRenderer.submit(kind,16,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Water animation leaked a pose");}
+                ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterKind(2);((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterLength(16);
+                if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterKind()!=2||((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$waterLength()!=16)throw new AssertionError("Water render state missing");
                 var visualOwner=java.util.UUID.randomUUID();
                 if(!visualOwner.equals(com.sibcraft.creeperborn.client.ClimateRenderer.attachedOwner("cb_climate_17|"+visualOwner))||com.sibcraft.creeperborn.client.ClimateRenderer.kind("cb_climate_11|"+visualOwner)!=11)throw new AssertionError("Attached climate visual must preserve its owner and model");
                 var ownerAt=new net.minecraft.world.phys.Vec3(8,20,12);var staleAt=new net.minecraft.world.phys.Vec3(3,2,4);

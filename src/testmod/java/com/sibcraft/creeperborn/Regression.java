@@ -1486,6 +1486,7 @@ public final class Regression implements ModInitializer {
             check(Creeperborn.ABILITIES.cast(caster).equals(e.moves[slot] + "!"), "Every move casts: " + e.moves[slot]);
             if (e == Element.EARTH && slot == 0) for (int i = 0; i < 10; i++) Creeperborn.ABILITIES.rocks.tick();
             if(e==Element.AIR&&slot==2)Creeperborn.ABILITIES.vortices.tick();
+            if(slot==0&&e==Element.WATER)check(WaterAnimations.activeCount()>0,"Water Whip creates a flowing model effect");
             if (slot == 0 || (slot == 2 && e == Element.AIR) || (slot == 1 && e == Element.FIRE))
                 check(target.getHealth() < 20, "Offensive move damages hostile: " + e.moves[slot]);
             if (slot == 1 && e == Element.WATER)
@@ -1493,6 +1494,8 @@ public final class Regression implements ModInitializer {
             if (slot == 1 && e == Element.EARTH) check(Creeperborn.ABILITIES.rocks.guarded(caster), "Frontal rock guard created");
             if (slot == 2 && e == Element.EARTH) check(Shackles.rooted(target)&&Shackles.remaining(target)==80, "Slab Shackles roots hostile for four seconds");
             if (slot == 1 && e == Element.WATER) {
+                check(Creeperborn.ABILITIES.pushRemaining(target)==0,"Tidal arms rise before pushing");
+                for(int phase=0;phase<WaterAnimations.GUARD_WINDUP;phase++){clock(level,level.getGameTime()+1);Creeperborn.ABILITIES.tick();}
                 check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard requests ten-block push");
                 check(target.getHealth()<20,"Tidal Guard damages hostile while pushing");
             }
@@ -1523,7 +1526,7 @@ public final class Regression implements ModInitializer {
             target.snapTo(.5, y, 2.5); target.setNoAi(true); level.addFreshEntity(target);
             Creeperborn.ABILITIES.move(caster, e == Element.EARTH ? 2 : 1); Creeperborn.ABILITIES.cast(caster);
             double start = target.getZ(), expected = 10;
-            for (int tick = 0; tick < 30; tick++) { target.travel(net.minecraft.world.phys.Vec3.ZERO); Creeperborn.ABILITIES.tick(); }
+            for (int tick = 0; tick < 36; tick++) { clock(level,level.getGameTime()+1);target.travel(net.minecraft.world.phys.Vec3.ZERO); Creeperborn.ABILITIES.tick(); }
             double travelled = target.getZ() - start;
             check(travelled >= expected - 1 && travelled <= expected + 1,
                 e.title + " actual push distance: " + travelled + ", expected about " + expected);
@@ -1544,10 +1547,13 @@ public final class Regression implements ModInitializer {
             check(level.addFreshEntity(target), "Tidal target added"); surrounding.add(target);
         }
         Creeperborn.ABILITIES.move(tidal, 1); Creeperborn.ABILITIES.cast(tidal);
+        check(WaterAnimations.activeCount()==1,"Tidal Guard uses one bounded animated display");
+        for(int phase=0;phase<WaterAnimations.GUARD_WINDUP;phase++){clock(level,level.getGameTime()+1);Creeperborn.ABILITIES.tick();}
         for (Zombie target : surrounding) {
             check(Creeperborn.ABILITIES.pushRemaining(target) == 10, "Tidal Guard covers front, rear and both sides: pos="
                 + target.position() + ", remaining=" + Creeperborn.ABILITIES.pushRemaining(target) + ", visible=" + tidal.hasLineOfSight(target)); target.discard();
         }
+        WaterAnimations.forget(tidal);check(WaterAnimations.activeCount()==0,"Water effects clean up on owner removal");
         Mastery.grant(tidal,Element.EARTH,3); Progress.select(tidal, Element.EARTH); Creeperborn.ABILITIES.move(tidal, 1);
         Creeperborn.ABILITIES.cast(tidal);
         var rockVisuals = level.getEntitiesOfClass(net.minecraft.world.entity.Display.BlockDisplay.class,

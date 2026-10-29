@@ -21,6 +21,7 @@ public abstract class PunchDisplayRendererMixin {
         int azure=AzureRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString());var cameraClient=Minecraft.getInstance();if((azure==2||azure==7||azure==14||azure==15)&&cameraClient.player!=null&&(AzureVisuals.flags(cameraClient.player.getId())&3)==2&&display.getCustomName()!=null&&display.getCustomName().getString().endsWith("|"+cameraClient.player.getUUID())&&AzureVisuals.cameraPosition()!=null&&display.position().distanceToSqr(AzureVisuals.cameraPosition())<9)azure=17;((BoltVisualState)state).creeperborn$azureKind(azure);
         ((BoltVisualState)state).creeperborn$climateKind(ClimateRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ClimateRenderer.followOwner(display,state,partial);
+        String waterName=display.getCustomName()==null?"":display.getCustomName().getString();((BoltVisualState)state).creeperborn$waterKind(WaterRenderer.kind(waterName));((BoltVisualState)state).creeperborn$waterLength(WaterRenderer.length(waterName));WaterRenderer.followOwner(display,state,partial);
         ((BoltVisualState)state).creeperborn$pairKind(PairRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$tremorKind(TremorRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$pawKind(PawRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
@@ -47,6 +48,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        int waterKind=((BoltVisualState)state).creeperborn$waterKind();if(waterKind>0){WaterRenderer.submit(waterKind,((BoltVisualState)state).creeperborn$waterLength(),state.ageInTicks,poses,collector);ci.cancel();return;}
         int azureKind=((BoltVisualState)state).creeperborn$azureKind();if(azureKind>0){AzureRenderer.submit(azureKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int climateKind=((BoltVisualState)state).creeperborn$climateKind();if(climateKind>0){ClimateRenderer.submit(climateKind,poses,collector,state.ageInTicks);ci.cancel();return;}
         int pairKind=((BoltVisualState)state).creeperborn$pairKind();if(pairKind>0){PairRenderer.submit(pairKind,poses,collector,state.ageInTicks);ci.cancel();return;}

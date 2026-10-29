@@ -31,9 +31,9 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
-    public void clear() { cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
+    public void clear() { WaterAnimations.clear(); cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
     public void tick() {
-        rocks.tick(); Shackles.tick(); vortices.tick();
+        rocks.tick(); Shackles.tick(); vortices.tick(); WaterAnimations.tick();
         Iterator<Push> iterator = pushes.values().iterator();
         while (iterator.hasNext()) {
             Push push = iterator.next(); LivingEntity t = push.target;
@@ -80,7 +80,7 @@ public final class Abilities {
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); pulse(level, p, e, 5, (float)(3 * power), 10 * power);
+                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); WaterAnimations.guard(p,()->pulse(level, p, e, 5, (float)(3 * power), 10 * power));
                 } else {
                     int foodBefore=p.getFoodData().getFoodLevel();
                     float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
@@ -143,7 +143,8 @@ public final class Abilities {
                 if (d < closest) { closest = d; best = target; }
             }
         }
-        for (double d = 0; d < closest; d += 0.5) particles(level, e, origin.add(direction.scale(d)), 1);
+        if(e==Element.WATER)WaterAnimations.whip(p,origin.add(direction.scale(closest)));
+        else for (double d = 0; d < closest; d += 0.5) particles(level, e, origin.add(direction.scale(d)), 1);
         if (best != null) strike(level, p, best, e, (float)((e == Element.AIR ? 2 : 6) * power), (e == Element.AIR ? 1.1 : .35) * power);
     }
     private void pulse(ServerLevel level, LivingEntity caster, Element e, double radius, float damage, double distance) {
