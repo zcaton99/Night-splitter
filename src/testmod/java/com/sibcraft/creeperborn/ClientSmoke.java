@@ -89,7 +89,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=8;kind++){com.sibcraft.creeperborn.client.TremorRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Tremor pose leak");}
                 for(int kind=1;kind<=12;kind++){com.sibcraft.creeperborn.client.PairRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Love/Sand pose leak");}
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
-                if(parts[0]!=222)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
+                if(parts[0]!=225)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
                 com.sibcraft.creeperborn.client.AzureRenderer.validate();
                 if(com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(0)!=30||com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(2)!=6.5f)throw new AssertionError("Dragon camera must reveal wide then settle close");
                 float prior=30;for(int frame=0;frame<=120;frame++){float distance=com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(frame/60.0);if(distance>prior||distance<6.5f||prior-distance>1)throw new AssertionError("Camera reveal is discontinuous");prior=distance;}
