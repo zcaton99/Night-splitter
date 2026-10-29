@@ -31,6 +31,7 @@ public final class Abilities {
     }
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
+    public static double elementRadius(Player p,Element e,double base){return Mastery.harmony(p)?12.5:Mastery.tier(p,e)>=3?10:base;}
     public void clear() { FireAnimations.clear(); WaterAnimations.clear(); cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
     public void tick() {
         rocks.tick(); Shackles.tick(); vortices.tick(); WaterAnimations.tick(); FireAnimations.tick();
@@ -80,7 +81,7 @@ public final class Abilities {
             }
             case WATER -> {
                 if (move == 1) {
-                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); WaterAnimations.guard(p,()->pulse(level, p, e, 5, (float)(3 * power), 10 * power));
+                    effect(p, MobEffects.RESISTANCE, (int)Math.round(80 * power * harmony), 0); WaterAnimations.guard(p,elementRadius(p,e,5),()->pulse(level, p, e, elementRadius(p,e,5), (float)(3 * power), 10 * power));
                 } else {
                     int foodBefore=p.getFoodData().getFoodLevel();
                     float before = p.getHealth(); p.heal((float)(4 * power * harmony)); p.clearFire();
@@ -89,7 +90,7 @@ public final class Abilities {
                 }
             }
             case FIRE -> {
-                if (move == 1) {FireAnimations.ring(p,4+4*power);pulse(level, p, e, 4, (float)(5 * power), 4 * power);}
+                if (move == 1) {FireAnimations.ring(p,elementRadius(p,e,4));pulse(level, p, e, elementRadius(p,e,4), (float)(5 * power), 4 * power);}
                 else {
                     int protection=(int)Math.round(160 * power * harmony);
                     float before=p.getHealth();p.heal((float)(10*harmony));
@@ -130,7 +131,7 @@ public final class Abilities {
     }
     private static void bolt(ServerLevel level, Player p, Element e, double power) {
         Vec3 origin = p.getEyePosition(), direction = p.getLookAngle();
-        double maximum=Mastery.harmony(p)?50:16;
+        double maximum=Mastery.harmony(p)?50:Mastery.tier(p,e)>=3?32:16;
         Vec3 end = origin.add(direction.scale(maximum));
         var block = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
         double range = block.getType() == HitResult.Type.MISS ? maximum : origin.distanceTo(block.getLocation());

@@ -11,11 +11,12 @@ import net.minecraft.world.phys.Vec3;
 /** One temporary display per cast; the tidal impact happens at the outward sweep. */
 public final class WaterAnimations {
     public static final int GUARD_WINDUP=6;
-    private static final class Effect {Player owner;ServerLevel level;Display.BlockDisplay display;Vec3 end;int kind;long starts,ends;Runnable impact;}
+    private static final class Effect {Player owner;ServerLevel level;Display.BlockDisplay display;Vec3 end;int kind;float radius;long starts,ends;Runnable impact;}
     private static final Map<UUID,Effect> active=new HashMap<>();
     private static boolean valid(Effect e){return e.owner.isAlive()&&!e.owner.isRemoved()&&!e.owner.isSpectator()&&e.owner.level()==e.level&&!WaterRules.suppressed(e.owner)&&!Dark.suppressed(e.owner);}
     public static void whip(Player p,Vec3 end){start(p,1,end,null);}
-    public static void guard(Player p,Runnable impact){start(p,2,null,impact);}
+    public static void guard(Player p,Runnable impact){guard(p,5,impact);}
+    public static void guard(Player p,double radius,Runnable impact){start(p,2,null,impact);for(Effect e:active.values())if(e.owner==p&&e.kind==2){e.radius=(float)radius;position(e);}}
     private static void start(Player p,int kind,Vec3 end,Runnable impact){
         if(!(p.level() instanceof ServerLevel level))return;
         // A recast replaces only its own visual, never another player's cast.
@@ -27,7 +28,7 @@ public final class WaterAnimations {
         position(e);if(level.addFreshEntity(display))active.put(display.getUUID(),e);
     }
     private static void position(Effect e){
-        Vec3 from=e.kind==1?LightningBolts.hand(e.owner):e.owner.position();Vec3 direction=e.kind==1?e.end.subtract(from):new Vec3(0,0,1);float length=e.kind==1?(float)Math.max(.25,Math.min(64,direction.length())):1;
+        Vec3 from=e.kind==1?LightningBolts.hand(e.owner):e.owner.position();Vec3 direction=e.kind==1?e.end.subtract(from):new Vec3(0,0,1);float length=e.kind==1?(float)Math.max(.25,Math.min(64,direction.length())):e.radius>0?e.radius:5;
         e.display.setCustomName(Component.literal("cb_water_"+e.kind+"|"+e.owner.getUUID()+"|"+length));e.display.snapTo(from.x,from.y,from.z);
         e.display.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),Paw.orientation(direction.normalize()),new org.joml.Vector3f(1),new org.joml.Quaternionf()));
     }

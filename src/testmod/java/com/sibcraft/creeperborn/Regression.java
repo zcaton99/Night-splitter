@@ -2014,6 +2014,8 @@ public final class Regression implements ModInitializer {
         }
         check(basic.getEffect(MobEffects.RESISTANCE).getDuration() == 80
             && master.getEffect(MobEffects.RESISTANCE).getDuration() == 92, "Tidal Guard duration gets fifteen percent");
+        check(Abilities.elementRadius(basic,Element.WATER,5)==10&&Abilities.elementRadius(master,Element.WATER,5)==12.5,"Mastered tidal diameter is twenty blocks, Harmony twenty-five");
+        check(Abilities.elementRadius(basic,Element.FIRE,4)==10&&Abilities.elementRadius(master,Element.FIRE,4)==12.5,"Mastered flame ring shares the expanded damage radius");
         for (Player caster : new Player[]{basic,master}) {
             Progress.select(caster,Element.EARTH); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
         }

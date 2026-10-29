@@ -28,16 +28,16 @@ public final class ClimateRenderer {
     private static ModelPart ring(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<32;i++){double a=i*Math.PI/16;box(r,"r"+i,(float)Math.cos(a)*7-.4f,(float)Math.sin(a)*7-.4f,0,.8f,.8f,.4f);}return bake(m);}
     private static ModelPart shards(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<24;i++){double a=i*2.4;box(r,"shard"+i,(float)Math.cos(a)*(i%7+1),(i%8)-3,(float)Math.sin(a)*(i%7+1),.5f,1.4f,.5f);}return bake(m);}
     private static void draw(ModelPart model,Identifier texture,PoseStack poses,SubmitNodeCollector nodes){nodes.submitModelPart(model,poses,RenderTypes.eyes(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
-    public static int kind(String name){for(int i=1;i<=18;i++)if(name.split("\\|",2)[0].equals("cb_climate_"+i))return i;return 0;}
-    public static java.util.UUID attachedOwner(String name){String[] parts=name.split("\\|",2);if(parts.length!=2)return null;int kind=kind(name);if(kind!=11&&kind!=16&&kind!=17)return null;try{return java.util.UUID.fromString(parts[1]);}catch(IllegalArgumentException ignored){return null;}}
-    public static net.minecraft.world.phys.Vec3 attachmentPosition(int kind,net.minecraft.world.phys.Vec3 owner,net.minecraft.world.phys.Vec3 display){return kind==16?new net.minecraft.world.phys.Vec3(owner.x,display.y,owner.z):owner;}
+    public static int kind(String name){for(int i=1;i<=19;i++)if(name.split("\\|",2)[0].equals("cb_climate_"+i))return i;return 0;}
+    public static java.util.UUID attachedOwner(String name){String[] parts=name.split("\\|",2);if(parts.length!=2)return null;int kind=kind(name);if(kind!=11&&kind!=16&&kind!=17&&kind!=19)return null;try{return java.util.UUID.fromString(parts[1]);}catch(IllegalArgumentException ignored){return null;}}
+    public static net.minecraft.world.phys.Vec3 attachmentPosition(int kind,net.minecraft.world.phys.Vec3 owner,net.minecraft.world.phys.Vec3 display){return kind==19?owner.add(0,-.015,0):kind==16?new net.minecraft.world.phys.Vec3(owner.x,display.y,owner.z):owner;}
     public static void followOwner(net.minecraft.world.entity.Display.BlockDisplay display,net.minecraft.client.renderer.entity.state.BlockDisplayEntityRenderState state,float partial){
         if(display.getCustomName()==null)return;String name=display.getCustomName().getString();java.util.UUID id=attachedOwner(name);if(id==null)return;var client=net.minecraft.client.Minecraft.getInstance();var owner=client.level==null?null:client.level.getPlayerByUUID(id);if(owner==null)return;var at=attachmentPosition(kind(name),owner.getPosition(partial),display.getPosition(partial));state.x=at.x;state.y=at.y;state.z=at.z;
     }
     public static void submit(int kind,PoseStack poses,SubmitNodeCollector nodes,float age){poses.pushPose();
         if(kind==1||kind==2)draw(SPEAR,kind==2?BLUE:ICE,poses,nodes);
         else if(kind==3){poses.rotate(new Quaternionf().rotationZ((float)Math.sin(age*.4)*.04f));draw(BIRD,BLUE,poses,nodes);}
-        else if(kind==4)draw(PLATFORM,ICE,poses,nodes);
+        else if(kind==4||kind==19)draw(PLATFORM,ICE,poses,nodes);
         else if(kind==5)draw(GLACIER,ICE,poses,nodes);
         else if(kind==6){draw(HAND,MAGMA,poses,nodes);draw(MOLTEN,LAVA,poses,nodes);for(int i=0;i<3;i++){poses.pushPose();poses.translate(Math.sin(age*.4+i)*.03,Math.cos(age*.4+i)*.03,-.4-i*.25);float size=.6f-i*.15f;poses.scale(size,size,size);draw(SHARDS,LAVA,poses,nodes);poses.popPose();}}
         else if(kind==7||kind==9){draw(FIST,MAGMA,poses,nodes);poses.pushPose();float pulse=.9f+(float)Math.sin(age*.5)*.03f;poses.scale(pulse,pulse,pulse);draw(FIST,LAVA,poses,nodes);poses.popPose();}
@@ -51,5 +51,5 @@ public final class ClimateRenderer {
         else if(kind==16){poses.rotate(new Quaternionf().rotationY(age*.07f));draw(COLUMN,LAVA,poses,nodes);}
         else if(kind==18){float growth=.2f+Math.min(1,age/12);poses.scale(growth,growth,growth);draw(SHARDS,LAVA,poses,nodes);draw(RING,MAGMA,poses,nodes);}
         poses.popPose();}
-    public static void validate(){SPEAR.getChild("tip");HAND.getChild("finger3").getChild("tip");HAND.getChild("thumb");HOUND.getChild("snout");GLACIER.getChild("center");COFFIN.getChild("cap");COLUMN.getChild("stream11");for(int i=1;i<=18;i++)if(kind("cb_climate_"+i)!=i)throw new AssertionError("Ice/Magma visual mapping");}
+    public static void validate(){SPEAR.getChild("tip");HAND.getChild("finger3").getChild("tip");HAND.getChild("thumb");HOUND.getChild("snout");GLACIER.getChild("center");COFFIN.getChild("cap");COLUMN.getChild("stream11");for(int i=1;i<=19;i++)if(kind("cb_climate_"+i)!=i)throw new AssertionError("Ice/Magma visual mapping");}
 }
