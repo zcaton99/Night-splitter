@@ -277,7 +277,7 @@ public final class Creeperborn implements ModInitializer {
                     else if(Lightning.unlocked(p)){Lightning.grant(p,tier);chat(p,Lightning.status(p));}
                     else if(Phoenix.unlocked(p)){Phoenix.grant(p,tier);chat(p,Phoenix.status(p));}
                     else if(DoorFruit.unlocked(p)){DoorFruit.grant(p,tier);chat(p,DoorFruit.status(p));}
-                    else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,Azure.status(p));chat(p,Rubber.status(p));}
+                    else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,Rubber.status(p));}
                     else {chat(p,"Eat a Devil Fruit first; fruitmastery changes the fruit you own.");return 0;}
                     return 1;
                 })));
