@@ -21,7 +21,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 /** Server-authoritative Azure forms, bounded attacks and temporary articulated dragon body. */
 public final class Azure {
-    public static final int DRAGON_TICKS=3000;
+    public static final int DRAGON_TICKS=6000;
     private static final class State {
         Player owner;ServerLevel level;int form=1,held=-1,keys,blade,attackTicks;long press,heartbeat,inputUntil,ends=Long.MAX_VALUE,flightInput=-1,correction=-100,transition,recent=-1000,basicReady,flare,torchUntil,breathUntil,breathNext,twisterUntil,twisterNext;Vec3 heading,last;boolean moving,breathCommitted;float swing;
         final ArrayList<Vec3> path=new ArrayList<>();final ArrayList<Display.BlockDisplay> body=new ArrayList<>();final ArrayList<Mob> proxies=new ArrayList<>();Display.BlockDisplay charge;final Set<UUID> rushHit=new HashSet<>();
@@ -72,7 +72,7 @@ public final class Azure {
                 if(s.form==2){toHybrid(s);ready(p,"form",now+40);return "Azure Hybrid!";}
                 if(tier<3)return "Full Dragon needs mastery: 40 uses and one active hour.";
                 if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to transform.";
-                Vec3 lift=p.position();for(int i=1;i<=6;i++){Vec3 next=p.position().add(0,i*.5,0);if(!safe(p,next))break;lift=next;}if(lift.y-p.getY()<1.5)return "Need more overhead space to take flight.";moveTo(p,lift);endForm(s);s.form=2;s.ends=now+DRAGON_TICKS;s.transition=now+30;s.heading=p.getLookAngle().normalize();ready(p,"form",now+40);p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);credit(p);seedPath(s);createBody(s);particles(p,p.position().add(0,1,0),0xFFA82C,40);return "Azure Dragon — 2:30! C tap Torch / tap again Flame Bagua; hold C returns to Hybrid.";
+                Vec3 lift=p.position();for(int i=1;i<=6;i++){Vec3 next=p.position().add(0,i*.5,0);if(!safe(p,next))break;lift=next;}if(lift.y-p.getY()<1.5)return "Need more overhead space to take flight.";moveTo(p,lift);endForm(s);s.form=2;s.ends=now+DRAGON_TICKS;s.transition=now+30;s.heading=p.getLookAngle().normalize();ready(p,"form",now+40);p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);credit(p);seedPath(s);createBody(s);particles(p,p.position().add(0,1,0),0xFFA82C,40);return "Azure Dragon — 5:00! C tap Torch / tap again Flame Bagua; hold C returns to Hybrid.";
             }
             if(now<s.transition)return "Finish transforming first.";
             if(s.form==2){
