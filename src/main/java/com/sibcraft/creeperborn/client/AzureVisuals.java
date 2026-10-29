@@ -20,7 +20,7 @@ public final class AzureVisuals {
         double y=Math.toRadians(yaw),p=Math.toRadians(pitch),aim=aimBlend(pitch),distance=revealDistance(seconds)*(1-aim)+5.5*aim,lift=4-aim*.8;
         var forward=new net.minecraft.world.phys.Vec3(-Math.sin(y)*Math.cos(p),-Math.sin(p),Math.cos(y)*Math.cos(p));
         var up=new net.minecraft.world.phys.Vec3(-Math.sin(y)*Math.sin(p),Math.cos(p),Math.cos(y)*Math.sin(p));
-        return forward.scale(-distance).add(up.scale(lift)).add(0,1.5,0);
+        var offset=forward.scale(-distance).add(up.scale(lift)).add(0,1.5,0);return new net.minecraft.world.phys.Vec3(offset.x,Math.max(3.5,offset.y),offset.z);
     }
     public static net.minecraft.world.phys.Vec3 cameraOffset(float yaw,float pitch){return cameraOffset(yaw,pitch,elapsed());}
     private static void restore(){if(previous!=null){var c=Minecraft.getInstance();if(c.options.getCameraType()==CameraType.THIRD_PERSON_BACK)c.options.setCameraType(previous);previous=null;}}
