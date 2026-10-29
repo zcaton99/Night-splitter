@@ -53,6 +53,8 @@ public final class CombatNetwork {
         Creeperborn.ABILITIES.move(p,move);return Creeperborn.ABILITIES.cast(p);
     }
     public static void init() {
+        PayloadTypeRegistry.serverboundPlay().register(AzureFlightPayload.TYPE,AzureFlightPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(AzureFlightPayload.TYPE,(payload,context)->Azure.flightInput(context.player(),payload));
         PayloadTypeRegistry.serverboundPlay().register(StringControlPayload.TYPE,StringControlPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(StringControlPayload.TYPE,StringControlPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(StringControlPayload.TYPE,(payload,context)->{if(payload.valid()&&context.player().isAlive())StringFruit.input(context.player(),payload);});

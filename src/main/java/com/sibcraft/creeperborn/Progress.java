@@ -17,7 +17,7 @@ public final class Progress {
     }
     public static boolean select(Player player, Element e) {
         if (!unlocked(player, e)) return false;
-        Rubber.cancelInput(player);Phoenix.cancelInput(player);Lightning.cancelInput(player);Dark.cancelInput(player); player.removeTag("cb_mode_fruit");
+        Azure.cancelInput(player);Rubber.cancelInput(player);Phoenix.cancelInput(player);Lightning.cancelInput(player);Dark.cancelInput(player); player.removeTag("cb_mode_fruit");
         for (Element old : Element.values()) player.removeTag("cb_select_" + old.key());
         player.addTag("cb_select_" + e.key()); return true;
     }

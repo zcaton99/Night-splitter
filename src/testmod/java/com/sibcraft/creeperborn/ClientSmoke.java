@@ -91,10 +91,13 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=1;kind<=18;kind++){com.sibcraft.creeperborn.client.ClimateRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Ice/Magma pose leak");}
                 if(parts[0]!=222)throw new AssertionError("Legacy model submissions changed: "+parts[0]);
                 com.sibcraft.creeperborn.client.AzureRenderer.validate();
+                if(com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(0)!=30||com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(2)!=6.5f)throw new AssertionError("Dragon camera must reveal wide then settle close");
+                float prior=30;for(int frame=0;frame<=120;frame++){float distance=com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(frame/60.0);if(distance>prior||distance<6.5f||prior-distance>1)throw new AssertionError("Camera reveal is discontinuous");prior=distance;}
+                var hidden=(com.sibcraft.creeperborn.client.AzureHiddenState)new net.minecraft.client.renderer.entity.state.LivingEntityRenderState();hidden.creeperborn$azureHidden(true);if(!hidden.creeperborn$azureHidden())throw new AssertionError("Invisible helper render state not mixed in");
                 if(Arrays.stream(Class.forName("net.minecraft.client.Camera").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$dragonZoom")))throw new AssertionError("Azure camera mixin did not apply");
                 int azureStart=parts[0];
                 for(int tier=1;tier<=3;tier++)for(int flags:new int[]{1|(tier<<2)|128,1|(tier<<2)|16|32|128}){com.sibcraft.creeperborn.client.AzureRenderer.avatar(state,pawPoses,nodes,flags);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Hybrid pose leak");}
-                for(int kind=1;kind<=15;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
+                for(int kind=1;kind<=16;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
                 com.sibcraft.creeperborn.client.AzureRenderer.hand(pawPoses,nodes);
                 if(parts[0]-azureStart<60)throw new AssertionError("Azure forms did not submit complete meshes");
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind(12);if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind()!=12)throw new AssertionError("Azure render state missing");

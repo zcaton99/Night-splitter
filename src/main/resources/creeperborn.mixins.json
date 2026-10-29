@@ -37,6 +37,7 @@
     "PhoenixNameMixin",
     "StringClientInteractionMixin",
     "StringClientMovementMixin",
-    "AzureCameraMixin"
+    "AzureCameraMixin",
+    "AzureHiddenStateMixin"
   ]
 }
