@@ -74,7 +74,7 @@ public final class Abilities {
                 else {
                     int duration=Mastery.harmony(p)?180:80;
                     for(LivingEntity target:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(5)))
-                        if(target instanceof Enemy&&target.isAlive()&&target.distanceToSqr(p)<=25&&p.hasLineOfSight(target))
+                        if(!Azure.ownedProxy(target,p)&&target instanceof Enemy&&target.isAlive()&&target.distanceToSqr(p)<=25&&p.hasLineOfSight(target))
                             Shackles.bind(p,target,duration);
                 }
             }
@@ -136,7 +136,7 @@ public final class Abilities {
         double range = block.getType() == HitResult.Type.MISS ? maximum : origin.distanceTo(block.getLocation());
         LivingEntity best = null; double closest = range;
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(maximum+1))) {
-            if (!(target instanceof Enemy) || !target.isAlive() || !p.hasLineOfSight(target)) continue;
+            if (Azure.ownedProxy(target,p) || !(target instanceof Enemy) || !target.isAlive() || !p.hasLineOfSight(target)) continue;
             var intersection = target.getBoundingBox().inflate(0.35).clip(origin, origin.add(direction.scale(range)));
             if (intersection.isPresent()) {
                 double d = origin.distanceTo(intersection.get());
@@ -148,7 +148,7 @@ public final class Abilities {
     }
     private void pulse(ServerLevel level, LivingEntity caster, Element e, double radius, float damage, double distance) {
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius))) {
-            if (!(target instanceof Enemy) || !target.isAlive() || target.distanceToSqr(caster) > radius * radius || !caster.hasLineOfSight(target)) continue;
+            if (Azure.ownedProxy(target,caster) || !(target instanceof Enemy) || !target.isAlive() || target.distanceToSqr(caster) > radius * radius || !caster.hasLineOfSight(target)) continue;
             strike(level, caster, target, e, damage, 0);
             Vec3 delta = target.position().subtract(caster.position());
             Vec3 direction = new Vec3(delta.x, 0, delta.z).normalize();
@@ -158,11 +158,12 @@ public final class Abilities {
     }
     private static void area(ServerLevel level, LivingEntity caster, Element e, double radius, float damage, double push) {
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, caster.getBoundingBox().inflate(radius))) {
-            if (target instanceof Enemy && target.isAlive() && target.distanceToSqr(caster) <= radius * radius
+            if (!Azure.ownedProxy(target,caster) && target instanceof Enemy && target.isAlive() && target.distanceToSqr(caster) <= radius * radius
                     && caster.hasLineOfSight(target)) strike(level, caster, target, e, damage, push);
         }
     }
     public static void strike(ServerLevel level, LivingEntity caster, LivingEntity target, Element e, float damage, double push) {
+        if(Azure.ownedProxy(target,caster))return;
         if (caster instanceof Player p && target instanceof Enemy && target.isAlive()) Mastery.credit(p, e);
         if (caster instanceof Player p) damage *= (float)Mastery.multiplier(p);
         if (damage > 0) {

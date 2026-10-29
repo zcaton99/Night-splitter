@@ -33,7 +33,7 @@ public final class Vortices {
             }
             boolean finish=++s.ticks>=100;
             for(LivingEntity target:s.level.getEntitiesOfClass(LivingEntity.class,new AABB(s.center,s.center).inflate(s.radius))){
-                if(!(target instanceof Enemy)||!target.isAlive()||target.position().distanceToSqr(s.center)>s.radius*s.radius)continue;
+                if(Azure.ownedProxy(target,s.owner)||!(target instanceof Enemy)||!target.isAlive()||target.position().distanceToSqr(s.center)>s.radius*s.radius)continue;
                 Vec3 sight=s.center.add(0,1,0),end=target.position().add(0,target.getBbHeight()/2,0);
                 if(s.level.clip(new ClipContext(sight,end,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,s.owner)).getType()!=HitResult.Type.MISS)continue;
                 Vec3 delta=target.position().subtract(s.center);

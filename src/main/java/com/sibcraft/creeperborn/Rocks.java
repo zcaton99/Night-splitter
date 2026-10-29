@@ -108,7 +108,7 @@ public final class Rocks {
             Vec3 end = wall.getType() == HitResult.Type.MISS ? next : wall.getLocation();
             LivingEntity victim = null; double closest = b.position.distanceTo(end);
             for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(b.position, end).inflate(.8))) {
-                if (!(target instanceof Enemy) || !target.isAlive() || !b.caster.hasLineOfSight(target)) continue;
+                if (Azure.ownedProxy(target,b.caster) || !(target instanceof Enemy) || !target.isAlive() || !b.caster.hasLineOfSight(target)) continue;
                 var hit = target.getBoundingBox().inflate(.65).clip(b.position, end);
                 if (hit.isPresent() && b.position.distanceTo(hit.get()) <= closest) {
                     closest = b.position.distanceTo(hit.get()); victim = target;

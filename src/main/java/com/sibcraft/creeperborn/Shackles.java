@@ -18,7 +18,7 @@ public final class Shackles {
     public static boolean rooted(LivingEntity target){if(Dark.rooted(target)||Op.rooted(target)||Gravity.rooted(target))return true;Binding b=bindings.get(target.getUUID());return b!=null&&valid(b);}
     public static long remaining(LivingEntity target){Binding b=bindings.get(target.getUUID());return b==null||!valid(b)?0:b.expires()-b.level().getGameTime();}
     public static void bind(Player caster,LivingEntity target,int ticks){
-        if(!(target instanceof Enemy)||!target.isAlive()||!(caster.level() instanceof ServerLevel level))return;
+        if(Azure.ownedProxy(target,caster)||!(target instanceof Enemy)||!target.isAlive()||!(caster.level() instanceof ServerLevel level))return;
         Binding old=bindings.remove(target.getUUID());if(old!=null)old.slabs().forEach(Entity::discard);
         List<Display.BlockDisplay> slabs=new ArrayList<>();
         for(int i=0;i<4;i++){var slab=Rocks.visual(level,target.position(),.85f);slab.setBlockState(Blocks.STONE_SLAB.defaultBlockState());slabs.add(slab);}
