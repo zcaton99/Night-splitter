@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class StringConnectionMixin {
     @Shadow public ServerPlayer player;
     @Inject(method="handleMovePlayer",at=@At("HEAD"),cancellable=true)
-    private void creeperborn$stringControlMovement(ServerboundMovePlayerPacket packet,CallbackInfo ci){if(com.sibcraft.creeperborn.Azure.locked(player)){com.sibcraft.creeperborn.Azure.connectionMove(player,packet);ci.cancel();return;}if(StringFruit.locked(player)||com.sibcraft.creeperborn.Paw.airborne(player)||com.sibcraft.creeperborn.Tremor.airborne(player)||com.sibcraft.creeperborn.PairPowers.rooted(player)||com.sibcraft.creeperborn.ClimatePowers.locked(player))ci.cancel();}
+    private void creeperborn$stringControlMovement(ServerboundMovePlayerPacket packet,CallbackInfo ci){if(com.sibcraft.creeperborn.ClimatePowers.connectionMove(player,packet)){ci.cancel();return;}if(com.sibcraft.creeperborn.Azure.locked(player)){com.sibcraft.creeperborn.Azure.connectionMove(player,packet);ci.cancel();return;}if(StringFruit.locked(player)||com.sibcraft.creeperborn.Paw.airborne(player)||com.sibcraft.creeperborn.Tremor.airborne(player)||com.sibcraft.creeperborn.PairPowers.rooted(player)||com.sibcraft.creeperborn.ClimatePowers.locked(player))ci.cancel();}
     @Inject(method="handleInteract",at=@At("HEAD"),cancellable=true)
     private void creeperborn$azureBasic(CallbackInfo ci){if(com.sibcraft.creeperborn.Azure.selected(player)||StringFruit.locked(player)||com.sibcraft.creeperborn.PairPowers.rooted(player)||com.sibcraft.creeperborn.ClimatePowers.rooted(player))ci.cancel();}
     @Inject(method={"handlePlayerAction","handleUseItem","handleUseItemOn","handleContainerClick","handleSetCreativeModeSlot"},at=@At("HEAD"),cancellable=true)
