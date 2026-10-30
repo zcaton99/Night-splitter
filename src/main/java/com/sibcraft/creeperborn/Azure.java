@@ -103,14 +103,29 @@ public final class Azure {
         ready(p,key,now+60);int count=s.form==2?7:s.form==1?5:3;Vec3 dir=s.form==2?s.heading:p.getLookAngle();for(int i=0;i<count;i++){double a=(i-(count-1)/2.0)*.19;Vec3 fan=new Vec3(dir.x*Math.cos(a)-dir.z*Math.sin(a),dir.y,dir.z*Math.cos(a)+dir.x*Math.sin(a)).normalize();shoot(p,s.form==2?mouth(p):p.getEyePosition().add(dir.scale(1.2)),fan,tier==3?20:tier==2?14:9,s.form==2?110:tier==3?75:50,1.2,(s.blade++%2==0)?3:4);}credit(p);return "Demolition Gust — intertwined lightning blades!";
     }
 
+    public static boolean kanabo(ItemStack item){return item.is(net.minecraft.world.item.Items.NETHERITE_SWORD)&&net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","azure_kanabo").equals(item.get(net.minecraft.core.component.DataComponents.ITEM_MODEL));}
+    private static int enchantment(Player p,ItemStack item,net.minecraft.resources.ResourceKey<net.minecraft.world.item.enchantment.Enchantment> key){return net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(p.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(key),item);}
+    public static void upgradeKanabo(Player p,ItemStack club){
+        if(!kanabo(club))return;
+        var keys=java.util.List.of(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS,net.minecraft.world.item.enchantment.Enchantments.KNOCKBACK,net.minecraft.world.item.enchantment.Enchantments.UNBREAKING,net.minecraft.world.item.enchantment.Enchantments.PIERCING,net.minecraft.world.item.enchantment.Enchantments.THORNS,net.minecraft.world.item.enchantment.Enchantments.SWEEPING_EDGE);
+        int[] levels={9,4,4,6,3,4};for(int i=0;i<levels.length;i++)if(enchantment(p,club,keys.get(i))<levels[i])club.enchant(p.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(keys.get(i)),levels[i]);
+    }
     private static void ensureKanabo(Player p){
+        for(int i=0;i<p.getInventory().getContainerSize();i++)upgradeKanabo(p,p.getInventory().getItem(i));
         if(p.entityTags().contains("cb_azure_kanabo_received"))return;
         ItemStack club=new ItemStack(net.minecraft.world.item.Items.NETHERITE_SWORD);
         club.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,Component.literal("Hassaikai — Azure Thunder Kanabo"));
-        club.set(net.minecraft.core.component.DataComponents.ITEM_MODEL,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","azure_kanabo"));
-        club.enchant(p.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SHARPNESS),5);
-        club.enchant(p.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING),3);
+        club.set(net.minecraft.core.component.DataComponents.ITEM_MODEL,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","azure_kanabo"));upgradeKanabo(p,club);
         if(p.getInventory().getFreeSlot()<0)return;p.getInventory().add(club);p.addTag("cb_azure_kanabo_received");
+    }
+    /** Piercing on this sword restores a fraction of damage absorbed by armor, before other defenses. */
+    public static float kanaboArmor(DamageSource source,float incoming,float afterArmor){
+        if(!(source.getEntity() instanceof Player p)||source.getDirectEntity()!=p||!source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||!kanabo(p.getMainHandItem())||afterArmor>=incoming)return afterArmor;
+        float penetration=Math.min(.6f,enchantment(p,p.getMainHandItem(),net.minecraft.world.item.enchantment.Enchantments.PIERCING)*.1f);return afterArmor+(incoming-afterArmor)*penetration;
+    }
+    public static void kanaboThorns(LivingEntity victim,DamageSource source,float damage){
+        if(damage<=0||!(victim instanceof Player p)||!kanabo(p.getMainHandItem())||source.is(net.minecraft.world.damagesource.DamageTypes.THORNS)||source.getDirectEntity()!=source.getEntity()||!(source.getEntity() instanceof LivingEntity attacker)||attacker==p||!attacker.isAlive()||attacker.distanceToSqr(p)>36)return;
+        int level=enchantment(p,p.getMainHandItem(),net.minecraft.world.item.enchantment.Enchantments.THORNS);if(level>0)attacker.hurtServer((ServerLevel)p.level(),p.damageSources().thorns(p),Math.min(3,level));
     }
     private static boolean enemy(Player p,LivingEntity e){return e!=p&&!proxy(e)&&e.isAlive()&&!e.isRemoved()&&!e.isSpectator()&&(e instanceof Enemy||e instanceof Player)&&!p.isAlliedTo(e)&&!(e instanceof Player other&&p.getTeam()!=null&&p.isAlliedTo(other));}
     private static boolean hit(Player p,LivingEntity e,float damage,Vec3 force,boolean fire){if(!enemy(p,e)||!p.hasLineOfSight(e))return false;boolean accepted=e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),damage);if(accepted){if(fire)e.setRemainingFireTicks(80);if(force!=null){if(e instanceof Player target)Rubber.impulse(target,force);else e.setDeltaMovement(e.getDeltaMovement().add(force));}particles(p,e.getBoundingBox().getCenter(),fire?0xFF9B24:0x9F20FF,8);}return accepted;}

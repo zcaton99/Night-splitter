@@ -60,7 +60,7 @@ public final class Creeperborn implements ModInitializer {
             if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);for(var p:server.getPlayerList().getPlayers())Relics.refreshFruitModels(p);}
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
-        ServerLivingEntityEvents.AFTER_DAMAGE.register((entity,source,baseDamage,damageTaken,blocked)->{if(entity instanceof Player p&&damageTaken>0)StringFruit.damaged(p);});
+        ServerLivingEntityEvents.AFTER_DAMAGE.register((entity,source,baseDamage,damageTaken,blocked)->{if(entity instanceof Player p&&damageTaken>0)StringFruit.damaged(p);Azure.kanaboThorns(entity,source,damageTaken);});
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
         ServerLivingEntityEvents.AFTER_DEATH.register(Dark::died);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity,source)->Hearts.died(entity));
