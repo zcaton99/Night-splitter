@@ -26,7 +26,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private void cancel(){if(holding()||StringVisuals.controlling())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
     private void changeSelection(){boolean wasHolding=holding();cancel();waitingForRelease=wasHolding;}
     @Override public void onInitializeClient(){
-        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.NatureVisualPayload.TYPE,(payload,context)->NatureVisuals.update(payload.entity(),payload.flags()));
+        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.NatureVisualPayload.TYPE,(payload,context)->{NatureVisuals.update(payload.entity(),payload.flags());var p=net.minecraft.client.Minecraft.getInstance().player;if(p!=null&&p.getId()==payload.entity())com.sibcraft.creeperborn.NaturePowers.clientGrapple((payload.flags()&16384)!=0?new net.minecraft.world.phys.Vec3(payload.x(),payload.y(),payload.z()):null);});
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.AzureVisualPayload.TYPE,(payload,context)->AzureVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.PhoenixVisualPayload.TYPE,(payload,context)->PhoenixVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.LightningVisualPayload.TYPE,(payload,context)->LightningVisuals.update(payload.entity(),payload.flags()));
