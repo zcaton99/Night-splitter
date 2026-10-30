@@ -15,7 +15,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.*;
 
 public final class Dark{
-    public static final List<String> FRUITS=List.of("rubber","door","phoenix","lightning","dark","op","gravity","string","paw","tremor","love","sand","ice","magma","azure");
+    public static final List<String> FRUITS=List.of("rubber","door","phoenix","lightning","dark","op","gravity","string","paw","tremor","love","sand","ice","magma","azure","tree","petal");
     private static final class State{Player owner;ServerLevel level;int held=-1,surge;long press,heartbeat,recent=-1000,mantleUntil,flare;Vec3 last,surgeDirection;}
     private record Void(Player owner,ServerLevel level,Vec3 center,long ends,Display.BlockDisplay visual,Display.BlockDisplay ground,int radius,float size){}
     private record Coil(Player owner,LivingEntity target,ServerLevel level,long ends){}
@@ -53,8 +53,8 @@ public final class Dark{
     public static int uses(Player p){return Mastery.get(p,"cb_dark_uses_");}
     public static int seconds(Player p){return Mastery.get(p,"cb_dark_time_");}
     public static int tier(Player p){return unlocked(p)?Rubber.progressTier(uses(p),seconds(p)):0;}
-    public static int fruitTier(Player p,String f){return switch(f){case "rubber"->Rubber.tier(p);case "door"->DoorFruit.tier(p);case "phoenix"->Phoenix.tier(p);case "lightning"->Lightning.tier(p);case "azure"->Azure.tier(p);case "ice","magma"->ClimatePowers.tier(p,f);case "love","sand"->PairPowers.tier(p,f);case "tremor"->Tremor.tier(p);case "paw"->Paw.tier(p);case "string"->StringFruit.tier(p);case "gravity"->Gravity.tier(p);case "op"->Op.tier(p);case "dark"->tier(p);default->0;};}
-    public static void grantFruit(Player p,String f,int tier){switch(f){case "rubber"->Rubber.grant(p,tier);case "door"->DoorFruit.grant(p,tier);case "phoenix"->Phoenix.grant(p,tier);case "lightning"->Lightning.grant(p,tier);case "azure"->Azure.grant(p,tier);case "ice","magma"->ClimatePowers.grant(p,f,tier);case "love","sand"->PairPowers.grant(p,f,tier);case "tremor"->Tremor.grant(p,tier);case "paw"->Paw.grant(p,tier);case "string"->StringFruit.grant(p,tier);case "gravity"->Gravity.grant(p,tier);case "op"->Op.grant(p,tier);case "dark"->grant(p,tier);}}
+    public static int fruitTier(Player p,String f){return switch(f){case "rubber"->Rubber.tier(p);case "door"->DoorFruit.tier(p);case "phoenix"->Phoenix.tier(p);case "lightning"->Lightning.tier(p);case "tree","petal"->NaturePowers.tier(p,f);case "azure"->Azure.tier(p);case "ice","magma"->ClimatePowers.tier(p,f);case "love","sand"->PairPowers.tier(p,f);case "tremor"->Tremor.tier(p);case "paw"->Paw.tier(p);case "string"->StringFruit.tier(p);case "gravity"->Gravity.tier(p);case "op"->Op.tier(p);case "dark"->tier(p);default->0;};}
+    public static void grantFruit(Player p,String f,int tier){switch(f){case "rubber"->Rubber.grant(p,tier);case "door"->DoorFruit.grant(p,tier);case "phoenix"->Phoenix.grant(p,tier);case "lightning"->Lightning.grant(p,tier);case "tree","petal"->NaturePowers.grant(p,f,tier);case "azure"->Azure.grant(p,tier);case "ice","magma"->ClimatePowers.grant(p,f,tier);case "love","sand"->PairPowers.grant(p,f,tier);case "tremor"->Tremor.grant(p,tier);case "paw"->Paw.grant(p,tier);case "string"->StringFruit.grant(p,tier);case "gravity"->Gravity.grant(p,tier);case "op"->Op.grant(p,tier);case "dark"->grant(p,tier);}}
     public static void grant(Player p,int tier){
         Mastery.set(p,"cb_dark_uses_",tier==3?40:tier==2?10:0);Mastery.set(p,"cb_dark_time_",tier==3?3600:tier==2?300:0);
     }
@@ -75,7 +75,7 @@ public final class Dark{
         Rubber.cancelInput(victim);Phoenix.cancelInput(victim);Lightning.cancelInput(victim);Op.cancelInput(victim);Gravity.cancelInput(victim);Paw.cancelInput(victim);Tremor.cancelInput(victim);PairPowers.cancelInput(victim);ClimatePowers.cancelInput(victim);cancelInput(victim);
         if(strong)stopForms(victim);
     }
-    private static void stopForms(Player p){Azure.stopOwned(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
+    private static void stopForms(Player p){NaturePowers.forget(p);Azure.stopOwned(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
     public static boolean rooted(LivingEntity target){
         Tether t=tethers.get(target.getUUID());return t!=null&&target.isAlive()&&t.owner().isAlive()&&target.level()==t.level()&&t.owner().level()==t.level()&&now(t.owner())<t.ends();
     }

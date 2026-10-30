@@ -1,0 +1,52 @@
+package com.sibcraft.creeperborn.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.geom.*;
+import net.minecraft.client.model.geom.builders.*;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.entity.state.*;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
+import org.joml.Quaternionf;
+
+/** Articulated roots, jointed human limbs and two distinct giant bodies; biome textures are native block assets. */
+public final class NatureRenderer {
+    private static Identifier block(String s){return Identifier.withDefaultNamespace("textures/block/"+s+".png");}
+    private static final String[] WOODS={"oak_log","spruce_log","birch_log","dark_oak_log","acacia_log","jungle_log","mangrove_log","cherry_log","bamboo_block","pale_oak_log"};
+    private static final Identifier SKIN=block("white_terracotta"),PINK=block("pink_concrete"),WHITE=block("white_concrete"),DARK=block("black_terracotta"),EYE=block("purple_concrete");
+    private static final ModelPart ROOT=root(),HAND=hand(),ARM=arm(),FOOT=foot(),TREE=tree(),LEAF=leaves(),DEMON=demon(),WINGS=wings(),FLOWER=flower(),NET=net();
+    private static void box(PartDefinition p,String name,float x,float y,float z,float w,float h,float d){p.addOrReplaceChild(name,CubeListBuilder.create().texOffs(0,0).addBox(x,y,z,w,h,d),PartPose.ZERO);}
+    private static ModelPart bake(MeshDefinition m){return LayerDefinition.create(m,16,16).bakeRoot();}
+    private static ModelPart root(){MeshDefinition m=new MeshDefinition();var p=m.getRoot();for(int i=0;i<9;i++){float width=3.5f-i*.32f;var next=p.addOrReplaceChild("joint"+i,CubeListBuilder.create(),PartPose.offset(0,0,i==0?0:1.8f));box(next,"wood",-width/2,-width/2,0,width,width,2.2f);p=next;}return bake(m);}
+    private static ModelPart hand(){MeshDefinition m=new MeshDefinition();var p=m.getRoot();box(p,"palm",-2,-.7f,-1,4,1.4f,3.5f);for(int i=0;i<4;i++){var finger=p.addOrReplaceChild("finger"+i,CubeListBuilder.create(),PartPose.offset(-1.6f+i,0,2.3f));box(finger,"base",-.4f,-.55f,0,.8f,1.1f,2);var tip=finger.addOrReplaceChild("tip",CubeListBuilder.create(),PartPose.offset(0,0,1.8f));box(tip,"bone",-.35f,-.5f,0,.7f,1,1.5f);}box(p,"thumb",1.8f,-.5f,-.2f,1,1,2);return bake(m);}
+    private static ModelPart arm(){MeshDefinition m=new MeshDefinition();var p=m.getRoot();box(p,"upper",-1.3f,-1.3f,0,2.6f,2.6f,7);var elbow=p.addOrReplaceChild("elbow",CubeListBuilder.create(),PartPose.offset(0,0,6.5f));box(elbow,"forearm",-1.1f,-1.1f,0,2.2f,2.2f,7);return bake(m);}
+    private static ModelPart foot(){MeshDefinition m=new MeshDefinition();var p=m.getRoot();box(p,"shin",-2,0,-2,4,13,4);box(p,"foot",-2.5f,0,-3,5,3,8);for(int i=0;i<5;i++)box(p,"toe"+i,-2.5f+i,.3f,4.7f,.9f,1.8f,1.8f);return bake(m);}
+    private static ModelPart tree(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"trunk",-7,16,-4,14,27,8);box(r,"head",-5,43,-4,10,12,8);box(r,"jaw",-4,42,2,8,3,4);for(int side:new int[]{-1,1}){var a=r.addOrReplaceChild("arm"+side,CubeListBuilder.create(),PartPose.offset(side*9,39,0));box(a,"upper",-3,-15,-3,6,17,6);var fore=a.addOrReplaceChild("fore",CubeListBuilder.create(),PartPose.offset(0,-14,0));box(fore,"wood",-3.5f,-14,-3.5f,7,15,7);for(int i=0;i<4;i++)box(fore,"finger"+i,-3.1f+i*1.7f,-18,0,1.4f,5,3);var leg=r.addOrReplaceChild("leg"+side,CubeListBuilder.create(),PartPose.offset(side*4,18,0));box(leg,"wood",-3.5f,-16,-3.5f,7,18,7);box(leg,"roots",-5,-18,-5,10,4,13);}return bake(m);}
+    private static ModelPart leaves(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<7;i++){double a=i*Math.PI*2/7;box(r,"crown"+i,(float)Math.cos(a)*7-5,51+i%3*2,(float)Math.sin(a)*5-4,10,5,8);}for(int side:new int[]{-1,1})box(r,"shoulder"+side,side*10-5,37,-4,10,6,8);return bake(m);}
+    private static ModelPart demon(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"body",-6,14,-3,12,20,6);box(r,"head",-4,34,-3.5f,8,9,7);box(r,"skirt",-8,10,-4,16,6,8);for(int side:new int[]{-1,1}){box(r,"leg"+side,side*3-2,0,-2,4,14,4);for(int i=0;i<3;i++)box(r,"horn"+side+i,side*(3+i*.5f)-.5f,41+i*2,-1,1,3,1);}return bake(m);}
+    private static ModelPart wings(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int side:new int[]{-1,1}){var wing=r.addOrReplaceChild("wing"+side,CubeListBuilder.create(),PartPose.offset(side*4,30,-2));for(int i=0;i<5;i++)box(wing,"feather"+i,side>0?i*4:-i*4-5,-i*2,-1,5,12-i,1.5f);}return bake(m);}
+    private static ModelPart flower(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();box(r,"stem",-1,-4,-1,2,10,2);box(r,"core",-3,5,-3,6,2,6);for(int i=0;i<8;i++){double a=i*Math.PI/4;var p=r.addOrReplaceChild("petal"+i,CubeListBuilder.create(),PartPose.offsetAndRotation((float)Math.cos(a)*5,6,(float)Math.sin(a)*5,0,(float)-a,0));box(p,"flower",-1,-.6f,-2,8,1.2f,4);}return bake(m);}
+    private static ModelPart net(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int spoke=0;spoke<8;spoke++){var a=r.addOrReplaceChild("spoke"+spoke,CubeListBuilder.create(),PartPose.rotation(0,(float)(spoke*Math.PI/4),0));for(int i=0;i<5;i++){box(a,"arm"+i,-.35f,(i%2)*.12f,i*2.8f,.7f,.6f,3.3f);box(a,"hand"+i,-.5f,0,i*2.8f+2,.95f,.7f,1);}}for(int ring=1;ring<=3;ring++)for(int i=0;i<24;i++){double a=i*Math.PI/12;var p=r.addOrReplaceChild("ring"+ring+"_"+i,CubeListBuilder.create(),PartPose.offsetAndRotation((float)Math.cos(a)*ring*4.2f,0,(float)Math.sin(a)*ring*4.2f,0,(float)(-a+Math.PI/2),0));box(p,"linked",-.4f,-.3f,-.2f,.8f,.6f,1.3f);}return bake(m);}
+    public static int kind(String name){if(!name.startsWith("cb_nature_"))return 0;try{int k=Integer.parseInt(name.substring(10,name.indexOf('|')));return k>=1&&k<=14?k:0;}catch(RuntimeException ignored){return 0;}}
+    public static int palette(String name){try{return Math.max(0,Math.min(9,Integer.parseInt(name.split("\\|",3)[1])));}catch(RuntimeException ignored){return 0;}}
+    private static void draw(ModelPart m,Identifier texture,PoseStack p,SubmitNodeCollector n,boolean glow){n.submitModelPart(m,p,glow?RenderTypes.eyes(texture):RenderTypes.entityTranslucent(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
+    private static void root(PoseStack p,SubmitNodeCollector n,int palette,float age,float bend){var part=ROOT;for(int i=0;i<9;i++){part=part.getChild("joint"+i);part.xRot=(float)Math.sin(age*.2-i*.45)*bend;part.yRot=(float)Math.cos(age*.14-i*.3)*bend*.7f;}draw(ROOT,block(WOODS[Math.max(0,Math.min(9,palette))]),p,n,false);}
+    private static void limb(PoseStack p,SubmitNodeCollector n,float age,float curl,boolean dark){ARM.getChild("elbow").xRot=curl;draw(ARM,dark?DARK:SKIN,p,n,false);p.pushPose();p.translate(0,-Math.sin(curl)*7/16, (6.5+Math.cos(curl)*7)/16);for(int i=0;i<4;i++)HAND.getChild("finger"+i).getChild("tip").xRot=-.8f*Math.max(0,curl);draw(HAND,dark?DARK:SKIN,p,n,false);p.popPose();}
+    public static void submit(int kind,int palette,float age,PoseStack p,SubmitNodeCollector n){p.pushPose();
+        if(kind==1||kind==2){if(kind==2){p.scale(2,2,2);draw(HAND,block(WOODS[palette]),p,n,false);}else root(p,n,palette,age,.13f);}
+        else if(kind==3){for(int i=0;i<6;i++){p.pushPose();p.rotate(new Quaternionf().rotationY(age*.22f+i*(float)Math.PI/3));p.translate(0,.5,0);p.scale(.35f,.5f,1);root(p,n,palette,age,.2f);p.popPose();}}
+        else if(kind==4||kind==11){for(int i=0;i<6;i++){double a=i*Math.PI/3;p.pushPose();p.translate(Math.cos(a)*.35,.15+i*.12,Math.sin(a)*.35);p.rotate(new Quaternionf().rotationY((float)(-a-Math.PI/2)));p.scale(.6f,.6f,.6f);if(kind==4)root(p,n,palette,age,.23f);else limb(p,n,age,.6f+Math.min(1,age/20)*.8f,false);p.popPose();}}
+        else if(kind==5){for(int i=0;i<3;i++){p.pushPose();p.rotate(new Quaternionf().rotationY(i*2.1f));p.scale(.3f,.3f,.7f);root(p,n,palette,age,.2f);p.popPose();}}
+        else if(kind==12){p.translate(0,Math.max(0,1-age/12)*2,0);draw(FOOT,SKIN,p,n,false);}
+        else if(kind==13){for(int i=0;i<10;i++){p.pushPose();p.translate(Math.sin(i*.4+age*.07)*.12,0,i/10f);p.scale(.3f,.3f,.1f);limb(p,n,age,.1f,false);p.popPose();}}
+        else if(kind==14){float open=Math.min(1,age/6);p.scale(open,1,open);draw(NET,SKIN,p,n,false);}
+        p.popPose();}
+    public static void avatar(AvatarRenderState s,PoseStack p,SubmitNodeCollector n,int flags,boolean overlay){boolean tree=(flags&3)==1,giant=(flags&4)!=0;int palette=(flags>>6)&15;palette=Math.min(9,palette);float age=s.ageInTicks;
+        p.pushPose();p.rotate(new Quaternionf().rotationY((float)Math.toRadians(-s.bodyRot)));
+        if(giant&&!overlay){float size=tree?((flags&1024)!=0?1.6f:1):1.3f;p.scale(size,size,size);if(tree){for(int side:new int[]{-1,1}){TREE.getChild("arm"+side).xRot=(float)Math.sin(age*.12+side)*.25f;TREE.getChild("arm"+side).getChild("fore").zRot=(float)Math.sin(age*.1+side)*.08f;TREE.getChild("leg"+side).xRot=(float)Math.sin(age*.15+side)*.12f;}draw(TREE,block(WOODS[palette]),p,n,false);draw(LEAF,block(palette==7?"cherry_leaves":palette==9?"pale_moss_block":"moss_block"),p,n,false);}else{draw(DEMON,DARK,p,n,false);for(int side:new int[]{-1,1}){WINGS.getChild("wing"+side).yRot=side*(.2f+(float)Math.sin(age*.25)*.35f);for(int arm=0;arm<3;arm++){p.pushPose();p.translate(side*.4,1.1+arm*.4,0);p.rotate(new Quaternionf().rotationY(side*(.8f+arm*.25f)));p.scale(1.3f,1.3f,1.3f);limb(p,n,age,.35f+(float)Math.sin(age*.1+arm)*.2f,true);p.popPose();}}draw(WINGS,DARK,p,n,false);}}
+        if(overlay&&tree&&(flags&8)!=0){p.pushPose();p.translate(0,1.5,-.45);p.rotate(new Quaternionf().rotationY(age*.6f));p.scale(2,2,2);draw(FLOWER,palette==7?PINK:WHITE,p,n,false);p.popPose();}
+        if(overlay&&(flags&32)!=0){for(int i=0;i<5;i++){p.pushPose();double a=age*.1+i*Math.PI*2/5;p.translate(Math.cos(a)*.5,.4+i*.25,Math.sin(a)*.5);p.scale(.2f,.2f,.2f);draw(FLOWER,PINK,p,n,false);p.popPose();}}
+        p.popPose();}
+    public static void validate(){TREE.getChild("arm1").getChild("fore");DEMON.getChild("horn10");NET.getChild("spoke7");HAND.getChild("finger3").getChild("tip");if(kind("cb_nature_14|0|owner")!=14||kind("bad")!=0||palette("cb_nature_1|99|owner")!=9)throw new AssertionError("Nature metadata validation");}
+}

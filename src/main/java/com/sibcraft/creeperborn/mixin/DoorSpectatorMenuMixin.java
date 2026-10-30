@@ -12,7 +12,7 @@ public abstract class DoorSpectatorMenuMixin {
     @Shadow public ServerPlayer player;
     private boolean creeperborn$travel(){
         // On the network thread, let vanilla schedule the packet onto the server thread first.
-        return player.level().getServer().isSameThread()&&DoorSpace.active(player);
+        return player.level().getServer().isSameThread()&&(DoorSpace.active(player)||com.sibcraft.creeperborn.NaturePowers.phased(player));
     }
     @Inject(method="handleTeleportToEntityPacket",at=@At("HEAD"),cancellable=true)
     private void creeperborn$noSpectatorTeleport(ServerboundTeleportToEntityPacket packet,CallbackInfo ci){if(creeperborn$travel())ci.cancel();}

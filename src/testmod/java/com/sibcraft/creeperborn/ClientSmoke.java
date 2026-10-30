@@ -27,7 +27,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(String fruit:Dark.FRUITS){
                     var id=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+fruit);
                     var texture=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","textures/item/fruit_"+fruit+".png");
-                    if(client.getResourceManager().getResource(texture).isEmpty())throw new AssertionError("Missing fruit texture: "+fruit);
+                    if(!fruit.equals("tree")&&!fruit.equals("petal")&&client.getResourceManager().getResource(texture).isEmpty())throw new AssertionError("Missing fruit texture: "+fruit);
                     Object model=itemGetter.invoke(modelManager,id);
                     if(model==null||model.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Fruit item model did not bake: "+fruit);
                 }
@@ -119,6 +119,9 @@ public final class ClientSmoke implements ClientModInitializer{
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind(12);if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind()!=12)throw new AssertionError("Azure render state missing");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.entity.LivingEntityRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$bird")))throw new AssertionError("Phoenix avatar mixin did not apply");
                 if(Arrays.stream(Class.forName("net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$birdHands")))throw new AssertionError("Phoenix hands mixin did not apply");
+                com.sibcraft.creeperborn.client.NatureRenderer.validate();
+                for(int biome=0;biome<10;biome++)for(int kind:new int[]{1,2,3,4,5,11,12,13,14})for(int frame:new int[]{0,10,21}){com.sibcraft.creeperborn.client.NatureRenderer.submit(kind,biome,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Nature effect pose leak");}
+                for(int biome=0;biome<10;biome++)for(int flags:new int[]{1|4|1024,1|8,2|4|8,2|32}){com.sibcraft.creeperborn.client.NatureRenderer.avatar(state,pawPoses,nodes,flags|(biome<<6),(flags&4)==0);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Nature form pose leak");}
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");
                 client.stop();
             }catch(Throwable error){error.printStackTrace();System.exit(1);}

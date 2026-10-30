@@ -38,6 +38,7 @@
     "StringClientInteractionMixin",
     "StringClientMovementMixin",
     "AzureCameraMixin",
-    "AzureHiddenStateMixin"
+    "AzureHiddenStateMixin",
+    "NatureCameraMixin"
   ]
 }

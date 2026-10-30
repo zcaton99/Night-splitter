@@ -9,6 +9,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class DoorCameraMixin {
     @Inject(method="setCamera",at=@At("HEAD"),cancellable=true)
     private void creeperborn$keepOwnCamera(Entity camera,CallbackInfo ci){
-        if(camera!=(Object)this&&DoorSpace.active((ServerPlayer)(Object)this))ci.cancel();
+        if(camera!=(Object)this&&(DoorSpace.active((ServerPlayer)(Object)this)||com.sibcraft.creeperborn.NaturePowers.phased((ServerPlayer)(Object)this)))ci.cancel();
     }
 }
