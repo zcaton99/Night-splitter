@@ -105,7 +105,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 var ownerAt=new net.minecraft.world.phys.Vec3(8,20,12);var staleAt=new net.minecraft.world.phys.Vec3(3,2,4);
                 for(int kind:new int[]{11,17})if(!com.sibcraft.creeperborn.client.ClimateRenderer.attachmentPosition(kind,ownerAt,staleAt).equals(ownerAt))throw new AssertionError("Armor and cloak must follow predicted owner position");
                 if(!com.sibcraft.creeperborn.client.ClimateRenderer.attachmentPosition(16,ownerAt,staleAt).equals(new net.minecraft.world.phys.Vec3(8,2,12)))throw new AssertionError("Magma column must follow owner horizontally while keeping ground height");
-                com.sibcraft.creeperborn.client.AzureRenderer.validate();
+                com.sibcraft.creeperborn.client.AzureRenderer.validate();if(com.sibcraft.creeperborn.client.AzureRenderer.normalSwordSwing(0)!=0||com.sibcraft.creeperborn.client.AzureRenderer.normalSwordSwing(.25f)<1)throw new AssertionError("Kanabo follows normal attack progress");
                 if(com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(0)!=30||com.sibcraft.creeperborn.client.AzureVisuals.revealDistance(2)!=12f)throw new AssertionError("Dragon camera must reveal wide then settle close");
                 for(int pitch=-90;pitch<=90;pitch++){var offset=com.sibcraft.creeperborn.client.AzureVisuals.cameraOffset(45,pitch,3);if(!Double.isFinite(offset.lengthSqr())||offset.length()<5)throw new AssertionError("Dragon camera orbit must remain outside skull through climbs and dives");}
                 if(com.sibcraft.creeperborn.client.AzureVisuals.aimBlend(0)!=0||com.sibcraft.creeperborn.client.AzureVisuals.aimBlend(60)!=1)throw new AssertionError("Dragon camera must blend cruise into downward aim");
@@ -114,7 +114,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 if(Arrays.stream(Class.forName("net.minecraft.client.Camera").getDeclaredMethods()).noneMatch(v->v.getName().contains("creeperborn$dragonZoom")))throw new AssertionError("Azure camera mixin did not apply");
                 int azureStart=parts[0];
                 for(int tier=1;tier<=3;tier++)for(int flags:new int[]{1|(tier<<2)|128,1|(tier<<2)|16|32|128}){com.sibcraft.creeperborn.client.AzureRenderer.avatar(state,pawPoses,nodes,flags);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Hybrid pose leak");}
-                for(int kind=1;kind<=16;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
+                for(int kind=1;kind<=17;kind++){com.sibcraft.creeperborn.client.AzureRenderer.submit(kind,pawPoses,nodes,12);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Azure effect pose leak");}
                 com.sibcraft.creeperborn.client.AzureRenderer.hand(pawPoses,nodes);
                 if(parts[0]-azureStart<60)throw new AssertionError("Azure forms did not submit complete meshes");
                 ((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind(12);if(((com.sibcraft.creeperborn.client.BoltVisualState)boltState).creeperborn$azureKind()!=12)throw new AssertionError("Azure render state missing");

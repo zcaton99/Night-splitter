@@ -80,7 +80,7 @@ public final class Creeperborn implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
         UseItemCallback.EVENT.register((player, level, hand) -> {
-            ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
+            ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
