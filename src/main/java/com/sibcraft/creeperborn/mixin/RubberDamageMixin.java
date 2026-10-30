@@ -25,8 +25,11 @@ public abstract class RubberDamageMixin {
         // Zero damage alone still enters vanilla's hurt sound, animation and knockback path.
         if((Object)this instanceof Player p&&(Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)||Lightning.immune(p,source)||com.sibcraft.creeperborn.Gravity.immune(p,source)||com.sibcraft.creeperborn.StringFruit.immune(p,source)))cir.setReturnValue(false);
     }
+    @org.spongepowered.asm.mixin.Unique private float creeperborn$armorIncoming;
+    @Inject(method="getDamageAfterArmorAbsorb",at=@At("HEAD"))
+    private void creeperborn$rememberArmorDamage(DamageSource source,float amount,CallbackInfoReturnable<Float> cir){creeperborn$armorIncoming=amount;}
     @Inject(method="getDamageAfterArmorAbsorb",at=@At("RETURN"),cancellable=true)
-    private void creeperborn$kanaboArmor(DamageSource source,float amount,CallbackInfoReturnable<Float> cir){cir.setReturnValue(com.sibcraft.creeperborn.Azure.kanaboArmor(source,amount,cir.getReturnValue()));}
+    private void creeperborn$kanaboArmor(DamageSource source,float amount,CallbackInfoReturnable<Float> cir){cir.setReturnValue(com.sibcraft.creeperborn.Azure.kanaboArmor(source,creeperborn$armorIncoming,cir.getReturnValue()));}
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         if((Object)this instanceof Player climate&&com.sibcraft.creeperborn.ClimatePowers.piercing(climate,source))return com.sibcraft.creeperborn.ClimatePowers.damage(climate,source,amount);
