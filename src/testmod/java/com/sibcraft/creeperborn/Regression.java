@@ -1460,8 +1460,8 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
         Creeperborn.ABILITIES.clear(); Creeperborn.ABILITIES.move(p, 2); p.setHealth(12);
         ItemStack bucket = new ItemStack(Items.WATER_BUCKET);
         bucket.set(DataComponents.CUSTOM_NAME, Component.literal("Travel water")); p.addItem(bucket);
-        check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && p.getHealth() == 16, "Bucket enables healing");
-        check(Creeperborn.ABILITIES.cast(p).startsWith("Cooling down") && p.getHealth() == 16, "Cooldown prevents repeated healing");
+        check(Creeperborn.ABILITIES.cast(p).equals("Mending Flow!") && Math.abs(p.getHealth()-17.2)<.001, "Bucket enables collection-boosted healing");
+        check(Creeperborn.ABILITIES.cast(p).startsWith("Cooling down") && Math.abs(p.getHealth()-17.2)<.001, "Cooldown prevents repeated healing");
         Progress.select(p, Element.EARTH); Creeperborn.ABILITIES.move(p, 1); Creeperborn.ABILITIES.cast(p);
         check(Creeperborn.ABILITIES.rocks.guarded(p), "Stone Guard creates frontal rocks");
         Zombie front = EntityTypes.ZOMBIE.create(level, EntitySpawnReason.COMMAND); front.snapTo(.5, y, 3.5);
@@ -1843,7 +1843,7 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
             Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);target.snapTo(mastered?-8.5:8.5,y+5,9.5);
             target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
             Creeperborn.ABILITIES.move(caster,2);Creeperborn.ABILITIES.cast(caster);
-            check(Shackles.remaining(target)==(mastered?180:80),"Shackles duration follows all-four mastery");
+            check(Shackles.remaining(target)==(mastered?234:80),"Shackles duration follows all-four mastery");
             if(mastered)slabMaster=target;else slabNormal=target;
         }
     }
@@ -1939,8 +1939,8 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
             var before=slabNormal.position();slabNormal.setDeltaMovement(.4,0,0);slabNormal.travel(net.minecraft.world.phys.Vec3.ZERO);
             check(slabNormal.position().distanceToSqr(before)>0,"Native movement resumes after normal root expires");
         }
-        if(rubberTicks==181){
-            Shackles.tick();check(!Shackles.rooted(slabMaster),"Nine-second mastered root expires");
+        if(rubberTicks==235){
+            Shackles.tick();check(!Shackles.rooted(slabMaster),"Collection-boosted mastered root expires");
             var before=slabMaster.position();slabMaster.setDeltaMovement(.4,0,0);slabMaster.travel(net.minecraft.world.phys.Vec3.ZERO);
             check(slabMaster.position().distanceToSqr(before)>0,"Mastered target resumes movement");
             slabNormal.discard();slabMaster.discard();return true;
