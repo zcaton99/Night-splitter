@@ -21,7 +21,7 @@ public final class WaterRules {
     public static void clearClient(){clientPlayer=null;clientFlags=0;}
     public static int flags(Player p){
         if(!(p.level() instanceof ServerLevel))return p.getUUID().equals(clientPlayer)?clientFlags:0;
-        return ((CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")||NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")||Azure.unlocked(p)||Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand")||ClimatePowers.unlocked(p,"ice")||ClimatePowers.unlocked(p,"magma"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
+        return ((CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")||CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")||NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")||Azure.unlocked(p)||Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand")||ClimatePowers.unlocked(p,"ice")||ClimatePowers.unlocked(p,"magma"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
     }
     public static boolean fruitOwner(Player p){return (flags(p)&1)!=0;}
     public static boolean mastered(Player p){return (flags(p)&2)!=0;}

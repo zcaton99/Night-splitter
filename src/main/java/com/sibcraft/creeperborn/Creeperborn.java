@@ -79,14 +79,15 @@ public final class Creeperborn implements ModInitializer {
             if(level instanceof ServerLevel)say(player,Hearts.use(player,cube));
             return InteractionResult.SUCCESS;
         });
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player,level,hand,hit)->{if(!CelestialPowers.spears(player))return InteractionResult.PASS;if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;});
         UseItemCallback.EVENT.register((player, level, hand) -> {
-            ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
+            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;} ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if(StringFruit.locked(player))return InteractionResult.FAIL;
             if(kind.equals("op:heart")){say(player,Hearts.use(player,stack));
-            }else if(kind.equals("fruit:glint")||kind.equals("fruit:straw")){String f=kind.substring(6);say(player,CelestialPowers.consume(player,stack,f)?CelestialPowers.status(player,f):"Fruit slot full, or fruit already claimed.");
+            }else if(kind.equals("fruit:glint")||kind.equals("fruit:straw")||kind.equals("fruit:flame")||kind.equals("fruit:buddha")){String f=kind.substring(6);say(player,CelestialPowers.consume(player,stack,f)?CelestialPowers.status(player,f):"Fruit slot full, or fruit already claimed.");
             }else if(kind.equals("fruit:tree")||kind.equals("fruit:petal")){String f=kind.substring(6);say(player,NaturePowers.consume(player,stack,f)?NaturePowers.status(player,f):"Fruit slot full, or fruit already claimed.");
             }else if(kind.equals("fruit:azure")){say(player,Azure.consume(player,stack)?Azure.status(player):"Fruit slot full, or Azure already claimed.");
             }else if(kind.equals("fruit:ice")||kind.equals("fruit:magma")){String f=kind.substring(6);say(player,ClimatePowers.consume(player,stack,f)?ClimatePowers.status(player,f):"Fruit slot full, or fruit already claimed.");
@@ -118,6 +119,7 @@ public final class Creeperborn implements ModInitializer {
             return InteractionResult.SUCCESS;
         });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
+            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;}
             if(Relics.kind(player.getItemInHand(hand)).equals("op:heart")&&player.isShiftKeyDown()&&entity instanceof net.minecraft.world.entity.LivingEntity target){
                 if(level instanceof ServerLevel)say(player,Hearts.giveBack(player,target,player.getItemInHand(hand))?"Heart returned.":"This heart belongs to someone else.");
                 return InteractionResult.SUCCESS;
@@ -149,7 +151,7 @@ public final class Creeperborn implements ModInitializer {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
-                String active=CelestialPowers.selected(p,"glint")?"Glint-Glint":CelestialPowers.selected(p,"straw")?"Straw-Straw":NaturePowers.selected(p,"tree")?"Tree Tree":NaturePowers.selected(p,"petal")?"Petal Petal":Azure.selected(p)?"Azure Dragon":ClimatePowers.selected(p,"ice")?"Ice-Ice":ClimatePowers.selected(p,"magma")?"Magma-Magma":PairPowers.selected(p,"love")?"Love-Love":PairPowers.selected(p,"sand")?"Sand-Sand":Tremor.selected(p)?"Tremor":Paw.selected(p)?"Paw-Paw":StringFruit.selected(p)?"String":Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
+                String active=CelestialPowers.selected(p,"flame")?"Flame-Flame":CelestialPowers.selected(p,"buddha")?"Golden Buddha":CelestialPowers.selected(p,"glint")?"Glint-Glint":CelestialPowers.selected(p,"straw")?"Straw-Straw":NaturePowers.selected(p,"tree")?"Tree Tree":NaturePowers.selected(p,"petal")?"Petal Petal":Azure.selected(p)?"Azure Dragon":ClimatePowers.selected(p,"ice")?"Ice-Ice":ClimatePowers.selected(p,"magma")?"Magma-Magma":PairPowers.selected(p,"love")?"Love-Love":PairPowers.selected(p,"sand")?"Sand-Sand":Tremor.selected(p)?"Tremor":Paw.selected(p)?"Paw-Paw":StringFruit.selected(p)?"String":Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
                 chat(p,"Creeperborn 0.1.0-alpha.47 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
@@ -237,6 +239,8 @@ public final class Creeperborn implements ModInitializer {
                 })));
             root.then(Commands.literal("testfruit").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .executes(ctx -> { chat(ctx.getSource().getPlayerOrException(),"Usage: /creeperborn testfruit rubber|door|phoenix|lightning|dark|op|gravity|string|paw|tremor|love|sand|ice|magma|azure|tree|petal|glint|straw"); return 0; })
+                .then(Commands.literal("flame").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.celestialFruit("flame"));return 1;}))
+                .then(Commands.literal("buddha").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.celestialFruit("buddha"));return 1;}))
                 .then(Commands.literal("glint").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.celestialFruit("glint"));return 1;}))
                 .then(Commands.literal("straw").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.celestialFruit("straw"));return 1;}))
                 .then(Commands.literal("tree").executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.natureFruit("tree"));return 1;}))
@@ -269,7 +273,7 @@ public final class Creeperborn implements ModInitializer {
             root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
                     ServerPlayer p=ctx.getSource().getPlayerOrException();int tier=IntegerArgumentType.getInteger(ctx,"tier");
-                    if(CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")){String f=CelestialPowers.unlocked(p,"glint")?"glint":"straw";CelestialPowers.grant(p,f,tier);chat(p,CelestialPowers.status(p,f));}
+                    if(CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")||CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")){String f=CelestialPowers.unlocked(p,"flame")?"flame":CelestialPowers.unlocked(p,"buddha")?"buddha":CelestialPowers.unlocked(p,"glint")?"glint":"straw";CelestialPowers.grant(p,f,tier);chat(p,CelestialPowers.status(p,f));}
                     else if(NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")){String f=NaturePowers.unlocked(p,"tree")?"tree":"petal";NaturePowers.grant(p,f,tier);chat(p,NaturePowers.status(p,f));}
                     else if(Dark.unlocked(p)){Dark.grantFruit(p,Dark.choice(p),tier);chat(p,Dark.status(p));}
                     else if(Azure.unlocked(p)){Azure.grant(p,tier);chat(p,CelestialPowers.status(p,"glint"));chat(p,CelestialPowers.status(p,"straw"));chat(p,NaturePowers.status(p,"tree"));chat(p,NaturePowers.status(p,"petal"));chat(p,Azure.status(p));}
@@ -290,8 +294,8 @@ public final class Creeperborn implements ModInitializer {
                     return 1;
                 })));
             root.then(Commands.literal("fruit").executes(ctx -> {
-                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!CelestialPowers.unlocked(p,"glint")&&!CelestialPowers.unlocked(p,"straw")&&!NaturePowers.unlocked(p,"tree")&&!NaturePowers.unlocked(p,"petal")&&!Azure.unlocked(p)&&!Rubber.unlocked(p)&&!DoorFruit.unlocked(p)&&!Phoenix.unlocked(p)&&!Lightning.unlocked(p)&&!Dark.unlocked(p)&&!Op.unlocked(p)&&!Gravity.unlocked(p)&&!StringFruit.unlocked(p)&&!Paw.unlocked(p)&&!Tremor.unlocked(p)&&!PairPowers.unlocked(p,"love")&&!PairPowers.unlocked(p,"sand")&&!ClimatePowers.unlocked(p,"ice")&&!ClimatePowers.unlocked(p,"magma"))return 0;
-                p.addTag("cb_mode_fruit");say(p,CelestialPowers.unlocked(p,"glint")?CelestialPowers.status(p,"glint"):CelestialPowers.unlocked(p,"straw")?CelestialPowers.status(p,"straw"):NaturePowers.unlocked(p,"tree")?NaturePowers.status(p,"tree"):NaturePowers.unlocked(p,"petal")?NaturePowers.status(p,"petal"):Dark.unlocked(p)?Dark.status(p):Azure.unlocked(p)?Azure.status(p):ClimatePowers.unlocked(p,"ice")?ClimatePowers.status(p,"ice"):ClimatePowers.unlocked(p,"magma")?ClimatePowers.status(p,"magma"):PairPowers.unlocked(p,"love")?PairPowers.status(p,"love"):PairPowers.unlocked(p,"sand")?PairPowers.status(p,"sand"):Tremor.unlocked(p)?Tremor.status(p):Paw.unlocked(p)?Paw.status(p):StringFruit.unlocked(p)?StringFruit.status(p):Gravity.unlocked(p)?Gravity.status(p):Op.unlocked(p)?Op.status(p):Lightning.unlocked(p)?Lightning.status(p):Phoenix.unlocked(p)?Phoenix.status(p):DoorFruit.unlocked(p)?DoorFruit.status(p):Rubber.status(p));return 1;
+                ServerPlayer p=ctx.getSource().getPlayerOrException();if(!CelestialPowers.unlocked(p,"flame")&&!CelestialPowers.unlocked(p,"buddha")&&!CelestialPowers.unlocked(p,"glint")&&!CelestialPowers.unlocked(p,"straw")&&!NaturePowers.unlocked(p,"tree")&&!NaturePowers.unlocked(p,"petal")&&!Azure.unlocked(p)&&!Rubber.unlocked(p)&&!DoorFruit.unlocked(p)&&!Phoenix.unlocked(p)&&!Lightning.unlocked(p)&&!Dark.unlocked(p)&&!Op.unlocked(p)&&!Gravity.unlocked(p)&&!StringFruit.unlocked(p)&&!Paw.unlocked(p)&&!Tremor.unlocked(p)&&!PairPowers.unlocked(p,"love")&&!PairPowers.unlocked(p,"sand")&&!ClimatePowers.unlocked(p,"ice")&&!ClimatePowers.unlocked(p,"magma"))return 0;
+                p.addTag("cb_mode_fruit");say(p,CelestialPowers.unlocked(p,"flame")?CelestialPowers.status(p,"flame"):CelestialPowers.unlocked(p,"buddha")?CelestialPowers.status(p,"buddha"):CelestialPowers.unlocked(p,"glint")?CelestialPowers.status(p,"glint"):CelestialPowers.unlocked(p,"straw")?CelestialPowers.status(p,"straw"):NaturePowers.unlocked(p,"tree")?NaturePowers.status(p,"tree"):NaturePowers.unlocked(p,"petal")?NaturePowers.status(p,"petal"):Dark.unlocked(p)?Dark.status(p):Azure.unlocked(p)?Azure.status(p):ClimatePowers.unlocked(p,"ice")?ClimatePowers.status(p,"ice"):ClimatePowers.unlocked(p,"magma")?ClimatePowers.status(p,"magma"):PairPowers.unlocked(p,"love")?PairPowers.status(p,"love"):PairPowers.unlocked(p,"sand")?PairPowers.status(p,"sand"):Tremor.unlocked(p)?Tremor.status(p):Paw.unlocked(p)?Paw.status(p):StringFruit.unlocked(p)?StringFruit.status(p):Gravity.unlocked(p)?Gravity.status(p):Op.unlocked(p)?Op.status(p):Lightning.unlocked(p)?Lightning.status(p):Phoenix.unlocked(p)?Phoenix.status(p):DoorFruit.unlocked(p)?DoorFruit.status(p):Rubber.status(p));return 1;
             }));
             test.then(Commands.literal("rubber").executes(ctx -> {
                 ServerPlayer p=ctx.getSource().getPlayerOrException();ServerLevel level=(ServerLevel)p.level();
@@ -355,7 +359,7 @@ public final class Creeperborn implements ModInitializer {
             }));
             root.then(Commands.literal("stringmastery").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx->{var p=ctx.getSource().getPlayerOrException();if(!StringFruit.unlocked(p))return 0;StringFruit.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));chat(p,StringFruit.status(p));chat(p,Paw.status(p));chat(p,Tremor.status(p));chat(p,PairPowers.status(p,"love"));chat(p,PairPowers.status(p,"sand"));chat(p,ClimatePowers.status(p,"ice"));chat(p,ClimatePowers.status(p,"magma"));return 1;})));
-            for(String f:java.util.List.of("glint","straw")){
+            for(String f:java.util.List.of("glint","straw","flame","buddha")){
                 root.then(Commands.literal(f+"mastery").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx->{var p=ctx.getSource().getPlayerOrException();if(!CelestialPowers.unlocked(p,f))return 0;CelestialPowers.grant(p,f,IntegerArgumentType.getInteger(ctx,"tier"));chat(p,CelestialPowers.status(p,f));return 1;})));
                 test.then(Commands.literal(f).executes(ctx->{var p=ctx.getSource().getPlayerOrException();var c=EntityTypes.CREEPER.create(p.level(),EntitySpawnReason.COMMAND);c.snapTo(p.getX()+3,p.getY(),p.getZ());FruitCreepers.assignCelestial(c,f);p.level().addFreshEntity(c);return 1;}));
             }

@@ -19,7 +19,7 @@ public final class CombatNetwork {
     }
     public static void clear() { limits.clear();sentSelection.clear(); }
     public static int selection(Player p){
-        Element e=Progress.selected(p);return CelestialPowers.selected(p,"glint")?21:CelestialPowers.selected(p,"straw")?22:NaturePowers.selected(p,"tree")?19:NaturePowers.selected(p,"petal")?20:Azure.selected(p)?18:ClimatePowers.selected(p,"ice")?16:ClimatePowers.selected(p,"magma")?17:PairPowers.selected(p,"love")?14:PairPowers.selected(p,"sand")?15:Tremor.selected(p)?13:Paw.selected(p)?12:StringFruit.selected(p)?11:Gravity.selected(p)?10:Op.selected(p)?9:Dark.selected(p)?8:Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
+        Element e=Progress.selected(p);return CelestialPowers.selected(p,"flame")?23:CelestialPowers.selected(p,"buddha")?24:CelestialPowers.selected(p,"glint")?21:CelestialPowers.selected(p,"straw")?22:NaturePowers.selected(p,"tree")?19:NaturePowers.selected(p,"petal")?20:Azure.selected(p)?18:ClimatePowers.selected(p,"ice")?16:ClimatePowers.selected(p,"magma")?17:PairPowers.selected(p,"love")?14:PairPowers.selected(p,"sand")?15:Tremor.selected(p)?13:Paw.selected(p)?12:StringFruit.selected(p)?11:Gravity.selected(p)?10:Op.selected(p)?9:Dark.selected(p)?8:Lightning.selected(p)?7:Phoenix.selected(p)?6:DoorFruit.selected(p)?5:Rubber.selected(p)?4:e==null?-1:e.ordinal();
     }
     public static void forget(Player p){limits.remove(p.getUUID());sentSelection.remove(p.getUUID());}
     public static void tick(net.minecraft.server.MinecraftServer server){
@@ -73,8 +73,9 @@ public final class CombatNetwork {
         ServerPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE, (payload, context) -> {
             Player p = context.player();
             if(CelestialPowers.rooted(p)||StringFruit.controlled(p)||PairPowers.rooted(p))return;
-            if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p)&&!NaturePowers.phased(p) || !(payload.action()==10&&(CelestialPowers.flying(p)||NaturePowers.flying(p)))&&!allow(p)) return;
+            if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p)&&!NaturePowers.phased(p) || !(payload.action()==10&&(CelestialPowers.flying(p)||NaturePowers.flying(p))||payload.action()==12&&CelestialPowers.customMelee(p))&&!allow(p)) return;
             if(NaturePowers.phased(p)){if(payload.action()==5&&(payload.value()&3)==2)Creeperborn.say(p,NaturePowers.exitPhase(p,false)?"Reappeared!":"Find an open place to emerge.");return;}
+            if(payload.action()==12){CelestialPowers.basicButtons(p,payload.value());return;}
             if(payload.action()==10){CelestialPowers.input(p,payload.value());NaturePowers.input(p,payload.value());ClimatePowers.input(p,payload.value());Azure.input(p,payload.value());return;}
             if(ClimatePowers.rooted(p))return;
             if(DoorSpace.active(p)){
@@ -95,6 +96,7 @@ public final class CombatNetwork {
             if (payload.action() == 4) {
                 CelestialPowers.cancelInput(p);NaturePowers.cancelInput(p);Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);Azure.cancelInput(p);
                 if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
+                else if(CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")){String f=CelestialPowers.unlocked(p,"flame")?"flame":"buddha";p.addTag("cb_mode_fruit");Creeperborn.say(p,CelestialPowers.status(p,f));}
                 else if(CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")){String f=CelestialPowers.unlocked(p,"glint")?"glint":"straw";p.addTag("cb_mode_fruit");Creeperborn.say(p,CelestialPowers.status(p,f));}
                 else if(NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")){String f=NaturePowers.unlocked(p,"tree")?"tree":"petal";p.addTag("cb_mode_fruit");Creeperborn.say(p,NaturePowers.status(p,f));}
                 else if(Azure.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,Azure.status(p));}

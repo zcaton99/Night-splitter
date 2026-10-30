@@ -28,7 +28,7 @@ public abstract class PhoenixAvatarMixin{
     }
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("TAIL"))
     private void creeperborn$wings(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
-        if(state instanceof AvatarRenderState avatar){int celestial=CelestialVisuals.flags(avatar.id);if((celestial&3)==2&&(celestial&4)==0)CelestialRenderer.avatar(avatar,poses,nodes,celestial,true);int nature=NatureVisuals.flags(avatar.id);if((nature&4)==0)NatureRenderer.avatar(avatar,poses,nodes,nature,true);int azure=AzureVisuals.flags(avatar.id);if((azure&128)!=0&&(azure&3)==0)AzureRenderer.avatar(avatar,poses,nodes,azure);int flags=PhoenixVisuals.flags(avatar.id);
+        if(state instanceof AvatarRenderState avatar){int celestial=CelestialVisuals.flags(avatar.id);if(((celestial&3)==2||(celestial&2048)!=0)&&(celestial&4)==0)CelestialRenderer.avatar(avatar,poses,nodes,celestial,true);int nature=NatureVisuals.flags(avatar.id);if((nature&4)==0)NatureRenderer.avatar(avatar,poses,nodes,nature,true);int azure=AzureVisuals.flags(avatar.id);if((azure&128)!=0&&(azure&3)==0)AzureRenderer.avatar(avatar,poses,nodes,azure);int flags=PhoenixVisuals.flags(avatar.id);
             if((flags&1)!=0&&(flags&2)==0)PhoenixRenderer.submit(avatar,poses,nodes,flags,false);
         }
     }

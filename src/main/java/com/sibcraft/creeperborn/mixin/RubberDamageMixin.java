@@ -37,6 +37,7 @@ public abstract class RubberDamageMixin {
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         if((Object)this instanceof Player climate&&com.sibcraft.creeperborn.ClimatePowers.piercing(climate,source))return com.sibcraft.creeperborn.ClimatePowers.damage(climate,source,amount);
+        amount=com.sibcraft.creeperborn.CelestialPowers.damage((LivingEntity)(Object)this,source,amount);
         float value=(Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,com.sibcraft.creeperborn.Gravity.damage(p,source,com.sibcraft.creeperborn.StringFruit.damage(p,source,amount)))))) : amount;
         return (Object)this instanceof Player p?com.sibcraft.creeperborn.NaturePowers.damage(p,source,com.sibcraft.creeperborn.Azure.damage(p,source,com.sibcraft.creeperborn.ClimatePowers.damage(p,source,value))):value;
     }
