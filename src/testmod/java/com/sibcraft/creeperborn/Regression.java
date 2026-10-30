@@ -39,6 +39,7 @@ public final class Regression implements ModInitializer {
     private int rubberTicks;
     private Zombie slabNormal,slabMaster;
     @Override public void onInitialize() {
+        if(Boolean.getBoolean("creeperborn.multiplayer"))return;
         ServerLifecycleEvents.SERVER_STARTED.register(s -> {
             server = s; Creeperborn.config().naturalCreepers = false;
             for (int x = -1; x <= 0; x++) for (int z = -1; z <= 2; z++) s.overworld().setChunkForced(x, z, true);

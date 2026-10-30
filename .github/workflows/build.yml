@@ -68,6 +68,28 @@ jobs:
           name: creeperborn-client-smoke-log
           path: build/creeperborn-client-smoke.log
 
+      - name: Prepare native two-client multiplayer test
+        run: bash gradlew prepareMultiplayer --no-configuration-cache --stacktrace
+
+      - name: Run native clients against dedicated server with network delay
+        timeout-minutes: 11
+        run: |
+          set -euo pipefail
+          sudo tc qdisc add dev lo root netem delay 60ms 10ms
+          trap 'sudo tc qdisc del dev lo root || true' EXIT
+          python3 scripts/multiplayer_ci.py | tee build/multiplayer/summary.log
+
+      - name: Upload native multiplayer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creeperborn-native-multiplayer
+          path: |
+            build/multiplayer/*.log
+            build/multiplayer/server/multiplayer-report.json
+            build/multiplayer/*/logs/latest.log
+            build/multiplayer/*/crash-reports/*.txt
+
       - name: Upload test JAR
         uses: actions/upload-artifact@v4
         with:

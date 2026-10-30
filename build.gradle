@@ -99,3 +99,38 @@ loom {
     }
 }
 
+
+// Generate three independent native Java launches so Gradle project locks do not serialize the clients behind the server.
+loom.runs {
+    multiplayerServer {
+        server(); source sourceSets.testmod; runDir "build/multiplayer/server"
+        vmArg "-Dcreeperborn.multiplayer=true"; vmArg "-Xmx768M"; programArg "nogui"
+    }
+    multiplayerAlpha {
+        client(); source sourceSets.testmod; runDir "build/multiplayer/alpha"
+        vmArg "-Dcreeperborn.multiplayer=true"; vmArg "-Xmx1024M"
+        programArgs "--username", "LanAlpha", "--width", "640", "--height", "480"
+    }
+    multiplayerBeta {
+        client(); source sourceSets.testmod; runDir "build/multiplayer/beta"
+        vmArg "-Dcreeperborn.multiplayer=true"; vmArg "-Xmx1024M"
+        programArgs "--username", "LanBeta", "--width", "640", "--height", "480"
+    }
+}
+tasks.register('prepareMultiplayer') {
+    def launches = ['runMultiplayerServer','runMultiplayerAlpha','runMultiplayerBeta']
+    dependsOn { launches.collectMany { name -> def t=tasks.named(name).get(); t.taskDependencies.getDependencies(t).toList() } }
+    doLast {
+        def result=[]
+        launches.each { name ->
+            def t=tasks.named(name).get()
+            def command=[System.getProperty('java.home')+'/bin/java']
+            command.addAll((t.allJvmArgs+t.jvmArgumentProviders.collectMany { it.asArguments().toList() }).findAll { !it.startsWith('@') }.unique())
+            command.addAll(['-cp',t.classpath.asPath,t.mainClass.get()])
+            command.addAll(t.args);command.addAll(t.argumentProviders.collectMany { it.asArguments().toList() })
+            def folder=file('build/multiplayer/'+(name.endsWith('Server')?'server':name.endsWith('Alpha')?'alpha':'beta'));folder.mkdirs()
+            result.add([name:name,command:command,directory:folder.absolutePath])
+        }
+        file('build/multiplayer/launch.json').text=groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result))
+    }
+}

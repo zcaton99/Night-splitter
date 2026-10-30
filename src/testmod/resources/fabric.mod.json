@@ -6,10 +6,12 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.sibcraft.creeperborn.Regression"
+      "com.sibcraft.creeperborn.Regression",
+      "com.sibcraft.creeperborn.MultiplayerServer"
     ],
     "client": [
-      "com.sibcraft.creeperborn.ClientSmoke"
+      "com.sibcraft.creeperborn.ClientSmoke",
+      "com.sibcraft.creeperborn.MultiplayerClient"
     ]
   },
   "depends": {
