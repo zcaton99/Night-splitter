@@ -1298,8 +1298,8 @@ public final class Regression implements ModInitializer {
         ItemStack club=ItemStack.EMPTY;for(int slot=0;slot<p.getInventory().getContainerSize();slot++)if(Azure.kanabo(p.getInventory().getItem(slot)))club=p.getInventory().getItem(slot);
         p.setItemInHand(InteractionHand.MAIN_HAND,club);Zombie plated=tremorTarget(level,200,y+12,202),plain=tremorTarget(level,202,y+12,202);
         for(Zombie target:new Zombie[]{plated,plain})target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(20);
-        plated.hurtServer(level,p.damageSources().playerAttack(p),10);p.setItemInHand(InteractionHand.MAIN_HAND,weapon);plain.hurtServer(level,p.damageSources().playerAttack(p),10);
-        check(plated.getHealth()<plain.getHealth(),"Kanabo Piercing VI increases actual damage through armor");
+        check(Azure.kanaboArmor(p.damageSources().playerAttack(p),10,4)>4,"Kanabo held-item piercing calculation: "+Azure.kanabo(p.getMainHandItem()));plated.hurtServer(level,p.damageSources().playerAttack(p),10);p.setItemInHand(InteractionHand.MAIN_HAND,weapon);plain.hurtServer(level,p.damageSources().playerAttack(p),10);
+        check(plated.getHealth()<plain.getHealth(),"Kanabo Piercing VI increases actual damage through armor: "+plated.getHealth()+" vs "+plain.getHealth());
         p.setItemInHand(InteractionHand.MAIN_HAND,club);p.setHealth(20);p.damageCooldownTime=0;float thornsBefore=plain.getHealth();plain.damageCooldownTime=0;p.hurtServer(level,plain.damageSources().mobAttack(plain),4);check(plain.getHealth()<thornsBefore,"Held kanabo Thorns III retaliates against an actual melee attacker");
         p.setItemInHand(InteractionHand.MAIN_HAND,weapon);p.setHealth(20);plated.discard();plain.discard();
 Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hybrid appearance");Azure.grant(p,3);check(((Azure.flags(p)>>2)&3)==3,"Mastery evolves existing Hybrid appearance");
