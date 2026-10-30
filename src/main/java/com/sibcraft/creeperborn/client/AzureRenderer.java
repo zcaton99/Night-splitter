@@ -50,7 +50,7 @@ public final class AzureRenderer {
     private static ModelPart clapRing(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<32;i++){double a=i*Math.PI/16;box(r,"ring"+i,(float)Math.cos(a)*7-.3f,0,(float)Math.sin(a)*7-.3f,.6f,1.4f,.6f);}return bake(m);}
     private static ModelPart clapSparks(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<16;i++)box(r,"spark"+i,(i%2==0?-1:1)*(1+i*.3f),-7+i,0,.5f,2,.5f);return bake(m);}
     private static void draw(ModelPart part,Identifier tex,PoseStack p,SubmitNodeCollector n,boolean glow){n.submitModelPart(part,p,glow?RenderTypes.eyes(tex):RenderTypes.entityTranslucent(tex),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
-    public static void avatar(AvatarRenderState state,PoseStack p,SubmitNodeCollector n,int flags){int form=flags&3,tier=Math.max(1,Math.min(3,(flags>>2)&3));if(form==2)return;float time=state.ageInTicks;boolean moving=(flags&16)!=0,attack=(flags&32)!=0;float swing=normalSwordSwing(state.attackTime);
+    public static void avatar(AvatarRenderState state,PoseStack p,SubmitNodeCollector n,int flags){int form=flags&3,tier=Math.max(1,Math.min(3,(flags>>2)&3));if(form==2)return;float time=state.ageInTicks;boolean moving=(flags&16)!=0,attack=(flags&32)!=0;float swing=normalSwordSwing(swingProgress(state));
         p.pushPose();p.rotate(new Quaternionf().rotationY((float)Math.toRadians(-state.bodyRot)));
         if(form==1){float scale=tier==1?.95f:tier==2?1.15f:1.4f;p.scale(scale,scale,scale);var model=HYBRID[tier-1];for(int side:new int[]{-1,1}){model.getChild("arm"+side).xRot=side==-1&&swing>0?-swing:(float)Math.sin(time*.35+side)* (moving?.35f:.04f);model.getChild("leg"+side).xRot=moving?(float)Math.sin(time*.35+side)*.4f:0;CAPES[tier-1].getChild("panel"+side).xRot=.1f+(float)Math.sin(time*.12+side)*.06f;}
             for(ModelPart root:new ModelPart[]{model,DETAILS[tier-1]}){var tail=root.getChild("tail");for(int i=0;i<4+tier*2;i++){tail=tail.getChild("next");tail.yRot=(float)Math.sin(time*.12-i*.45)*.13f;tail.xRot=.1f;}}
@@ -62,6 +62,7 @@ public final class AzureRenderer {
 
             if((flags&512)!=0){p.pushPose();p.translate(-.375,1.3125,0);p.rotate(new Quaternionf().rotationX(-swing));p.translate(0,-.75,0);p.rotate(new Quaternionf().rotationX(-.25f));draw(CLUB,BLACK,p,n,false);p.popPose();}
         }else{p.translate(-.4,.8,.25);p.scale(.8f,.8f,.8f);p.rotate(new Quaternionf().rotationX(-.2f-swing));draw(CLUB,BLACK,p,n,false);}p.popPose();}
+    private static float swingProgress(AvatarRenderState state){var c=net.minecraft.client.Minecraft.getInstance();return c.level!=null&&c.level.getEntity(state.id) instanceof net.minecraft.world.entity.LivingEntity e?e.getSwingAnimation(state.ageInTicks-(float)Math.floor(state.ageInTicks)):0;}
     public static float normalSwordSwing(float progress){return (float)Math.sin(Math.sqrt(Math.max(0,Math.min(1,progress)))*Math.PI)*1.2f;}
     public static void hand(PoseStack p,SubmitNodeCollector n){p.pushPose();p.translate(.55,-.45,-.9);p.rotate(new Quaternionf().rotationZ(-.25f));p.scale(1.1f,1.1f,1.1f);draw(CLUB,BLACK,p,n,false);p.popPose();}
     public static int kind(String name){int separator=name.indexOf('|');if(separator>=0)name=name.substring(0,separator);for(int i=1;i<=17;i++)if(name.equals("cb_azure_"+i))return i;return 0;}
