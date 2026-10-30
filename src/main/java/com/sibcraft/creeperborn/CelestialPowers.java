@@ -1,0 +1,137 @@
+package com.sibcraft.creeperborn;
+import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.*;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.*;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.*;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+/** Glint light combat and shared-health copies; bounded Straw effigies with non-recursive damage transfer. */
+public final class CelestialPowers {
+ private static final class State {Player p;ServerLevel level;String fruit;int held=-1,keys,cursor;long press,heartbeat,inputUntil,formEnds,clonesEnd,recent=-1000;boolean form;final List<Copy> copies=new ArrayList<>();final LinkedHashMap<UUID,Link> links=new LinkedHashMap<>();}
+ private static final class Copy {Mob proxy;Display.BlockDisplay visual;}
+ private record Link(LivingEntity target,long ends){}
+ private static final class Snare {Player owner;LivingEntity target;ServerLevel level;long ends;boolean ai;Display.BlockDisplay visual;}
+ private record Visual(Player owner,Display.BlockDisplay entity,long ends){}
+ private record Blast(Player owner,ServerLevel level,Vec3 at,float damage,double radius,long ends,boolean light){}
+ private static final Map<UUID,State> states=new HashMap<>(),copies=new HashMap<>();
+ private static final Map<UUID,Visual> visuals=new HashMap<>();private static final Map<UUID,Snare> snares=new HashMap<>();private static final Map<UUID,Long> resistance=new HashMap<>(),landing=new HashMap<>();
+ private static final List<Blast> blasts=new ArrayList<>();private static final Set<UUID> moving=new HashSet<>();private static final ThreadLocal<Boolean> transfer=ThreadLocal.withInitial(()->false),masterElement=ThreadLocal.withInitial(()->false);
+ private static UUID client;private static int clientFlags,clientKeys;
+ private static long now(Entity p){return p.level().getGameTime();}
+ public static boolean unlocked(Player p,String f){return (f.equals("glint")||f.equals("straw"))&&p.entityTags().contains("cb_fruit_"+f)&&p.getUUID().equals(FruitClaims.owner(f));}
+ public static boolean selected(Player p,String f){return unlocked(p,f)&&p.entityTags().contains("cb_mode_fruit")&&Dark.matches(p,f);}
+ public static String current(Player p){return selected(p,"glint")?"glint":selected(p,"straw")?"straw":"";}
+ public static int tier(Player p,String f){return unlocked(p,f)?Rubber.progressTier(Mastery.get(p,"cb_"+f+"_uses_"),Mastery.get(p,"cb_"+f+"_time_")):0;}
+ public static void grant(Player p,String f,int t){Mastery.set(p,"cb_"+f+"_uses_",t>=3?40:t==2?10:0);Mastery.set(p,"cb_"+f+"_time_",t>=3?3600:t==2?300:0);}
+ public static boolean consume(Player p,ItemStack item,String f){if(!Relics.kind(item).equals("fruit:"+f)||!FruitClaims.claimItem(p,item,f))return false;p.addTag("cb_fruit_"+f);grant(p,f,Relics.captureTier(item));p.addTag("cb_mode_fruit");if(Dark.unlocked(p))Dark.selectConsumed(p,f);item.shrink(1);return true;}
+ private static int scale(Player p,String f,int a,int b,int c){int t=tier(p,f);return t>=3?c:t==2?b:a;}
+ private static boolean valid(State s){return s.p.isAlive()&&!s.p.isRemoved()&&s.p.level()==s.level&&unlocked(s.p,s.fruit)&&!s.p.isSpectator()&&!Dark.suppressed(s.p)&&!WaterRules.suppressed(s.p)&&!StringFruit.controlled(s.p);}
+ private static State state(Player p,String f){State s=states.get(p.getUUID());if(s!=null&&(s.level!=p.level()||!s.fruit.equals(f))){forget(p);s=null;}if(s==null){s=new State();s.p=p;s.level=(ServerLevel)p.level();s.fruit=f;states.put(p.getUUID(),s);}return s;}
+ private static long saved(Player p,String key){for(String tag:p.entityTags())if(tag.startsWith(key))try{return Long.parseLong(tag.substring(key.length()));}catch(NumberFormatException ignored){}return 0;}
+ private static void saved(Player p,String key,long value){for(String t:Set.copyOf(p.entityTags()))if(t.startsWith(key))p.removeTag(t);p.addTag(key+value);}
+ private static boolean targetable(Player p,LivingEntity e){return e!=p&&e.isAlive()&&!e.isSpectator()&&!Azure.proxy(e)&&!NaturePowers.proxy(e)&&!proxy(e)&&!StringFruit.isKnight(e);}
+ private static boolean enemy(Player p,LivingEntity e){return targetable(p,e)&&!p.isAlliedTo(e)&&(e instanceof Enemy||e instanceof Player);}
+ private static LivingEntity target(Player p,double range,boolean any){Vec3 start=p.getEyePosition(),end=aim(p,start,p.getLookAngle(),range);LivingEntity best=null;double near=start.distanceTo(end);for(var e:((ServerLevel)p.level()).getEntitiesOfClass(LivingEntity.class,new AABB(start,end).inflate(1)))if((any?targetable(p,e):enemy(p,e))){var hit=e.getBoundingBox().inflate(.35).clip(start,end);if(hit.isPresent()&&start.distanceTo(hit.get())<near){near=start.distanceTo(hit.get());best=e;}}return best;}
+ private static Vec3 aim(Player p,Vec3 start,Vec3 dir,double range){var hit=p.level().clip(new ClipContext(start,start.add(dir.scale(range)),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));return hit.getType()==HitResult.Type.MISS?start.add(dir.scale(range)):hit.getLocation();}
+ private static boolean hurt(Player p,LivingEntity e,float damage){return enemy(p,e)&&e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),damage*(float)Mastery.multiplier(p));}
+ private static void push(LivingEntity e,Vec3 v){if(e instanceof Player p)Rubber.impulse(p,v);else e.setDeltaMovement(v);}
+ public static void press(Player p,int move){String f=current(p);if(f.isEmpty()||move<0||move>2)return;State s=state(p,f);if(!valid(s)||s.held>=0)return;s.held=move;s.press=now(p);s.heartbeat=now(p)+15;}
+ public static void heartbeat(Player p){State s=states.get(p.getUUID());if(s!=null)s.heartbeat=now(p)+15;}
+ public static void cancelInput(Player p){State s=states.get(p.getUUID());if(s!=null)s.held=-1;}
+ public static void release(Player p,int move){State s=states.get(p.getUUID());if(s==null||s.held!=move)return;long held=now(p)-s.press;s.held=-1;Creeperborn.say(p,cast(p,s.fruit,move,held));}
+ public static int linkCapacity(int tier){return tier>=3?15:tier==2?10:5;}
+ public static int cloneCapacity(int tier){return tier>=3?5:tier==2?3:2;}
+ public static int linkCount(Player p){State s=states.get(p.getUUID());if(s==null)return 0;prune(s);return s.links.size();}
+ public static long cloneRemaining(Player p){State s=states.get(p.getUUID());return s==null||s.copies.isEmpty()?0:Math.max(0,s.clonesEnd-now(p));}
+ public static int cloneCount(Player p){State s=states.get(p.getUUID());return s==null?0:s.copies.size();}
+ public static boolean form(Player p){State s=states.get(p.getUUID());return s!=null&&s.form&&valid(s);}
+ public static boolean flying(Player p){return unlocked(p,"glint")&&form(p);}
+ public static long formRemaining(Player p){State s=states.get(p.getUUID());return s!=null&&s.form?Math.max(0,s.formEnds-now(p)):0;}
+ public static boolean proxy(Entity e){return copies.containsKey(e.getUUID());}
+ public static boolean ownedProxy(Entity e,Player p){State s=copies.get(e.getUUID());return s!=null&&s.p==p;}
+ public static boolean rooted(LivingEntity e){return snares.containsKey(e.getUUID());}
+ public static boolean locked(LivingEntity e){return !moving.contains(e.getUUID())&&(rooted(e)||e instanceof Player p&&flying(p));}
+ public static double headHeight(Player p){int flags=p.level() instanceof ServerLevel?flags(p):p.getUUID().equals(client)?clientFlags:0;return (flags&7)==6?3.65:0;}
+ public static void beginElement(Player p,Element e){masterElement.set(Mastery.tier(p,e)>=3);}
+ public static void endElement(){masterElement.remove();}
+ private static boolean counter(DamageSource source){return masterElement.get()||source.getEntity() instanceof Player p&&(Mastery.harmony(p)||Dark.unlocked(p)&&Dark.selected(p)||Rubber.gear(p));}
+ public static boolean redirect(LivingEntity victim,DamageSource source,float amount){if(source.getEntity()!=null&&proxy(source.getEntity()))return true;State s=copies.get(victim.getUUID());if(s==null)return false;if(source.getEntity()!=s.p&&amount>0&&valid(s))s.p.hurtServer(s.level,source,amount);return true;}
+ public static boolean intercept(Player p,DamageSource source,float amount){if(source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)||amount<=0)return false;State s=states.get(p.getUUID());if(s==null||!valid(s))return false;if(source.is(DamageTypeTags.IS_FALL)&&(flying(p)||now(p)<landing.getOrDefault(p.getUUID(),0L)))return true;
+  if(s.fruit.equals("glint")&&s.form&&!transfer.get()&&!counter(source)){spark(p,p.getEyePosition(),8);return true;}
+  if(s.fruit.equals("straw")&&!transfer.get()){prune(s);if(!s.links.isEmpty()){Link l=s.links.values().iterator().next();LivingEntity target=l.target;transfer.set(true);try{target.damageCooldownTime=0;target.hurtServer(s.level,target.damageSources().generic(),amount);}finally{transfer.set(false);}visual(p,target.position().add(0,target.getBbHeight()/2,0),14,12,1,1,1,0);if(!target.isAlive())s.links.remove(target.getUUID());sync(s);return true;}}
+  return false;
+ }
+ public static String cast(Player p,String f,int move,long held){if(move<0||move>2||!selected(p,f))return "Fruit unavailable.";State s=state(p,f);if(!valid(s)||rooted(p)||NaturePowers.rooted(p)||PairPowers.rooted(p)||ClimatePowers.rooted(p))return "Fruit suppressed or restrained.";boolean hold=held>=7;long time=now(p);int t=tier(p,f),slot=move*2+(hold?1:0);boolean light=f.equals("glint");
+  if(hold&&held<20)return "Charge for one second.";
+  if(move==2&&hold&&s.form){endForm(s);return "Transformation ended.";}
+  if(light&&move==2&&!hold&&!s.copies.isEmpty())return swap(s)?"Light clone switched — shared health and timer.":"No safe clone to switch into.";
+  if(hold&&move==2&&t<3)return "Transformation requires fruit mastery.";
+  if(move==1&&t<2)return "This move unlocks at tier two.";
+  String key="cb_"+f+"_ready_"+slot+"_";if(time<saved(p,key))return "Move recovering.";if(p.getFoodData().getFoodLevel()-(hold?2:1)<=6)return "Eat before using your fruit.";
+  String result;int cooldown=30;float strength=s.form?1.5f:1;
+  if(light){
+   if(move==0&&!hold){LivingEntity e=target(p,s.form?12:scale(p,f,5,7,9),false);if(e!=null)hurt(p,e,scale(p,f,10,16,22)*strength);visual(p,LightningBolts.hand(p),4,12,1,1,1,p.getYRot());spark(p,LightningBolts.hand(p),12);result="Light Sword!";cooldown=10;}
+   else if(move==0){LivingEntity victim=target(p,scale(p,f,24,36,52),false);Vec3 at=victim==null?aim(p,p.getEyePosition(),p.getLookAngle(),scale(p,f,24,36,52)):victim.getBoundingBox().getCenter();beam(p,p.getEyePosition().add(0,-.45,0),at,5,16);blasts.add(new Blast(p,s.level,at,scale(p,f,18,26,36)*strength,3.5,time+8,true));result="Star Kick!";cooldown=90;}
+   else if(move==1&&!hold){laser(p,LightningBolts.hand(p),p.getLookAngle(),scale(p,f,32,48,64),scale(p,f,18,26,34)*strength);result="Star Laser!";cooldown=30;}
+   else if(move==1){for(int i=0;i<scale(p,f,7,11,15);i++){double yaw=Math.toRadians(p.getYRot()+(i-(scale(p,f,7,11,15)-1)/2.0)*3);double pitch=Math.toRadians(p.getXRot()+((i%3)-1)*3);Vec3 dir=new Vec3(-Math.sin(yaw)*Math.cos(pitch),-Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));laser(p,LightningBolts.hand(p),dir,scale(p,f,28,40,56),scale(p,f,7,10,14)*strength);}result="Sacred Jewel Barrage!";cooldown=140;}
+   else if(!hold){spawnClones(s);result="Light Clones — tap C to switch; health and timer are shared.";cooldown=600;}
+   else{s.form=true;s.formEnds=time+3000;s.keys=0;result="Light Body — WASD flight, Space up, Shift down!";cooldown=600;}
+  }else{
+   if(move==0&&!hold){LivingEntity e=target(p,s.form?14:scale(p,f,5,7,9),false);if(e!=null){hurt(p,e,scale(p,f,7,11,16)*strength);push(e,p.getLookAngle().scale(.4));}beam(p,LightningBolts.hand(p),aim(p,LightningBolts.hand(p),p.getLookAngle(),s.form?12:6),11,12);result="Straw Talons!";cooldown=15;}
+   else if(move==0){LivingEntity victim=target(p,scale(p,f,18,26,36),false);Vec3 at=victim==null?aim(p,p.getEyePosition(),p.getLookAngle(),scale(p,f,18,26,36)):victim.getBoundingBox().getCenter();beam(p,LightningBolts.hand(p),at,12,24);blasts.add(new Blast(p,s.level,at,scale(p,f,15,23,32)*strength,s.form?5:3,time+12,false));result="Death Knock!";cooldown=100;}
+   else if(move==1&&!hold){LivingEntity e=target(p,scale(p,f,16,24,32),true);if(e==null)return "Aim at a living mob or player to bind an effigy.";prune(s);if(s.links.containsKey(e.getUUID()))return "That target already has a doll.";if(s.links.size()>=linkCapacity(t))return "All effigy slots are filled.";s.links.put(e.getUUID(),new Link(e,time+scale(p,f,1200,1800,2400)));beam(p,LightningBolts.hand(p),e.getBoundingBox().getCenter(),13,20);result="Effigy Bound — "+s.links.size()+"/"+linkCapacity(t)+" lives linked!";cooldown=10;}
+   else if(move==1){LivingEntity first=target(p,scale(p,f,16,24,32),false);if(first==null)return "Aim at an enemy for Misfortune.";int count=0;for(var e:s.level.getEntitiesOfClass(LivingEntity.class,first.getBoundingBox().inflate(t>=3?7:1)))if(enemy(p,e)&&p.hasLineOfSight(e)&&count<(t>=3?5:1)&&time>=resistance.getOrDefault(e.getUUID(),0L)){misfortune(p,e,t);count++;}result="Misfortune Card — "+count+" enemies cursed!";cooldown=160;}
+   else if(!hold){int count=0;double radius=s.form?12:scale(p,f,5,7,9);for(var e:s.level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(radius)))if(enemy(p,e)&&e.distanceToSqr(p)<=radius*radius&&p.hasLineOfSight(e)&&!snares.containsKey(e.getUUID())&&time>=resistance.getOrDefault(e.getUUID(),0L)&&!NaturePowers.rooted(e)&&!PairPowers.rooted(e)&&!ClimatePowers.rooted(e)){Snare q=new Snare();q.owner=p;q.target=e;q.level=s.level;q.ends=time+(e instanceof Player?30:scale(p,f,30,45,60));if(e instanceof Mob m){q.ai=m.isNoAi();m.setNoAi(true);}Vec3 pull=p.position().subtract(e.position()).multiply(1,0,1).normalize().scale(1.2);e.move(MoverType.SELF,pull);if(e instanceof ServerPlayer sp)sp.teleportTo(sp.getX(),sp.getY(),sp.getZ());q.visual=visual(p,e.position(),15,q.ends-time,1,e.getBbHeight(),1,0);snares.put(e.getUUID(),q);count++;}visual(p,p.position(),16,20,(float)radius,1,(float)radius,0);result="Wicker Snare — "+count+" enemies caught!";cooldown=100;}
+   else{s.form=true;s.formEnds=time+3600;result="Straw Man — elongated claws and stronger straw constructs!";cooldown=600;}
+  }
+  saved(p,key,time+cooldown);p.getFoodData().setFoodLevel(Math.max(0,p.getFoodData().getFoodLevel()-(hold?2:1)));if(time-s.recent>=20)Mastery.set(p,"cb_"+f+"_uses_",Mastery.get(p,"cb_"+f+"_uses_")+1);s.recent=time;sync(s);return result;
+ }
+ private static void misfortune(Player p,LivingEntity e,int tier){int choice=((ServerLevel)p.level()).getRandom().nextInt(5);int ticks=tier>=3?80:50;switch(choice){case 0->e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,ticks,2));case 1->e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,ticks,1));case 2->e.addEffect(new MobEffectInstance(MobEffects.BLINDNESS,Math.min(50,ticks),0));case 3->e.addEffect(new MobEffectInstance(MobEffects.POISON,ticks,0));default->{e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,30,3));push(e,p.getLookAngle().scale(-.4));}}resistance.put(e.getUUID(),now(p)+120);visual(p,e.position().add(0,e.getBbHeight()+.4,0),17,24,1,1,1,choice*15);}
+ private static void laser(Player p,Vec3 from,Vec3 dir,double range,float damage){Vec3 end=aim(p,from,dir,range);LivingEntity first=null;double nearest=from.distanceTo(end);for(var e:((ServerLevel)p.level()).getEntitiesOfClass(LivingEntity.class,new AABB(from,end).inflate(.7)))if(enemy(p,e)){var h=e.getBoundingBox().inflate(.35).clip(from,end);if(h.isPresent()&&from.distanceTo(h.get())<nearest){first=e;nearest=from.distanceTo(h.get());}}if(first!=null){end=from.add(dir.scale(nearest));first.damageCooldownTime=0;hurt(p,first,damage);}beam(p,from,end,1,12);visual(p,end,2,14,1.3f,1.3f,1.3f,0);spark(p,end,20);}
+ private static void spawnClones(State s){clearCopies(s);s.clonesEnd=now(s.p)+scale(s.p,"glint",400,600,800);for(int i=0;i<cloneCapacity(tier(s.p,"glint"));i++){double a=i*Math.PI*2/cloneCapacity(tier(s.p,"glint"));Vec3 at=s.p.position().add(Math.cos(a)*3,0,Math.sin(a)*3);if(!DoorSpace.fits(s.level,s.p,at))continue;var mob=EntityTypes.SLIME.create(s.level,EntitySpawnReason.TRIGGERED);if(mob==null)continue;mob.setSize(2,true);mob.setNoAi(true);mob.setNoGravity(true);mob.noPhysics=true;mob.setInvisible(true);mob.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY,Integer.MAX_VALUE,0,false,false,false));mob.setCustomName(Component.literal("cb_celestial_copy:"+s.p.getUUID()));mob.setCustomNameVisible(false);mob.addTag("cb_temporary_rock");mob.setSilent(true);mob.snapTo(at.x,at.y,at.z);if(s.level.addFreshEntity(mob)){Copy c=new Copy();c.proxy=mob;c.visual=visual(s.p,at,3,s.clonesEnd-now(s.p),1,1,1,s.p.getYRot());s.copies.add(c);copies.put(mob.getUUID(),s);}}}
+ private static boolean swap(State s){for(int i=0;i<s.copies.size();i++){Copy c=s.copies.get((s.cursor+i)%s.copies.size());Vec3 at=c.proxy.position();if(c.proxy.isRemoved()||!DoorSpace.fits(s.level,s.p,at)||StringFruit.blocked(s.p,at)||!s.level.getWorldBorder().isWithinBounds(BlockPos.containing(at)))continue;Vec3 old=s.p.position();if(s.p instanceof ServerPlayer sp)sp.teleportTo(s.level,at.x,at.y,at.z,Set.of(),s.p.getYRot(),s.p.getXRot(),false);else s.p.snapTo(at.x,at.y,at.z);c.proxy.snapTo(old.x,old.y,old.z);if(c.visual!=null)c.visual.snapTo(old.x,old.y,old.z);s.cursor=(s.cursor+i+1)%s.copies.size();spark(s.p,old,25);spark(s.p,at,25);s.p.resetFallDistance();sync(s);return true;}return false;}
+ private static void clearCopies(State s){for(Copy c:s.copies){copies.remove(c.proxy.getUUID());c.proxy.discard();if(c.visual!=null){c.visual.discard();visuals.remove(c.visual.getUUID());}}s.copies.clear();}
+ private static void prune(State s){double range=scale(s.p,"straw",32,48,64);s.links.entrySet().removeIf(e->{LivingEntity t=e.getValue().target;return !t.isAlive()||t.isRemoved()||t.level()!=s.level||now(s.p)>=e.getValue().ends||s.p.distanceToSqr(t)>range*range;});}
+ private static void endForm(State s){s.form=false;s.keys=0;s.p.setDeltaMovement(Vec3.ZERO);s.p.resetFallDistance();landing.put(s.p.getUUID(),now(s.p)+100);sync(s);}
+ public static void input(Player p,int keys){State s=states.get(p.getUUID());if(s!=null&&keys>=0&&keys<=127){s.keys=keys;s.inputUntil=now(p)+5;}}
+ public static void clientState(UUID id,int flags){client=id;clientFlags=flags;}
+ public static void clientInput(int keys){clientKeys=keys&127;}
+ public static void clearClient(){client=null;clientFlags=clientKeys=0;}
+ private static void move(Player p,Vec3 v){moving.add(p.getUUID());try{p.move(MoverType.SELF,v);p.setDeltaMovement(Vec3.ZERO);p.resetFallDistance();}finally{moving.remove(p.getUUID());}}
+ public static Vec3 flightMotion(Player p,int keys){return NaturePowers.flightMotion(p.getYRot(),p.getXRot(),keys,3).scale(1.6);}
+ public static boolean clientTravel(Player p){if(p.level() instanceof ServerLevel||!p.getUUID().equals(client))return false;if((clientFlags&1024)!=0){p.setDeltaMovement(Vec3.ZERO);return true;}if((clientFlags&7)!=5)return false;move(p,flightMotion(p,clientKeys));return true;}
+ public static boolean connectionMove(ServerPlayer p,net.minecraft.network.protocol.game.ServerboundMovePlayerPacket packet){if(!flying(p))return false;float yaw=packet.getYRot(p.getYRot()),pitch=packet.getXRot(p.getXRot());if(Float.isFinite(yaw)&&Float.isFinite(pitch)){p.setYRot(net.minecraft.util.Mth.wrapDegrees(yaw));p.setXRot(net.minecraft.util.Mth.clamp(pitch,-90,90));}return true;}
+ private static void releaseSnare(Snare q){if(q.target instanceof Mob m)m.setNoAi(q.ai);q.target.setDeltaMovement(Vec3.ZERO);snares.remove(q.target.getUUID());resistance.put(q.target.getUUID(),now(q.owner)+80);if(q.visual!=null)q.visual.discard();if(q.target instanceof Player p)syncPlayer(p);}
+ public static void tickPlayer(Player p){State s=states.get(p.getUUID());if(s==null)return;if(!valid(s)){forget(p);return;}long time=now(p);if(!selected(p,s.fruit)||time>s.heartbeat)cancelInput(p);if(s.held>=0&&time%4==0){Vec3 at=LightningBolts.hand(p);if(s.fruit.equals("glint"))visual(p,at,2,6,.35f,.35f,.35f,0);else visual(p,at,17,6,.35f,.35f,.35f,0);}
+  if(s.form&&(time>=s.formEnds||p.getFoodData().getFoodLevel()<=6))endForm(s);if(p.getFoodData().getFoodLevel()<=6)clearCopies(s);
+  if(rooted(p)||NaturePowers.rooted(p)||PairPowers.rooted(p)||ClimatePowers.rooted(p))p.setDeltaMovement(Vec3.ZERO);else if(flying(p)){if(p instanceof ServerPlayer sp)((com.sibcraft.creeperborn.mixin.AirStepConnectionAccessor)sp.connection).creeperborn$resetAirStepCounter(0);move(p,flightMotion(p,time<=s.inputUntil?s.keys:0));}
+  if(!s.copies.isEmpty()){if(time>=s.clonesEnd)clearCopies(s);else for(Copy c:s.copies){if(c.proxy.isRemoved())continue;c.proxy.setDeltaMovement(Vec3.ZERO);if(c.visual!=null)c.visual.snapTo(c.proxy.getX(),c.proxy.getY(),c.proxy.getZ());if(time%30==0){LivingEntity enemy=s.level.getEntitiesOfClass(LivingEntity.class,c.proxy.getBoundingBox().inflate(20)).stream().filter(e->enemy(p,e)&&s.level.clip(new ClipContext(c.proxy.position().add(0,1.4,0),e.getBoundingBox().getCenter(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p)).getType()==HitResult.Type.MISS).min(Comparator.comparingDouble(c.proxy::distanceToSqr)).orElse(null);if(enemy!=null)laser(p,c.proxy.position().add(0,1.4,0),enemy.getBoundingBox().getCenter().subtract(c.proxy.position().add(0,1.4,0)).normalize(),20,scale(p,"glint",3,5,7));}}}
+  prune(s);if(time%200==0&&(s.form||!s.copies.isEmpty()))p.getFoodData().setFoodLevel(Math.max(0,p.getFoodData().getFoodLevel()-1));if(time%20==0){if(s.form||!s.copies.isEmpty()||!s.links.isEmpty()||time-s.recent<200)Mastery.set(p,"cb_"+s.fruit+"_time_",Mastery.get(p,"cb_"+s.fruit+"_time_")+1);if(s.form)Creeperborn.say(p,(s.fruit.equals("glint")?"Light Body ":"Straw Man ")+(formRemaining(p)+19)/20+"s"+(s.links.isEmpty()?"":" | dolls "+s.links.size()));}if(time%10==0)sync(s);
+ }
+ public static void tick(MinecraftServer server){for(State s:List.copyOf(states.values()))tickPlayer(s.p);effects();long time=server.overworld().getGameTime();resistance.entrySet().removeIf(e->time>=e.getValue());landing.entrySet().removeIf(e->time>=e.getValue());}
+ public static void effects(){for(Blast q:List.copyOf(blasts)){if(!q.owner.isAlive()||q.owner.level()!=q.level||Dark.suppressed(q.owner)||WaterRules.suppressed(q.owner)){blasts.remove(q);continue;}if(now(q.owner)>=q.ends){for(var e:q.level.getEntitiesOfClass(LivingEntity.class,new AABB(q.at,q.at).inflate(q.radius)))if(enemy(q.owner,e)&&e.getBoundingBox().getCenter().distanceToSqr(q.at)<=q.radius*q.radius&&q.level.clip(new ClipContext(q.at,e.getBoundingBox().getCenter(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,q.owner)).getType()==HitResult.Type.MISS){hurt(q.owner,e,q.damage);push(e,e.position().subtract(q.at).normalize().scale(.8).add(0,.3,0));}visual(q.owner,q.at,q.light?2:12,18,(float)q.radius,1,(float)q.radius,0);blasts.remove(q);}}
+  for(Snare q:List.copyOf(snares.values())){State s=states.get(q.owner.getUUID());if(s==null||!valid(s)||!q.target.isAlive()||q.target.level()!=q.level||now(q.owner)>=q.ends){releaseSnare(q);continue;}q.target.setDeltaMovement(Vec3.ZERO);q.target.resetFallDistance();if(q.visual!=null)q.visual.snapTo(q.target.getX(),q.target.getY(),q.target.getZ());if(q.target instanceof Player p&&now(q.owner)%10==0)syncPlayer(p);}
+  for(Visual v:List.copyOf(visuals.values()))if(v.entity.isRemoved()||now(v.owner)>=v.ends||!v.owner.isAlive()||v.owner.level()!=v.entity.level()){v.entity.discard();visuals.remove(v.entity.getUUID());}
+ }
+ private static Display.BlockDisplay visual(Player p,Vec3 at,int kind,long duration,float x,float y,float z,float yaw){var d=EntityTypes.BLOCK_DISPLAY.create((ServerLevel)p.level(),EntitySpawnReason.TRIGGERED);if(d==null)return null;d.addTag("cb_temporary_rock");d.setCustomName(Component.literal("cb_celestial_"+kind+"|"+p.getUUID()));d.setCustomNameVisible(false);d.setBlockState(Blocks.STONE.defaultBlockState());d.snapTo(at.x,at.y,at.z);var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;a.creeperborn$duration(0);a.creeperborn$positionDuration(0);a.creeperborn$width(128);a.creeperborn$height(64);a.creeperborn$view(5);d.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),new org.joml.Quaternionf().rotationY((float)Math.toRadians(-yaw)),new org.joml.Vector3f(x,y,z),new org.joml.Quaternionf()));if(!p.level().addFreshEntity(d))return null;visuals.put(d.getUUID(),new Visual(p,d,now(p)+duration));return d;}
+ private static void beam(Player p,Vec3 from,Vec3 to,int kind,int ticks){Display.BlockDisplay d=visual(p,from,kind,ticks,1,1,1,0);if(d!=null){Vec3 delta=to.subtract(from);d.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),Paw.orientation(delta.normalize()),new org.joml.Vector3f(1,1,(float)delta.length()),new org.joml.Quaternionf()));}}
+ private static void spark(Player p,Vec3 at,int count){((ServerLevel)p.level()).sendParticles(new DustParticleOptions(0xFFE35B,.7f),at.x,at.y,at.z,count,.3,.3,.3,.02);}
+ public static int flags(Player p){State s=states.get(p.getUUID());return (rooted(p)?1024:0)|(s==null?0:(s.fruit.equals("glint")?1:2)|(s.form?4:0)|(!s.copies.isEmpty()?8:0)|(s.links.size()<<4)|(tier(p,s.fruit)<<8));}
+ private static void sync(State s){syncPlayer(s.p);}
+ private static void syncPlayer(Player p){if(!(p.level() instanceof ServerLevel level))return;for(var v:level.getServer().getPlayerList().getPlayers())if(ServerPlayNetworking.canSend(v,CelestialPayload.TYPE))ServerPlayNetworking.send(v,new CelestialPayload(p.getId(),flags(p)));}
+ public static void tickVisual(Entity e){if(!(e.level() instanceof ServerLevel)||e.getCustomName()==null)return;String n=e.getCustomName().getString();if(n.startsWith("cb_celestial_copy:")){if(!proxy(e)&&e.tickCount>2)e.discard();return;}if(!n.startsWith("cb_celestial_"))return;Visual v=visuals.get(e.getUUID());if(v==null&&e.tickCount>2||v!=null&&now(e)>=v.ends){e.discard();visuals.remove(e.getUUID());}}
+ public static void forget(Player p){State s=states.remove(p.getUUID());if(s!=null){clearCopies(s);s.links.clear();s.form=false;sync(s);}for(Snare q:List.copyOf(snares.values()))if(q.owner==p||q.target==p)releaseSnare(q);for(State other:states.values())other.links.remove(p.getUUID());for(Visual v:List.copyOf(visuals.values()))if(v.owner==p){v.entity.discard();visuals.remove(v.entity.getUUID());}blasts.removeIf(q->q.owner==p);}
+ public static void clear(){for(State s:List.copyOf(states.values()))forget(s.p);states.clear();copies.clear();visuals.clear();snares.clear();resistance.clear();landing.clear();blasts.clear();transfer.remove();masterElement.remove();clearClient();}
+ public static String status(Player p,String f){return !unlocked(p,f)?f+": locked":f.equals("glint")?"Glint T"+tier(p,f)+" | Z Sword / hold Star Kick | X Laser / hold Barrage | C Clones / hold Light Body":"Straw T"+tier(p,f)+" | dolls "+linkCount(p)+"/"+linkCapacity(tier(p,f))+" | Z Talons / hold Death Knock | X Bind / hold Misfortune | C Snare / hold Straw Man";}
+}

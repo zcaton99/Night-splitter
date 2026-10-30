@@ -26,6 +26,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private void cancel(){if(holding()||StringVisuals.controlling())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
     private void changeSelection(){boolean wasHolding=holding();cancel();waitingForRelease=wasHolding;}
     @Override public void onInitializeClient(){
+        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.CelestialPayload.TYPE,(payload,context)->CelestialVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.NatureVisualPayload.TYPE,(payload,context)->{NatureVisuals.update(payload.entity(),payload.flags());var p=net.minecraft.client.Minecraft.getInstance().player;if(p!=null&&p.getId()==payload.entity())com.sibcraft.creeperborn.NaturePowers.clientGrapple((payload.flags()&16384)!=0?new net.minecraft.world.phys.Vec3(payload.x(),payload.y(),payload.z()):null);});
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.AzureVisualPayload.TYPE,(payload,context)->AzureVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.PhoenixVisualPayload.TYPE,(payload,context)->PhoenixVisuals.update(payload.entity(),payload.flags()));
@@ -45,10 +46,10 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
-            if(client.player==null||client.getConnection()==null){NatureVisuals.clear();StringVisuals.clear();AzureVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
-            NatureVisuals.tick(client);StringVisuals.tick(client,ticks);AzureVisuals.tick(client);
+            if(client.player==null||client.getConnection()==null){CelestialVisuals.clear();NatureVisuals.clear();StringVisuals.clear();AzureVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
+            CelestialVisuals.tick(client);NatureVisuals.tick(client);StringVisuals.tick(client,ticks);AzureVisuals.tick(client);
             int azureKeys=client.gui.screen()!=null||client.isPaused()?0:(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);
-            com.sibcraft.creeperborn.NaturePowers.clientInput(azureKeys);com.sibcraft.creeperborn.Azure.clientInput(azureKeys);
+            com.sibcraft.creeperborn.CelestialPowers.clientInput(azureKeys);com.sibcraft.creeperborn.NaturePowers.clientInput(azureKeys);com.sibcraft.creeperborn.Azure.clientInput(azureKeys);
             com.sibcraft.creeperborn.ClimatePowers.clientInput(azureKeys,client.player.level().getGameTime());
             if((AzureVisuals.flags(client.player.getId())&3)==2&&ClientPlayNetworking.canSend(com.sibcraft.creeperborn.AzureFlightPayload.TYPE))ClientPlayNetworking.send(new com.sibcraft.creeperborn.AzureFlightPayload(azureKeys,client.player.getYRot(),client.player.getXRot()));
             if(!checkedBindings){
@@ -70,7 +71,7 @@ public final class CreeperbornClient implements ClientModInitializer {
                     client.player.sendSystemMessage(Component.literal("Creeperborn updated old controls: R elements, G fruits, Z/X/C moves. Custom bindings remain available in Controls."));
                 }
             }
-            if(ticks%4==0||com.sibcraft.creeperborn.ClimatePowers.clientNeedsInput()||(NatureVisuals.flags(client.player.getId())&8)!=0){int flags=0;if(client.gui.screen()==null&&!client.isPaused()){flags=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);}send(10,flags);}
+            if(ticks%4==0||com.sibcraft.creeperborn.ClimatePowers.clientNeedsInput()||(NatureVisuals.flags(client.player.getId())&8)!=0||(CelestialVisuals.flags(client.player.getId())&7)==5){int flags=0;if(client.gui.screen()==null&&!client.isPaused()){flags=(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);}send(10,flags);}
             if(ticks%4==0)send(9,client.gui.screen()==null&&!client.isPaused()&&client.options.keyUse.isDown()&&client.options.keyShift.isDown()?1:0);
             if(WaterRules.suppressed(client.player))cancel();
             if(client.gui.screen()!=null||client.isPaused()){

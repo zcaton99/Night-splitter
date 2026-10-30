@@ -16,6 +16,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class RubberDamageMixin {
     @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
+        if(com.sibcraft.creeperborn.CelestialPowers.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
+        if((Object)this instanceof Player celestial&&com.sibcraft.creeperborn.CelestialPowers.intercept(celestial,source,amount)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.NaturePowers.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
         if((Object)this instanceof Player nature&&com.sibcraft.creeperborn.NaturePowers.intercept(nature,source,amount)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.Azure.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
