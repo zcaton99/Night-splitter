@@ -9,7 +9,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 /** Geometry-native light stars and woven straw, with articulated human/scarecrow silhouettes. */
 public final class CelestialRenderer {
  private static Identifier tex(String name){return Identifier.withDefaultNamespace("textures/block/"+name+".png");}
@@ -38,7 +39,7 @@ public final class CelestialRenderer {
   if(kind==1||kind==5){draw(BEAM,GOLD,p,n,true);p.pushPose();p.scale(.45f,.45f,1);draw(BEAM,WHITE,p,n,true);p.popPose();star(p,n,age,.5f);p.pushPose();p.translate(0,0,1);star(p,n,age,.7f);p.popPose();}
   else if(kind==2){float burst=Math.max(.1f,(float)Math.sin(Math.min(1,age/16)*Math.PI));star(p,n,age,burst);}
   else if(kind==3){for(int side:new int[]{-1,1})HUMAN.getChild("arm"+side).xRot=.3f+(float)Math.sin(age*.09+side)*.12f;draw(HUMAN,GOLD,p,n,true);p.pushPose();p.translate(0,1.2,0);star(p,n,age,.25f);p.popPose();}
-  else if(kind==4){p.rotate(new Quaternionf().rotationY(-1.1f+age*.16f));draw(SWORD,GOLD,p,n,true);star(p,n,age,.3f);}
+  else if(kind==4||kind==6){p.rotate(new Quaternionf().rotationY((kind==4?1:-1)*(-1.1f+age*.16f)));draw(SWORD,GOLD,p,n,true);star(p,n,age,.3f);}
   else if(kind==11){draw(CLAWS,STRAW,p,n,false);}
   else if(kind==12){float length=p.last().pose().getScale(new Vector3f()).z;draw(ROPE,STRAW,p,n,false);p.translate(0,0,1);p.scale(1,1,1/Math.max(1,length));draw(MONSTER,STRAW,p,n,false);}
   else if(kind==13){draw(ROPE,STRAW,p,n,false);}
