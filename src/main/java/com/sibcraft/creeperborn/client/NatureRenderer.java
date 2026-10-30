@@ -51,7 +51,8 @@ public final class NatureRenderer {
         else if(kind==4||kind==11){for(int i=0;i<6;i++){double a=i*Math.PI/3;p.pushPose();p.translate(Math.cos(a)*.35,.15+i*.12,Math.sin(a)*.35);p.rotate(new Quaternionf().rotationY((float)(-a-Math.PI/2)));p.scale(.6f,.6f,.6f);if(kind==4)root(p,n,palette,age,.23f);else limb(p,n,age,.6f+Math.min(1,age/20)*.8f,false);p.popPose();}}
         else if(kind==5){for(int i=0;i<3;i++){p.pushPose();p.rotate(new Quaternionf().rotationY(i*2.1f));p.scale(.3f,.3f,.7f);root(p,n,palette,age,.2f);p.popPose();}}
         else if(kind==12){p.translate(0,Math.max(0,1-age/12)*2,0);draw(FOOT,SKIN,p,n,false);}
-        else if(kind==13){int chains=Math.max(1,Math.min(5,palette));for(int chain=0;chain<chains;chain++)for(int i=0;i<10;i++){double a=chain*Math.PI*2/chains;p.pushPose();p.translate((chains==1?0:Math.cos(a)*.3)+Math.sin(i*.4+age*.07)*.04,chains==1?0:Math.sin(a)*.3,i/10f);p.scale(.3f,.3f,.1f);limb(p,n,age,.1f,false);p.popPose();}}
+        else if(kind==13){for(int i=0;i<10;i++){p.pushPose();p.translate(Math.sin(i*.4+age*.07)*.04,0,i/10f);p.scale(.3f,.3f,.1f);limb(p,n,age,.1f,false);p.popPose();}}
+
         else if(kind==14){float open=Math.min(1,age/6);p.scale(open,1,open);draw(NET,SKIN,p,n,false);}
         p.popPose();}
     public static void avatar(AvatarRenderState s,PoseStack p,SubmitNodeCollector n,int flags,boolean overlay){boolean tree=(flags&3)==1,giant=(flags&4)!=0;int palette=(flags>>6)&15;palette=Math.min(11,palette);float age=s.ageInTicks;
