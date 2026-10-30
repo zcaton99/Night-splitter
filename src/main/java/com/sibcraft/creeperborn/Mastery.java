@@ -20,6 +20,10 @@ public final class Mastery {
         for (Element e : Element.values()) if (tier(p,e) < 3) return false;
         return true;
     }
+    public static int elements(Player p){int count=0;for(Element e:Element.values())if(Progress.unlocked(p,e))count++;return count;}
+    public static double collectionBonus(Player p){return 1+.1*Math.max(0,elements(p)-1);}
+    public static double elementalBonus(Player p){return collectionBonus(p)*multiplier(p);}
+    public static String elementalPercent(Player p){double percent=Math.round(elementalBonus(p)*1000)/10.0;return percent==Math.rint(percent)?Integer.toString((int)percent):Double.toString(percent);}
     public static double multiplier(Player p) { return harmony(p) ? 1.15 : 1; }
     public static boolean allowed(Player p, Element e, int move) { return tier(p,e) >= move + 1; }
     public static int uses(Player p, Element e) { return get(p, "cb_uses_" + e.key() + "_"); }

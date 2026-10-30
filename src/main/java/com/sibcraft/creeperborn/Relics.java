@@ -12,6 +12,7 @@ public final class Relics {
     public static boolean updateFruitModel(ItemStack item){
         if(item.isEmpty())return false;
         String kind=kind(item);
+        if(kind.startsWith("heart:")){Element element=Element.parse(kind.substring(6));if(element==null)return false;var icon=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","element_"+element.key());if(icon.equals(item.get(DataComponents.ITEM_MODEL)))return false;item.set(DataComponents.ITEM_MODEL,icon);return true;}
         if(!kind.startsWith("fruit:")||!Dark.FRUITS.contains(kind.substring(6)))return false;
         var model=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+kind.substring(6));
         if(model.equals(item.get(DataComponents.ITEM_MODEL)))return false;

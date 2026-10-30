@@ -58,7 +58,7 @@ public final class Abilities {
         if (e == null) return "Consume an elemental creeper heart first.";
         int move = move(p);
         if (!Mastery.allowed(p, e, move)) return e.moves[move] + " locked: move 2 needs 10 meaningful uses + 5 active minutes; move 3 needs 40 uses + 20 active minutes.";
-        double power = EnvironmentPower.strength(p, e);
+        double power = EnvironmentPower.strength(p, e)*Mastery.collectionBonus(p);
         double harmony = Mastery.multiplier(p);
         String key = e.key() + move;
         Map<String, Long> timers = cooldowns.computeIfAbsent(p.getUUID(), id -> new HashMap<>());
@@ -73,7 +73,7 @@ public final class Abilities {
             case EARTH -> {
                 if (move == 1) rocks.guard(p, (int)Math.round((Mastery.harmony(p)?160:100) * power));
                 else {
-                    int duration=Mastery.harmony(p)?180:80;
+                    int duration=(int)Math.round((Mastery.harmony(p)?180:80)*Mastery.collectionBonus(p));
                     for(LivingEntity target:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(5)))
                         if(!Azure.ownedProxy(target,p)&&target instanceof Enemy&&target.isAlive()&&target.distanceToSqr(p)<=25&&p.hasLineOfSight(target))
                             Shackles.bind(p,target,duration);
@@ -93,11 +93,11 @@ public final class Abilities {
                 if (move == 1) {FireAnimations.ring(p,elementRadius(p,e,4));pulse(level, p, e, elementRadius(p,e,4), (float)(5 * power), 4 * power);}
                 else {
                     int protection=(int)Math.round(160 * power * harmony);
-                    float before=p.getHealth();p.heal((float)(10*harmony));
+                    float before=p.getHealth();p.heal((float)(10*Mastery.collectionBonus(p)*harmony));
                     if(p.getHealth()>before)Mastery.credit(p,e);
                     effect(p, MobEffects.FIRE_RESISTANCE, (int)Math.round(160 * power * harmony), 0);
                     effect(p, MobEffects.RESISTANCE, protection, 0);
-                    float extra=p.getMaxHealth()/2, previous=p.getAbsorptionAmount();
+                    float extra=(float)(p.getMaxHealth()/2*Mastery.elementalBonus(p)), previous=p.getAbsorptionAmount();
                     if(previous<extra){
                         effect(p,MobEffects.ABSORPTION,protection,Math.max(0,(int)Math.ceil(extra/4)-1));
                         p.setAbsorptionAmount(Math.max(previous,extra));
@@ -108,7 +108,7 @@ public final class Abilities {
                 if (move == 1) {
                     Vec3 direction = p.getLookAngle();
                     p.setIgnoreFallDamageFromCurrentImpulse(true, p.position());
-                    p.setDeltaMovement(direction.x * 1.2 * power, .65 * power, direction.z * 1.2 * power);
+                    p.setDeltaMovement(direction.x * 1.2 * power * harmony, .65 * power * harmony, direction.z * 1.2 * power * harmony);
                     if (p instanceof ServerPlayer sp) {
                         ((com.sibcraft.creeperborn.mixin.AirStepConnectionAccessor)sp.connection).creeperborn$resetAirStepCounter(0);
                         sp.connection.send(new ClientboundSetEntityMotionPacket(p));

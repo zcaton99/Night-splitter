@@ -1374,6 +1374,14 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
         System.out.println("CREEPERBORN_TREE_PETAL_REGRESSION_PASSED");
     }
 
+    private void checkElementCollection(ServerLevel level){
+        Player p=player(level);p.snapTo(-20,y+8,40);p.setYRot(0);p.setXRot(0);p.addItem(new ItemStack(Items.WATER_BUCKET));
+        for(int z=40;z<=50;z++)for(int x=-22;x<=-18;x++)for(int dy=7;dy<=11;dy++)level.setBlock(new BlockPos(x,(int)y+dy,z),dy==7?Blocks.STONE.defaultBlockState():Blocks.AIR.defaultBlockState(),3);
+        Element[] order={Element.WATER,Element.EARTH,Element.FIRE,Element.AIR};
+        for(int i=0;i<order.length;i++){Element e=order[i];ItemStack heart=Relics.heart(e);var icon=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","element_"+e.key());check(icon.equals(heart.get(DataComponents.ITEM_MODEL)),"Edible elemental drop uses its own elemental symbol");heart.remove(DataComponents.ITEM_MODEL);check(Relics.updateFruitModel(heart)&&icon.equals(heart.get(DataComponents.ITEM_MODEL))&&Relics.kind(heart).equals("heart:"+e.key()),"Legacy elemental item appearance migrates without losing consume identity");check(Progress.consume(p,heart),"Each new element consumes once");check(Mastery.elements(p)==i+1&&Math.abs(Mastery.collectionBonus(p)-(1+i*.1))<.001,"Every new element strengthens all unlocked elements");Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);Zombie enemy=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);enemy.snapTo(-20,y+8,46);enemy.setNoAi(true);enemy.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(enemy);Creeperborn.ABILITIES.cast(p);check(Math.abs(enemy.getHealth()-(20-6*(1+i*.1)))<.01,"Actual Water damage grows as new elements are consumed: count="+(i+1)+", health="+enemy.getHealth());enemy.discard();}
+        for(Element e:Element.values())Mastery.grant(p,e,3);check(Mastery.harmony(p)&&Math.abs(Mastery.elementalBonus(p)-1.495)<.001,"Harmony stacks on collected elements for roughly fifty percent extra strength");Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);Zombie enemy=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);enemy.snapTo(-20,y+8,46);enemy.setNoAi(true);enemy.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(enemy);Creeperborn.ABILITIES.cast(p);check(Math.abs(enemy.getHealth()-(20-6*1.495))<.01,"Harmony's final damage bonus is applied once after collection strength");enemy.discard();Creeperborn.ABILITIES.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1392,7 +1400,7 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
         checkOp(level);
         checkGravity(level);
         checkStringFruit(level);checkPaw(level);checkTremor(level);checkLoveSand(level);checkIceMagma(level);checkAzure(level);checkNature(level);
-        checkFruitArtwork(level);
+        checkElementCollection(level);checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);
         checkGuardMaterials(level);
@@ -2044,35 +2052,35 @@ Azure.grant(p,2);check(((Azure.flags(p)>>2)&3)==2,"Tier two evolves existing Hyb
             Progress.select(caster,Element.WATER); Creeperborn.ABILITIES.move(caster,2);
             caster.setHealth(10); Creeperborn.ABILITIES.cast(caster);
         }
-        check(Math.abs(basic.getHealth()-14) < .001 && Math.abs(master.getHealth()-14.6) < .001,
-            "Harmony increases real healing from four to 4.6 health");
+        check(Math.abs(basic.getHealth()-15.2) < .001 && Math.abs(master.getHealth()-15.98) < .001,
+            "Collection and Harmony stack on real Mending Flow healing");
         for (Player caster : new Player[]{basic,master}) {
             Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
         }
-        check(basic.getEffect(MobEffects.RESISTANCE).getDuration() == 80
-            && master.getEffect(MobEffects.RESISTANCE).getDuration() == 92, "Tidal Guard duration gets fifteen percent");
+        check(basic.getEffect(MobEffects.RESISTANCE).getDuration() == 104
+            && master.getEffect(MobEffects.RESISTANCE).getDuration() == 120, "Tidal Guard duration gets fifteen percent");
         check(Abilities.elementRadius(basic,Element.WATER,5)==10&&Abilities.elementRadius(master,Element.WATER,5)==12.5,"Mastered tidal diameter is twenty blocks, Harmony twenty-five");
         check(Abilities.elementRadius(basic,Element.FIRE,4)==10&&Abilities.elementRadius(master,Element.FIRE,4)==12.5,"Mastered flame ring shares the expanded damage radius");
         for (Player caster : new Player[]{basic,master}) {
             Progress.select(caster,Element.EARTH); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
         }
-        check(Creeperborn.ABILITIES.rocks.guardTicks(basic) == 100 && Creeperborn.ABILITIES.rocks.guardTicks(master) == 160,
-            "Mastered brick guard lasts eight seconds at full environmental strength");
+        check(Creeperborn.ABILITIES.rocks.guardTicks(basic) == 130 && Creeperborn.ABILITIES.rocks.guardTicks(master) == 208,
+            "Collection strength extends normal and Harmony guards");
         for (Player caster : new Player[]{basic,master}) {
             Progress.select(caster,Element.FIRE); Creeperborn.ABILITIES.move(caster,2); Creeperborn.ABILITIES.cast(caster);
-            int expected = (int)Math.round(160 * EnvironmentPower.strength(caster,Element.FIRE) * Mastery.multiplier(caster));
+            int expected = (int)Math.round(160 * EnvironmentPower.strength(caster,Element.FIRE) * Mastery.elementalBonus(caster));
             check(caster.getEffect(MobEffects.FIRE_RESISTANCE).getDuration() == expected,
                 "Harmony multiplies environmental strength rather than removing weaknesses");
             Progress.select(caster,Element.AIR); Creeperborn.ABILITIES.move(caster,1); Creeperborn.ABILITIES.cast(caster);
             check(Creeperborn.ABILITIES.cast(caster).equals("Air Step!"), "Harmony keeps Air Step unlimited");
         }
-        check(basic.getDeltaMovement().equals(master.getDeltaMovement()), "Harmony leaves Air Step movement unchanged");
+        check(Math.abs(master.getDeltaMovement().y/basic.getDeltaMovement().y-1.15)<.001, "Harmony also boosts Air Step movement");
         for (boolean boosted : new boolean[]{false,true}) {
             Player fireShield = player(level);
             for (Element e : Element.values()) Mastery.grant(fireShield,e,3);
             if (!boosted) Mastery.grant(fireShield,Element.AIR,2);
             Progress.select(fireShield,Element.FIRE); Creeperborn.ABILITIES.move(fireShield,2); Creeperborn.ABILITIES.cast(fireShield);
-            int expectedResistance = (int)Math.round(160 * EnvironmentPower.strength(fireShield,Element.FIRE) * Mastery.multiplier(fireShield));
+            int expectedResistance = (int)Math.round(160 * EnvironmentPower.strength(fireShield,Element.FIRE) * Mastery.elementalBonus(fireShield));
             check(fireShield.getEffect(MobEffects.RESISTANCE).getDuration() == expectedResistance,
                 "Heat Shield physical protection receives the same Harmony duration bonus");
         }

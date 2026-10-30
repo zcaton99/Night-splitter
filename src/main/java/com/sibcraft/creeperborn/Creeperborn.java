@@ -106,7 +106,7 @@ public final class Creeperborn implements ModInitializer {
             } else if (kind.equals("fruit:rubber")) {
                 say(player, Rubber.consume(player,stack) ? "Rubber unlocked! B enables combat; G selects Rubber; Z punches." : "Fruit slot full, or Rubber is already claimed.");
             } else if (kind.startsWith("heart:")) {
-                say(player, Progress.consume(player, stack) ? "Element unlocked! Use your focus; /creeperborn move 1–3 selects a move."
+                say(player, Progress.consume(player, stack) ? "Element unlocked! "+Mastery.elements(player)+"/4 | elemental strength "+Mastery.elementalPercent(player)+"% — R changes elements; Z/X/C moves."
                     : "You already know this element. Keep the heart for a friend.");
             } else if (kind.equals("focus") || kind.equals("trident")) {
                 if (player.isShiftKeyDown()) {
@@ -153,7 +153,7 @@ public final class Creeperborn implements ModInitializer {
                 chat(p,"Elements unlocked: "+known);
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
-                chat(p,NaturePowers.status(p,"tree"));chat(p,NaturePowers.status(p,"petal"));chat(p,Azure.status(p));chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));chat(p,Dark.status(p));chat(p,Op.status(p));chat(p,Gravity.status(p));chat(p,StringFruit.status(p));chat(p,Paw.status(p));chat(p,Tremor.status(p));chat(p,PairPowers.status(p,"love"));chat(p,PairPowers.status(p,"sand"));chat(p,ClimatePowers.status(p,"ice"));chat(p,ClimatePowers.status(p,"magma"));
+                chat(p,"Elements: "+Mastery.elements(p)+"/4 | strength "+Mastery.elementalPercent(p)+"%"+(Mastery.harmony(p)?" | Harmony":""));chat(p,NaturePowers.status(p,"tree"));chat(p,NaturePowers.status(p,"petal"));chat(p,Azure.status(p));chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));chat(p,Dark.status(p));chat(p,Op.status(p));chat(p,Gravity.status(p));chat(p,StringFruit.status(p));chat(p,Paw.status(p));chat(p,Tremor.status(p));chat(p,PairPowers.status(p,"love"));chat(p,PairPowers.status(p,"sand"));chat(p,ClimatePowers.status(p,"ice"));chat(p,ClimatePowers.status(p,"magma"));
                 chat(p,"Dark claim: "+(FruitClaims.darkAvailable()?"available":FruitClaims.ownsDark(p)?"yours":"another living owner or reserved capture"));
                 chat(p,"Lightning claim: "+(FruitClaims.lightningAvailable()?"available":FruitClaims.ownsLightning(p)?"yours":"another living player"));
                 chat(p,"Phoenix claim: "+(FruitClaims.phoenixAvailable()?"available":FruitClaims.ownsPhoenix(p)?"yours":"another living player"));
