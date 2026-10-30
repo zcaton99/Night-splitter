@@ -5,6 +5,8 @@ import net.minecraft.world.InteractionHand;
 
 import com.mojang.authlib.GameProfile;
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
