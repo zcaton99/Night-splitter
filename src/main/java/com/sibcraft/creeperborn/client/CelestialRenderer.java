@@ -33,13 +33,14 @@ public final class CelestialRenderer {
  private static ModelPart claws(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<4;i++)box(r,"talon"+i,-3+i*2,-.4f,0,.7f,.8f,16);return bake(m);}
  private static void draw(ModelPart m,Identifier t,PoseStack p,SubmitNodeCollector n,boolean light){n.submitModelPart(m,p,light?RenderTypes.eyes(t):RenderTypes.entityTranslucent(t),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
  private static void star(PoseStack p,SubmitNodeCollector n,float age,float size){p.pushPose();p.rotate(new Quaternionf().rotationZ(age*.05f));p.scale(size,size,size);for(int axis=0;axis<3;axis++){p.pushPose();if(axis==1)p.rotate(new Quaternionf().rotationY((float)Math.PI/2));if(axis==2)p.rotate(new Quaternionf().rotationX((float)Math.PI/2));draw(STAR,GOLD,p,n,true);p.scale(.6f,.6f,.6f);draw(STAR,WHITE,p,n,true);p.popPose();}p.popPose();}
- public static int kind(String name){if(!name.startsWith("cb_celestial_"))return 0;try{int k=Integer.parseInt(name.substring(13,name.indexOf('|')));return k>=1&&k<=17?k:0;}catch(RuntimeException ignored){return 0;}}
+ public static int kind(String name){if(!name.startsWith("cb_celestial_"))return 0;try{int k=Integer.parseInt(name.substring(13,name.indexOf('|')));return k>=1&&k<=18?k:0;}catch(RuntimeException ignored){return 0;}}
  public static void submit(int kind,float age,PoseStack p,SubmitNodeCollector n){p.pushPose();
   if(kind!=3&&age>85){p.popPose();return;}
   if(kind==1||kind==5){draw(BEAM,GOLD,p,n,true);p.pushPose();p.scale(.45f,.45f,1);draw(BEAM,WHITE,p,n,true);p.popPose();star(p,n,age,.5f);p.pushPose();p.translate(0,0,1);star(p,n,age,.7f);p.popPose();}
   else if(kind==2){float burst=Math.max(.1f,(float)Math.sin(Math.min(1,age/16)*Math.PI));star(p,n,age,burst);}
   else if(kind==3){for(int side:new int[]{-1,1})HUMAN.getChild("arm"+side).xRot=.3f+(float)Math.sin(age*.09+side)*.12f;draw(HUMAN,GOLD,p,n,true);p.pushPose();p.translate(0,1.2,0);star(p,n,age,.25f);p.popPose();}
   else if(kind==4||kind==6){p.rotate(new Quaternionf().rotationY((kind==4?1:-1)*(-1.1f+age*.16f)));draw(SWORD,GOLD,p,n,true);star(p,n,age,.3f);}
+  else if(kind==18){draw(SWORD,GOLD,p,n,true);p.pushPose();p.scale(.55f,.55f,1);draw(SWORD,WHITE,p,n,true);p.popPose();star(p,n,age,.25f);}
   else if(kind==11){draw(CLAWS,STRAW,p,n,false);}
   else if(kind==12){float length=p.last().pose().getScale(new Vector3f()).z;draw(ROPE,STRAW,p,n,false);p.translate(0,0,1);p.scale(1,1,1/Math.max(1,length));draw(MONSTER,STRAW,p,n,false);}
   else if(kind==13){draw(ROPE,STRAW,p,n,false);}

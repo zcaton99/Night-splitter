@@ -120,7 +120,7 @@ public final class Azure {
     }
     /** Piercing on this sword restores a fraction of damage absorbed by armor, before other defenses. */
     public static float kanaboArmor(DamageSource source,float incoming,float afterArmor){
-        if(!(source.getEntity() instanceof Player p)||source.getDirectEntity()!=p||!source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||!kanabo(p.getMainHandItem())||afterArmor>=incoming)return afterArmor;
+        if(!(source.getEntity() instanceof Player p)||source.getDirectEntity()!=p||!source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||!(kanabo(p.getMainHandItem())||CelestialPowers.unlocked(p,"glint")&&CelestialPowers.lightSword(p.getMainHandItem())&&!Dark.suppressed(p)&&!WaterRules.suppressed(p))||afterArmor>=incoming)return afterArmor;
         float penetration=Math.min(.6f,enchantment(p,p.getMainHandItem(),net.minecraft.world.item.enchantment.Enchantments.PIERCING)*.1f);return afterArmor+(incoming-afterArmor)*penetration;
     }
     public static void kanaboThorns(LivingEntity victim,DamageSource source,float damage){
