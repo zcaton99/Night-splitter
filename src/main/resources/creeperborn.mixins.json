@@ -5,6 +5,7 @@
   "mixins": [
     "TemporaryRockMixin",
     "NatureEyesMixin",
+    "ZoanDimensionsMixin",
     "AirStepConnectionAccessor",
     "RubberDamageMixin",
     "FruitWaterPlayerMixin",
@@ -40,6 +41,7 @@
     "StringClientMovementMixin",
     "AzureCameraMixin",
     "AzureHiddenStateMixin",
-    "NatureCameraMixin"
+    "NatureCameraMixin",
+    "ZoanCameraMixin"
   ]
 }

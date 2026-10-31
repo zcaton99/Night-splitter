@@ -17,15 +17,17 @@ public final class WaterRules {
     private static int clientFlags;
     private static final Map<UUID,Integer> sent=new HashMap<>();
     private WaterRules(){}
-    public static void clientState(UUID id,int flags){clientPlayer=id;clientFlags=flags&7;}
+    public static void clientState(UUID id,int flags){clientPlayer=id;clientFlags=flags&15;}
     public static void clearClient(){clientPlayer=null;clientFlags=0;}
     public static int flags(Player p){
         if(!(p.level() instanceof ServerLevel))return p.getUUID().equals(clientPlayer)?clientFlags:0;
-        return ((CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")||CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")||NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")||Azure.unlocked(p)||Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand")||ClimatePowers.unlocked(p,"ice")||ClimatePowers.unlocked(p,"magma"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0);
+        return ((ZoanPowers.owns(p)||CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")||CelestialPowers.unlocked(p,"glint")||CelestialPowers.unlocked(p,"straw")||NaturePowers.unlocked(p,"tree")||NaturePowers.unlocked(p,"petal")||Azure.unlocked(p)||Rubber.unlocked(p)||DoorFruit.unlocked(p)||Phoenix.unlocked(p)||Lightning.unlocked(p)||Dark.unlocked(p)||Op.unlocked(p)||Gravity.unlocked(p)||StringFruit.unlocked(p)||Paw.unlocked(p)||Tremor.unlocked(p)||PairPowers.unlocked(p,"love")||PairPowers.unlocked(p,"sand")||ClimatePowers.unlocked(p,"ice")||ClimatePowers.unlocked(p,"magma"))?1:0)|(Mastery.harmony(p)?2:0)|(DoorSpace.active(p)?4:0)|(ZoanPowers.aquatic(p)?8:0);
     }
     public static boolean fruitOwner(Player p){return (flags(p)&1)!=0;}
     public static boolean mastered(Player p){return (flags(p)&2)!=0;}
-    public static boolean vulnerable(Player p){return fruitOwner(p)&&!mastered(p)&&p.isAlive()&&!p.isSpectator();}
+    public static boolean aquatic(Player p){return (flags(p)&8)!=0;}
+    public static boolean protectedWater(Player p){return mastered(p)||aquatic(p);}
+    public static boolean vulnerable(Player p){return fruitOwner(p)&&!protectedWater(p)&&p.isAlive()&&!p.isSpectator();}
     /** Eye below actual source/flowing-water surface. Rain and ankle-deep water do not qualify. */
     public static boolean submerged(Player p){
         Vec3 eye=p.getEyePosition();BlockPos pos=BlockPos.containing(eye);
@@ -55,9 +57,9 @@ public final class WaterRules {
     public static void apply(Player p){
         if(!p.isAlive()||p.isSpectator())return;
         if(Mastery.harmony(p)){p.clearFire();p.setTicksFrozen(0);}
-        if(mastered(p)){p.setAirSupply(p.getMaxAirSupply());return;}
+        if(protectedWater(p)){p.setAirSupply(p.getMaxAirSupply());return;}
         if(!suppressed(p))return;
-        CelestialPowers.forget(p);NaturePowers.forget(p);Azure.stopOwned(p);Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);
+        ZoanPowers.forget(p);CelestialPowers.forget(p);NaturePowers.forget(p);Azure.stopOwned(p);Rubber.suspendInWater(p);Phoenix.end(p);Phoenix.cancelInput(p);Lightning.end(p);Lightning.cancelInput(p);Dark.endMantle(p);Dark.cancelInput(p);Op.endRoom(p);Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);
         p.setSwimming(false);p.setSprinting(false);
         p.setDeltaMovement(sinkingVelocity(p.getDeltaMovement()));
         if(p instanceof ServerPlayer sp)sp.connection.send(new ClientboundSetEntityMotionPacket(p));

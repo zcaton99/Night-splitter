@@ -146,7 +146,7 @@ public final class Lightning {
         if(e instanceof Player target&&Rubber.unlocked(target)&&Rubber.gear(target))return false;
         DamageSource source=p.damageSources().playerAttack(p),previous=electricSource.get();
         electricSource.set(source);
-        try{return e.hurtServer((ServerLevel)p.level(),source,amount);}
+        try{return ZoanPowers.poweredHit(p,e,"lightning",source,amount);}
         finally{if(previous==null)electricSource.remove();else electricSource.set(previous);}
     }
     private static void strike(Player p,boolean charged){

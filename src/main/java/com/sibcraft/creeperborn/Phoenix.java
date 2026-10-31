@@ -218,7 +218,7 @@ public final class Phoenix {
         if(best!=null)hit(p,best,(float)(6*strength(p)));particles(p,12);
     }
     private static void hit(Player p,LivingEntity e,float damage){
-        if(e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),damage))credit(p);
+        if(ZoanPowers.poweredHit(p,e,"phoenix",p.damageSources().playerAttack(p),damage))credit(p);
         if(e.isAlive()){Vec3 push=e.position().subtract(p.position()).normalize();e.setDeltaMovement(e.getDeltaMovement().add(push.x*.35,.15,push.z*.35));}
     }
     private static void dive(Player p,State s){

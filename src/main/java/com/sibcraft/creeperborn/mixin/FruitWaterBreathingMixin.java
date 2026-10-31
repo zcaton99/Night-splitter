@@ -15,7 +15,7 @@ public abstract class FruitWaterBreathingMixin {
     @Inject(method="canBreatheUnderwater",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteredBreathing(CallbackInfoReturnable<Boolean> cir){
         if((Object)this instanceof Player p){
-            if(WaterRules.mastered(p))cir.setReturnValue(true);
+            if(WaterRules.protectedWater(p))cir.setReturnValue(true);
             else if(WaterRules.fruitOwner(p))cir.setReturnValue(false);
         }
     }

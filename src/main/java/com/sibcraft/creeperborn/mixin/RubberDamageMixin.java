@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class RubberDamageMixin {
     @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
+        if((Object)this instanceof Player ax&&com.sibcraft.creeperborn.ZoanPowers.intercept(ax,source,amount)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.CelestialPowers.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
         if((Object)this instanceof Player celestial&&com.sibcraft.creeperborn.CelestialPowers.intercept(celestial,source,amount)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.NaturePowers.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
@@ -37,6 +38,7 @@ public abstract class RubberDamageMixin {
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         if((Object)this instanceof Player climate&&com.sibcraft.creeperborn.ClimatePowers.piercing(climate,source))return com.sibcraft.creeperborn.ClimatePowers.damage(climate,source,amount);
+        if((Object)this instanceof Player zoan)amount=com.sibcraft.creeperborn.ZoanPowers.damage(zoan,source,amount);
         amount=com.sibcraft.creeperborn.CelestialPowers.damage((LivingEntity)(Object)this,source,amount);
         float value=(Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,com.sibcraft.creeperborn.Gravity.damage(p,source,com.sibcraft.creeperborn.StringFruit.damage(p,source,amount)))))) : amount;
         return (Object)this instanceof Player p?com.sibcraft.creeperborn.NaturePowers.damage(p,source,com.sibcraft.creeperborn.Azure.damage(p,source,com.sibcraft.creeperborn.ClimatePowers.damage(p,source,value))):value;

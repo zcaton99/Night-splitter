@@ -171,10 +171,10 @@ public final class Abilities {
         if (caster instanceof Player p) damage *= (float)Mastery.multiplier(p);
         if(caster instanceof Player p&&e==Element.FIRE)damage*=(float)CelestialPowers.fireBonus(p);
         if (damage > 0) {
-            Rubber.fireBending(e == Element.FIRE);if(caster instanceof Player player){ClimatePowers.beginElement(player,e);NaturePowers.beginElement(player,e);CelestialPowers.beginElement(player,e);}
+            Rubber.fireBending(e == Element.FIRE);if(caster instanceof Player player){ClimatePowers.beginElement(player,e);NaturePowers.beginElement(player,e);CelestialPowers.beginElement(player,e);ZoanPowers.beginElement(player,e);}
             try { target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
                 : caster.damageSources().mobAttack(caster), damage); }
-            finally { Rubber.fireBending(false);ClimatePowers.endElement();NaturePowers.endElement();CelestialPowers.endElement(); }
+            finally { Rubber.fireBending(false);ClimatePowers.endElement();NaturePowers.endElement();CelestialPowers.endElement();ZoanPowers.endElement(); }
         }
         if (!target.isAlive()) return;
         if (e == Element.WATER || e == Element.EARTH) effect(target, MobEffects.SLOWNESS, 50, 0);

@@ -55,7 +55,7 @@ public final class NaturePowers {
     private static boolean enemy(Player p,LivingEntity e){return e!=p&&e.isAlive()&&!e.isSpectator()&&!p.isAlliedTo(e)&&!StringFruit.isKnight(e)&&!Azure.proxy(e)&&!limbs.containsKey(e.getUUID())&&!bodies.containsKey(e.getUUID())&&(e instanceof Enemy||e instanceof Player);}
     private static List<LivingEntity> enemies(Player p,double radius){return ((ServerLevel)p.level()).getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(radius)).stream().filter(e->enemy(p,e)&&e.distanceToSqr(p)<=radius*radius&&p.hasLineOfSight(e)).sorted(Comparator.comparingDouble(p::distanceToSqr)).toList();}
     private static void impulse(LivingEntity e,Vec3 v){if(e instanceof Player p)Rubber.impulse(p,v);else e.setDeltaMovement(v);}
-    private static boolean hit(Player p,LivingEntity e,float amount){return enemy(p,e)&&e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),amount*(float)Mastery.multiplier(p));}
+    private static boolean hit(Player p,LivingEntity e,float amount){return enemy(p,e)&&ZoanPowers.poweredHit(p,e,ZoanPowers.activeFruit(p,"tree","petal"),p.damageSources().playerAttack(p),amount*(float)Mastery.multiplier(p));}
     public static int formDuration(String fruit){return fruit.equals("tree")?3600:3000;}
     public static int grappleCapacity(int tier){return tier>=3?5:tier==2?3:1;}
     public static int grapplesRemaining(Player p){int capacity=grappleCapacity(tier(p,"petal"));return now(p)>=saved(p,"cb_petal_ready_2_")?capacity:Math.max(0,capacity-(int)Math.min(capacity,saved(p,"cb_petal_grapples_used_")));}

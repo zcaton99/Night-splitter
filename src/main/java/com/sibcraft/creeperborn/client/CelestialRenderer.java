@@ -33,8 +33,9 @@ public final class CelestialRenderer {
  private static ModelPart claws(){MeshDefinition m=new MeshDefinition();var r=m.getRoot();for(int i=0;i<4;i++)box(r,"talon"+i,-3+i*2,-.4f,0,.7f,.8f,16);return bake(m);}
  private static void draw(ModelPart m,Identifier t,PoseStack p,SubmitNodeCollector n,boolean light){n.submitModelPart(m,p,light?RenderTypes.eyes(t):RenderTypes.entityTranslucent(t),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
  private static void star(PoseStack p,SubmitNodeCollector n,float age,float size){p.pushPose();p.rotate(new Quaternionf().rotationZ(age*.05f));p.scale(size,size,size);for(int axis=0;axis<3;axis++){p.pushPose();if(axis==1)p.rotate(new Quaternionf().rotationY((float)Math.PI/2));if(axis==2)p.rotate(new Quaternionf().rotationX((float)Math.PI/2));draw(STAR,GOLD,p,n,true);p.scale(.6f,.6f,.6f);draw(STAR,WHITE,p,n,true);p.popPose();}p.popPose();}
- public static int kind(String name){if(!name.startsWith("cb_celestial_"))return 0;try{int k=Integer.parseInt(name.substring(13,name.indexOf('|')));return k>=1&&k<=27?k:0;}catch(RuntimeException ignored){return 0;}}
+ public static int kind(String name){if(!name.startsWith("cb_celestial_"))return 0;try{int k=Integer.parseInt(name.substring(13,name.indexOf('|')));return k>=1&&k<=32?k:0;}catch(RuntimeException ignored){return 0;}}
  public static void submit(int kind,float age,PoseStack p,SubmitNodeCollector n){p.pushPose();
+  if(kind>=28){ZoanRenderer.effect(kind,age,p,n);p.popPose();return;}
   if(kind>=19){SolarRenderer.effect(kind,age,p,n);p.popPose();return;}
   if(kind!=3&&age>85){p.popPose();return;}
   if(kind==1||kind==5){draw(BEAM,GOLD,p,n,true);p.pushPose();p.scale(.45f,.45f,1);draw(BEAM,WHITE,p,n,true);p.popPose();star(p,n,age,.5f);p.pushPose();p.translate(0,0,1);star(p,n,age,.7f);p.popPose();}

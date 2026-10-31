@@ -1428,6 +1428,38 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         for(Element e:Element.values())Mastery.grant(p,e,3);check(Mastery.harmony(p)&&Math.abs(Mastery.elementalBonus(p)-1.495)<.001,"Harmony stacks on collected elements for roughly fifty percent extra strength");Creeperborn.ABILITIES.clear();Creeperborn.ABILITIES.move(p,0);Zombie enemy=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);enemy.snapTo(-20,y+8,46);enemy.setNoAi(true);enemy.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).setBaseValue(0);level.addFreshEntity(enemy);Creeperborn.ABILITIES.cast(p);check(Math.abs(enemy.getHealth()-(20-6*1.495))<.01,"Harmony's final damage bonus is applied once after collection strength");enemy.discard();Creeperborn.ABILITIES.clear();
     }
 
+    private void zoanTicks(ServerLevel level,int count,Player... players){for(int i=0;i<count;i++){clock(level,level.getGameTime()+1);for(Player p:players)ZoanPowers.tickPlayer(p);ZoanPowers.tick(level.getServer());}}
+    private void checkZoans(ServerLevel level){
+        ZoanPowers.clear();Player fox=player(level),ax=player(level),enemy=player(level);fox.snapTo(560,y+12,400);fox.setYRot(0);fox.setXRot(0);ax.snapTo(580,y+12,400);ax.setYRot(0);ax.setXRot(0);enemy.snapTo(580,y+12,412);
+        check(ZoanPowers.consume(fox,Relics.zoanFruit("fox"),"fox")&&ZoanPowers.consume(ax,Relics.zoanFruit("axolotl"),"axolotl"),"Zoan fruits consume and claim independent unique slots");
+        check(ZoanPowers.tailCount(ZoanPowers.mode(fox))==3&&ZoanPowers.small(ax),"Fox starts with exactly three tails and Axolotl starts small");
+        check(!ZoanPowers.consume(player(level),Relics.zoanFruit("fox"),"fox"),"Duplicate fox ownership rejected");
+        FruitClaims.load(server);check(ZoanPowers.unlocked(fox,"fox")&&ZoanPowers.unlocked(ax,"axolotl")&&CombatNetwork.selection(fox)==25&&CombatNetwork.selection(ax)==26,"Zoan claims survive file reload and server controls route");
+        check(WaterRules.fruitOwner(ax)&&WaterRules.aquatic(ax)&&!WaterRules.vulnerable(ax)&&!Mastery.harmony(ax),"Axolotl water exception does not grant elemental Harmony");
+        ax.setAirSupply(1);WaterRules.apply(ax);check(ax.getAirSupply()==ax.getMaxAirSupply()&&ax.canBreatheUnderwater(),"Axolotl breathes underwater without Harmony");
+        ZoanPowers.grant(fox,"fox",2);check(ZoanPowers.mode(fox)==2&&fox.getAbilities().mayfly&&fox.getAbilities().flying,"Golden cloak grants native flight");
+        Mastery.grant(fox,Element.EARTH,1);Progress.select(fox,Element.EARTH);ZoanPowers.tickPlayer(fox);check(ZoanPowers.mode(fox)==2&&fox.getAbilities().flying&&CombatNetwork.selection(fox)==0,"Golden cloak and flight persist with elements selected");fox.addTag("cb_mode_fruit");
+        for(int i=0;i<9;i++){fox.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(fox,"fox",1,0).contains("Fox Flash"),"Each golden dash spends one of nine charges");zoanTicks(level,6,fox);}
+        check(ZoanPowers.dashRemaining(fox)==0&&ZoanPowers.cast(fox,"fox",1,0).contains("recovering"),"Nine chained dashes cannot bypass shared rest");zoanTicks(level,80,fox);check(ZoanPowers.dashRemaining(fox)==9,"Four seconds without dashing refills the full pool");
+        ZoanPowers.grant(fox,"fox",3);fox.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(fox,"fox",1,20).contains("Nine-Tails")&&ZoanPowers.giantFox(fox)&&!fox.getAbilities().mayfly,"Mastered X hold selects grounded full fox and restores survival flight permissions");
+        check(Math.abs(fox.getBbHeight()-5)<.01&&fox.getBbWidth()>6&&ZoanPowers.tailCount(3)==9,"Full fox has a real five-block combat hitbox and nine visual tails");
+        clock(level,level.getGameTime()+21);Vec3 start=fox.position();fox.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(fox,"fox",1,0).contains("25 blocks"),"Full fox starts its 25-block jump dash");zoanTicks(level,25,fox);check(Math.abs(fox.getZ()-start.z-25)<.1,"Unobstructed full-fox lunge travels 25 horizontal blocks");
+        clock(level,level.getGameTime()+100);fox.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(fox,"fox",1,20).contains("Golden Cloak")&&fox.getAbilities().flying,"Mastery retains access to Golden Cloak");
+        ZoanPowers.grant(ax,"axolotl",3);check(ZoanPowers.giantAx(ax)&&ax.getBbWidth()>7,"Axolotl mastery unlocks its large combat body");
+        Mastery.grant(enemy,Element.FIRE,1);Progress.select(enemy,Element.FIRE);ax.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(ax,"axolotl",1,0).contains("Fire Bolt")&&ZoanPowers.borrowed(ax).equals("fire"),"Targeted Power Imprint copies an aimed bender");
+        Mastery.grant(ax,Element.EARTH,1);Progress.select(ax,Element.EARTH);ZoanPowers.tickPlayer(ax);check(ZoanPowers.giantAx(ax)&&ZoanPowers.borrowed(ax).equals("fire")&&WaterRules.aquatic(ax),"Axolotl body, copy slot and water exception persist across element selection");ax.addTag("cb_mode_fruit");
+        Zombie victim=tremorTarget(level,580,y+12,420);ax.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(ax,"axolotl",2,0).contains("Fire Bolt")&&ZoanPowers.borrowed(ax).isEmpty(),"Borrowed move fires once and consumes its slot");zoanTicks(level,20,ax);check(victim.getHealth()<200,"Borrowed projectile deals actual damage");victim.discard();
+        clock(level,level.getGameTime()+200);ax.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(ax,"axolotl",1,20).contains("Guard"),"Absorption Guard arms");float health=ax.getHealth();ax.damageCooldownTime=0;Abilities.strike(level,enemy,ax,Element.FIRE,8,0);check(ax.getHealth()==health&&ZoanPowers.borrowed(ax).equals("fire")&&!ZoanPowers.guarding(ax),"Elemental damage is absorbed once and stored without losing health");
+        check(FruitClaims.owner("flame")==null&&FruitClaims.owner("axolotl").equals(ax.getUUID()),"Borrowed powers never change fruit ownership");
+        clock(level,level.getGameTime()+200);ax.getFoodData().setFoodLevel(20);ZoanPowers.cast(ax,"axolotl",1,20);ax.damageCooldownTime=0;ax.hurtServer(level,enemy.damageSources().playerAttack(enemy),4);check(ZoanPowers.guarding(ax),"Ordinary sword or melee damage does not consume a power absorption");
+        clock(level,level.getGameTime()+200);ax.getFoodData().setFoodLevel(20);check(ZoanPowers.cast(ax,"axolotl",2,20).contains("Small Axolotl")&&ZoanPowers.small(ax)&&ax.getBbHeight()<.5,"Mastery can return to the little swimmer");
+        var fish=EntityTypes.TROPICAL_FISH.create(level,EntitySpawnReason.EVENT);fish.snapTo(ax.getX(),ax.getY(),ax.getZ()+1);level.addFreshEntity(fish);ItemStack expected=fish.getBucketItemStack();fish.saveToBucketTag(expected);ax.setShiftKeyDown(true);ax.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(Items.WATER_BUCKET));check(ZoanPowers.catchFish(ax,InteractionHand.MAIN_HAND,fish)==net.minecraft.world.InteractionResult.SUCCESS&&fish.isRemoved()&&ItemStack.isSameItemSameComponents(expected,ax.getMainHandItem()),"Small Axolotl captures a tropical fish with its original bucket variant data");ax.setShiftKeyDown(false);
+        clock(level,level.getGameTime()+200);ax.getFoodData().setFoodLevel(20);ax.setHealth(8);check(ZoanPowers.cast(ax,"axolotl",0,20).contains("Regrowth"),"Axolotl starts bounded regeneration");zoanTicks(level,80,ax);check(ax.getHealth()>8&&ax.getHealth()<=20,"Regrowth restores health gradually");
+        clock(level,level.getGameTime()+200);fox.getFoodData().setFoodLevel(20);fox.snapTo(620,y+12,400);fox.setYRot(0);fox.setXRot(0);Zombie bomb=tremorTarget(level,620,y+12,420);check(ZoanPowers.cast(fox,"fox",2,70).contains("Tailed Beast Bomb"),"Charged Beast Bomb launches");Progress.select(fox,Element.EARTH);zoanTicks(level,20,fox);check(bomb.getHealth()<200,"Beast Bomb finishes and deals blast damage after switching to elements");bomb.discard();
+        ZoanPowers.forget(fox);check(!fox.getAbilities().mayfly&&Math.abs(fox.getBbHeight()-1.8)<.01,"Disconnect cleanup restores flight and normal collision");
+        FruitClaims.releaseOnDeath(fox);FruitClaims.releaseOnDeath(ax);check(FruitClaims.owner("fox")==null&&FruitClaims.owner("axolotl")==null&&!WaterRules.aquatic(ax),"Death releases both Zoan claims and clears aquatic exception");enemy.discard();fox.discard();ax.discard();ZoanPowers.clear();
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1445,7 +1477,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
-        checkStringFruit(level);checkPaw(level);checkTremor(level);checkLoveSand(level);checkIceMagma(level);checkAzure(level);checkNature(level);checkCelestial(level);checkSolar(level);
+        checkStringFruit(level);checkPaw(level);checkTremor(level);checkLoveSand(level);checkIceMagma(level);checkAzure(level);checkNature(level);checkCelestial(level);checkSolar(level);checkZoans(level);
         checkElementCollection(level);checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);

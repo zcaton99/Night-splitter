@@ -13,6 +13,7 @@ public abstract class FruitWaterPlayerMixin {
     @Inject(method="travel",at=@At("HEAD"),cancellable=true)
     private void creeperborn$sinkInsteadOfSwimming(Vec3 input,CallbackInfo ci){
         Player p=(Player)(Object)this;
+        if(com.sibcraft.creeperborn.ZoanPowers.swim(p,input)){ci.cancel();return;}
         if(WaterRules.suppressed(p)&&!p.isPassenger()){WaterRules.travel(p,input);ci.cancel();}
     }
 }

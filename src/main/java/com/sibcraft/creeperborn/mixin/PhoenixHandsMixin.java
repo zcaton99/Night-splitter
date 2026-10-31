@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PhoenixHandsMixin{
     @Inject(method="submitHandsWithItems",at=@At("HEAD"),cancellable=true)
     private void creeperborn$birdHands(float partial,PoseStack poses,SubmitNodeCollector nodes,PlayerRenderState player,FirstPersonHandsAndItemsRenderState hands,CallbackInfo ci){
+        if(player.avatarRenderState!=null&&com.sibcraft.creeperborn.client.ZoanRenderer.full(com.sibcraft.creeperborn.client.ZoanVisuals.flags(player.avatarRenderState.id))){ci.cancel();return;}
         if(player.avatarRenderState!=null&&(com.sibcraft.creeperborn.client.NatureVisuals.flags(player.avatarRenderState.id)&20)!=0){ci.cancel();return;}
         if(player.avatarRenderState!=null){int celestial=com.sibcraft.creeperborn.client.CelestialVisuals.flags(player.avatarRenderState.id);if((celestial&8192)!=0){com.sibcraft.creeperborn.client.SolarRenderer.hands(poses,nodes,celestial,net.minecraft.client.Minecraft.getInstance().player==null?0:net.minecraft.client.Minecraft.getInstance().player.tickCount+partial);ci.cancel();return;}if(((celestial&7)==5||(celestial&7)==6||(celestial&9)==9)&&!(net.minecraft.client.Minecraft.getInstance().player!=null&&com.sibcraft.creeperborn.CelestialPowers.lightSword(net.minecraft.client.Minecraft.getInstance().player.getMainHandItem()))){ci.cancel();return;}}
         if(player.avatarRenderState!=null){int azure=com.sibcraft.creeperborn.client.AzureVisuals.flags(player.avatarRenderState.id);if((azure&3)==2){ci.cancel();return;}}

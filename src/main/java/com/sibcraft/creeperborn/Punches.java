@@ -85,7 +85,7 @@ public final class Punches {
             if(victim!=null){
                 p.struck=true;p.aim=hit;next=hit;
                 if(p.gear)victim.damageCooldownTime=0;
-                if(victim.hurtServer(p.level,p.owner.damageSources().playerAttack(p.owner),p.damage))Rubber.credit(p.owner);
+                if(ZoanPowers.poweredHit(p.owner,victim,"rubber",p.owner.damageSources().playerAttack(p.owner),p.damage))Rubber.credit(p.owner);
                 Vec3 push=victim.position().subtract(p.owner.position()).normalize().scale(p.charged?1:.4);
                 if(victim.isAlive())victim.setDeltaMovement(victim.getDeltaMovement().add(push.x,.15,push.z));
                 Abilities.particles(p.level,Element.AIR,hit,8);

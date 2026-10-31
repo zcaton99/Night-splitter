@@ -107,7 +107,7 @@ public final class Op {
     private static void positionCoating(Player p,State s){boolean armed=!p.getMainHandItem().isEmpty();Vec3 direction=p.getLookAngle(),at=LightningBolts.hand(p).add(direction.scale(armed?.55:.15));s.coating.snapTo(at.x,at.y,at.z);s.coating.setTransformation(new com.mojang.math.Transformation(new org.joml.Vector3f(),Paw.orientation(direction),new org.joml.Vector3f(armed?.16f:.24f,armed?.16f:.24f,armed?.85f:.4f),new org.joml.Quaternionf()));}
     public static boolean coated(Player p){State s=states.get(p.getUUID());return s!=null&&s.coating!=null&&!s.coating.isRemoved()&&now(p)<s.coatingEnds;}
     private static void impulse(LivingEntity e,Vec3 motion){if(e instanceof ServerPlayer sp)Rubber.impulse(sp,motion);else e.setDeltaMovement(motion);}
-    private static boolean hurt(Player p,LivingEntity e,float amount){boolean hit=e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),(float)(amount*Mastery.multiplier(p)));if(hit)credit(p);return hit;}
+    private static boolean hurt(Player p,LivingEntity e,float amount){boolean hit=ZoanPowers.poweredHit(p,e,"op",p.damageSources().playerAttack(p),(float)(amount*Mastery.multiplier(p)));if(hit)credit(p);return hit;}
     public static int remaining(Player p){
         if(now(p)>=value(p,"cb_op_swap_refill_"))return charges(p);
         return Math.max(0,charges(p)-(int)value(p,"cb_op_swap_spent_"));

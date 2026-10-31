@@ -73,7 +73,7 @@ public final class Gravity{
     }
     private static void impulse(LivingEntity e,Vec3 motion){if(e instanceof Player p)Rubber.impulse(p,motion);else e.setDeltaMovement(motion);}
     private static boolean hit(Player p,LivingEntity e,float amount){
-        boolean result=e.hurtServer((ServerLevel)p.level(),p.damageSources().playerAttack(p),(float)(amount*Mastery.multiplier(p)));
+        boolean result=ZoanPowers.poweredHit(p,e,"gravity",p.damageSources().playerAttack(p),(float)(amount*Mastery.multiplier(p)));
         if(result)credit(p);return result;
     }
     private static Vec3 aim(Player p){
