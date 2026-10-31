@@ -165,7 +165,7 @@ public final class Creeperborn implements ModInitializer {
                 chat(p,"Door claim: "+(FruitClaims.doorAvailable()?"available":FruitClaims.ownsDoor(p)?"yours":"another living player"));
                 chat(p,"Rubber claim: "+(FruitClaims.available()?"available":FruitClaims.owns(p)?"yours":"another living player"));
                 chat(p,"All-four mastery: "+(Mastery.harmony(p)?"ON — +15%, water breathing, lava/fire/fall/freezing immunity":"not yet mastered"));
-                chat(p,"Water: "+(WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
+                chat(p,"Water: "+(WaterRules.aquatic(p)?"Axolotl swimming and water breathing":WaterRules.mastered(p)?"mastery protection":WaterRules.suppressed(p)?"SINKING — powers disabled":WaterRules.fruitOwner(p)?"fruit weakness applies when submerged":"normal")
                     +" | Eyes submerged: "+WaterRules.submerged(p)+" | Air: "+p.getAirSupply()+"/"+p.getMaxAirSupply());
                 if(Progress.unlocked(p,Element.AIR)){
                     long now=p.level().getGameTime();int steps=ABILITIES.airSteps.remaining(p,now);
