@@ -172,9 +172,10 @@ public final class Abilities {
         if(caster instanceof Player p&&e==Element.FIRE)damage*=(float)CelestialPowers.fireBonus(p);
         if (damage > 0) {
             Rubber.fireBending(e == Element.FIRE);if(caster instanceof Player player){ClimatePowers.beginElement(player,e);NaturePowers.beginElement(player,e);CelestialPowers.beginElement(player,e);ZoanPowers.beginElement(player,e);}
-            try { target.hurtServer(level, caster instanceof Player p ? caster.damageSources().playerAttack(p)
-                : caster.damageSources().mobAttack(caster), damage); }
+            var elementalSource=caster instanceof Player p ? caster.damageSources().playerAttack(p) : caster.damageSources().mobAttack(caster);
+            try { target.hurtServer(level,elementalSource,damage); }
             finally { Rubber.fireBending(false);ClimatePowers.endElement();NaturePowers.endElement();CelestialPowers.endElement();ZoanPowers.endElement(); }
+            if(ZoanPowers.absorbed(target,elementalSource))return;
         }
         if (!target.isAlive()) return;
         if (e == Element.WATER || e == Element.EARTH) effect(target, MobEffects.SLOWNESS, 50, 0);
