@@ -1461,6 +1461,23 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         FruitClaims.releaseOnDeath(fox);FruitClaims.releaseOnDeath(ax);check(FruitClaims.owner("fox")==null&&FruitClaims.owner("axolotl")==null&&!WaterRules.aquatic(ax),"Death releases both Zoan claims and clears aquatic exception");enemy.discard();fox.discard();ax.discard();ZoanPowers.clear();
     }
 
+    private void luffyTicks(ServerLevel level,int ticks,Player p){for(int i=0;i<ticks;i++){clock(level,level.getGameTime()+1);LuffyPowers.tickPlayer(p);LuffyPowers.tickEffects();Punches.tick();}}
+    private void checkLuffy(ServerLevel level){
+        LuffyPowers.clear();Rubber.clear();Player p=player(level),caster=player(level);p.snapTo(420,y+12,400);p.setYRot(0);p.setXRot(0);caster.snapTo(430,y+12,400);
+        check(Rubber.consume(p,Relics.fruit()),"Updated Luffy uses existing Rubber fruit ownership");Rubber.grant(p,3);p.getFoodData().setFoodLevel(20);
+        Zombie rocket=tremorTarget(level,420,y+12,412);check(LuffyPowers.cast(p,0,0).contains("Red Rocket"),"Tap Z starts Red Rocket");luffyTicks(level,6,p);check(rocket.getHealth()==200,"Red Rocket retracts before its damaging launch");luffyTicks(level,12,p);check(rocket.getHealth()<200&&rocket.isOnFire(),"Red Rocket hits and ignites a real enemy");rocket.discard();
+        Zombie kong=tremorTarget(level,420,y+12,412);check(LuffyPowers.cast(p,0,50).contains("Kong Gun"),"Hold Z launches the two-arm Kong Gun");luffyTicks(level,20,p);check(kong.getHealth()<150&&LuffyPowers.cast(p,0,50).contains("recovering"),"Kong Gun delivers heavy bounded damage and enforces its cooldown");kong.discard();
+        Zombie hammer=tremorTarget(level,420,y+12,412);check(LuffyPowers.cast(p,1,0).contains("Hammer"),"Tap X raises Hammer leg");luffyTicks(level,18,p);check(hammer.getHealth()<200&&LuffyPowers.rooted(hammer),"Hammer lands with a real stun");Vec3 anchor=hammer.position();hammer.move(net.minecraft.world.entity.MoverType.SELF,new Vec3(2,0,0));check(hammer.position().equals(anchor),"Hammer stun blocks actual movement");luffyTicks(level,99,p);check(LuffyPowers.rooted(hammer),"Hammer stun persists for almost five seconds");luffyTicks(level,1,p);check(!LuffyPowers.rooted(hammer),"Hammer stun releases after exactly five seconds");hammer.discard();
+        Zombie puppet=tremorTarget(level,420,y+12,412);check(LuffyPowers.cast(p,1,20).contains("Octopus"),"Hold X wraps an enemy");double oldZ=puppet.getZ();for(int i=0;i<8;i++){LuffyPowers.input(p,new LuffyInputPayload(0,1,0,0));luffyTicks(level,1,p);}check(LuffyPowers.controlled(puppet)&&puppet.getZ()>oldZ&&p.distanceToSqr(puppet)<5,"Octopus steers its captive and attaches the caster behind it");LuffyPowers.damaged(p);check(!LuffyPowers.controlled(puppet)&&!LuffyPowers.attached(p),"Damaging the vulnerable rider interrupts control");puppet.discard();p.snapTo(420,y+12,400);p.setYRot(0);p.setXRot(0);
+        check(LuffyPowers.cast(p,2,0).contains("Balloon")&&p.getBbWidth()>2.7,"Tap C visibly inflates the actual collision body");p.setHealth(20);p.damageCooldownTime=0;p.hurtServer(level,caster.damageSources().playerAttack(caster),8);check(p.getHealth()>18&&p.getHealth()<20,"Balloon provides actual protection");luffyTicks(level,121,p);check(!LuffyPowers.balloon(p)&&Math.abs(p.getBbWidth()-.6)<.01,"Balloon expiry restores normal dimensions");p.setHealth(20);p.getFoodData().setFoodLevel(20);
+        check(LuffyPowers.cast(p,2,20).contains("Gear 5")&&Rubber.gear(p),"Hold C enters Gear 5 under the updated controls");LuffyPowers.buttons(p,2);float health=p.getHealth();check(!Lightning.hit(caster,p,20)&&LuffyPowers.caught(p).equals("lightning")&&p.getHealth()==health,"Gear 5 catches actual incoming lightning instead of merely ignoring it");
+        Zombie reflected=tremorTarget(level,420,y+12,415);float yaw=p.getYRot();LuffyPowers.buttons(p,0);luffyTicks(level,6,p);check(LuffyPowers.spinAge(p)==6&&LuffyPowers.shotCount()==0&&reflected.getHealth()==200,"Return first performs half of its spin while retaining the attack");p.setYRot(90);luffyTicks(level,5,p);check(reflected.getHealth()==200&&p.getYRot()==90,"Spin does not rotate the player's camera or fire early");luffyTicks(level,10,p);check(reflected.getHealth()<200&&LuffyPowers.caught(p).isEmpty()&&LuffyPowers.spinAge(p)<0,"Attack fires after the full spin toward the aim captured on release");reflected.discard();p.setYRot(0);
+        Zombie gat=tremorTarget(level,420,y+12,412);clock(level,level.getGameTime()+100);for(int i=0;i<24;i++){LuffyPowers.input(p,new LuffyInputPayload(1,0,0,0));luffyTicks(level,1,p);}check(gat.getHealth()<200&&LuffyPowers.visualCount(p)>=20&&LuffyPowers.visualCount(p)<=90,"Held attack produces alternating Gatling damage with many bounded fist afterimages");LuffyPowers.buttons(p,0);luffyTicks(level,15,p);check(Punches.activeCount()==0,"Releasing Gatling stops its damaging fists");gat.discard();
+        LuffyPowers.input(p,new LuffyInputPayload(0,0,0,0));p.setOnGround(false);p.setDeltaMovement(0,-1,0);LuffyPowers.tickPlayer(p);p.setOnGround(true);p.setDeltaMovement(Vec3.ZERO);clock(level,level.getGameTime()+10);LuffyPowers.tickPlayer(p);check(p.getDeltaMovement().y>0,"Gear 5 rebounds from a landing");
+        var floor=p.blockPosition().below();var before=level.getBlockState(floor);clock(level,level.getGameTime()+20-level.getGameTime()%20);LuffyPowers.tickPlayer(p);check(level.getBlockState(floor).equals(before),"Awakening changes temporary physics and visuals without replacing terrain");
+        check(!new LuffyInputPayload(0,0,Float.NaN,0).valid()&&!new LuffyInputPayload(9,0,0,0).valid(),"Luffy input rejects invalid rotations and mouse masks");FruitClaims.releaseOnDeath(p);check(!Rubber.gear(p)&&LuffyPowers.shotCount()==0&&LuffyPowers.visualCount(p)==0&&!p.getAbilities().mayfly,"Death cleans Luffy visuals, stored attacks, control, and Gear flight");p.discard();caster.discard();LuffyPowers.clear();Rubber.clear();System.out.println("CREEPERBORN_LUFFY_REGRESSION_PASSED");
+    }
+
     private void run(ServerLevel level) {
         try { Class.forName("net.minecraft.server.network.ServerGamePacketListenerImpl"); }
         catch (ClassNotFoundException error) { throw new AssertionError(error); }
@@ -1478,7 +1495,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         checkFoundSecondFruit(level);
         checkOp(level);
         checkGravity(level);
-        checkStringFruit(level);checkPaw(level);checkTremor(level);checkLoveSand(level);checkIceMagma(level);checkAzure(level);checkNature(level);checkCelestial(level);checkSolar(level);checkZoans(level);
+        checkStringFruit(level);checkPaw(level);checkTremor(level);checkLoveSand(level);checkIceMagma(level);checkAzure(level);checkNature(level);checkCelestial(level);checkSolar(level);checkZoans(level);checkLuffy(level);
         checkElementCollection(level);checkFruitArtwork(level);
         checkVortex(level);
         checkQuietMastery(level);
@@ -1849,7 +1866,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         check(CombatNetwork.press(p,2).equals("Mending Flow!")&&p.getHealth()==14,"C routes to selected Water immediately");
         check(Rubber.consume(p,Relics.fruit()),"Routing test acquires Rubber");Rubber.grant(p,3);
         check(CombatNetwork.press(p,2).isEmpty()&&p.getHealth()==14,"C press routes to newly selected Rubber, not stale Water");
-        Rubber.release(p,2);check(Rubber.gear(p),"C release activates Rubber Gear 5 after selection");
+        clock(level,level.getGameTime()+20);LuffyPowers.release(p,2);check(Rubber.gear(p),"Held C release activates Rubber Gear 5 after selection");
         Progress.select(p,Element.WATER);Creeperborn.ABILITIES.clear();p.setHealth(10);
         check(CombatNetwork.press(p,2).equals("Mending Flow!")&&p.getHealth()==14,"C routes back to element without a failed first cast");
         FruitClaims.releaseOnDeath(p);Rubber.clear();Creeperborn.ABILITIES.clear();

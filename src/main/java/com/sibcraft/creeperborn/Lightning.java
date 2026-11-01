@@ -143,7 +143,7 @@ public final class Lightning {
     private static final ThreadLocal<DamageSource> electricSource=new ThreadLocal<>();
     public static boolean electrical(DamageSource source){return source==electricSource.get();}
     static boolean hit(Player p,LivingEntity e,float amount){
-        if(e instanceof Player target&&Rubber.unlocked(target)&&Rubber.gear(target))return false;
+        if(e instanceof Player target&&Rubber.unlocked(target)&&Rubber.gear(target)&&!LuffyPowers.catching(target))return false;
         DamageSource source=p.damageSources().playerAttack(p),previous=electricSource.get();
         electricSource.set(source);
         try{return ZoanPowers.poweredHit(p,e,"lightning",source,amount);}

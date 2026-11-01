@@ -42,6 +42,7 @@
     "AzureCameraMixin",
     "AzureHiddenStateMixin",
     "NatureCameraMixin",
-    "ZoanCameraMixin"
+    "ZoanCameraMixin",
+    "LuffySpinMixin"
   ]
 }

@@ -74,8 +74,8 @@ public final class Rubber {
         s.grabTarget=null;s.anchor=null;s.grabAttempted=false;s.held=-1;s.press=-1;s.guarding=false;
         guardSize(p,false);
     }
-    public static void forget(Player p) { Punches.cancel(p); State s=states.get(p.getUUID()); if(s!=null)end(p,s); states.remove(p.getUUID()); positions.remove(p.getUUID()); }
-    public static void clear() { Punches.clear(); states.values().forEach(s->{if(s.owner!=null)guardSize(s.owner,false);}); states.clear(); positions.clear(); }
+    public static void forget(Player p) { LuffyPowers.forget(p); Punches.cancel(p); State s=states.get(p.getUUID()); if(s!=null)end(p,s); LuffyPowers.refresh(p);states.remove(p.getUUID()); positions.remove(p.getUUID()); }
+    public static void clear() { LuffyPowers.clear(); Punches.clear(); states.values().forEach(s->{if(s.owner!=null)guardSize(s.owner,false);}); states.clear(); positions.clear(); }
     public static String status(Player p) {
         return "Rubber " + (unlocked(p) ? "tier " + tier(p) + "/3, " + uses(p) + " uses, " + seconds(p) + " active seconds" : "locked")
             + " | active: " + (selected(p) ? "Rubber" : "elements") + " | Gear 5: " + (gear(p) ? (state(p).gearUntil-now(p)+19)/20 + "s" : "OFF");
@@ -86,7 +86,7 @@ public final class Rubber {
         State s = state(p); if (s.held >= 0) return;
         s.direction=direction & 15; s.held=move; s.press=now(p); s.level=(ServerLevel)p.level(); s.guardUntil=now(p)+15;
     }
-    public static void suspendInWater(Player p){Punches.cancel(p);State s=state(p);cancelInput(p);end(p,s);}
+    public static void suspendInWater(Player p){LuffyPowers.forget(p);Punches.cancel(p);State s=state(p);cancelInput(p);end(p,s);}
     public static void heartbeat(Player p) { State s=state(p); if(s.held>=0) s.guardUntil=now(p)+15; }
     public static void release(Player p, int move) {
         State s=state(p); if (s.held!=move) return;

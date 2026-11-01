@@ -56,11 +56,11 @@ public final class Creeperborn implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear();FireAnimations.clear();WaterAnimations.clear();DoorSpace.clear();Phoenix.clear();Lightning.clear();Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear();});
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> { ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear(); DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear(); Hearts.clear();FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            ZoanPowers.tick(server);DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);Gravity.tick(server);StringFruit.tick(server);Paw.tick(server);Tremor.tick(server);PairPowers.tick(server);ClimatePowers.tick(server);Azure.tick(server);CelestialPowers.tick(server);NaturePowers.tick(server);Op.tick(server);Hearts.tick(server);
+            LuffyPowers.tick(server);ZoanPowers.tick(server);DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);Gravity.tick(server);StringFruit.tick(server);Paw.tick(server);Tremor.tick(server);PairPowers.tick(server);ClimatePowers.tick(server);Azure.tick(server);CelestialPowers.tick(server);NaturePowers.tick(server);Op.tick(server);Hearts.tick(server);
             if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);for(var p:server.getPlayerList().getPlayers())Relics.refreshFruitModels(p);}
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
-        ServerLivingEntityEvents.AFTER_DAMAGE.register((entity,source,baseDamage,damageTaken,blocked)->{if(entity instanceof Player p&&damageTaken>0)StringFruit.damaged(p);Azure.kanaboThorns(entity,source,damageTaken);});
+        ServerLivingEntityEvents.AFTER_DAMAGE.register((entity,source,baseDamage,damageTaken,blocked)->{if(entity instanceof Player p&&damageTaken>0){StringFruit.damaged(p);LuffyPowers.damaged(p);}Azure.kanaboThorns(entity,source,damageTaken);});
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
         ServerLivingEntityEvents.AFTER_DEATH.register(Dark::died);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity,source)->Hearts.died(entity));
@@ -81,7 +81,7 @@ public final class Creeperborn implements ModInitializer {
         });
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player,level,hand,hit)->{if(!CelestialPowers.spears(player))return InteractionResult.PASS;if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;});
         UseItemCallback.EVENT.register((player, level, hand) -> {
-            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;} ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
+            if(LuffyPowers.overrides(player)&&player.getItemInHand(hand).isEmpty())return InteractionResult.SUCCESS;if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;} ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
@@ -121,7 +121,7 @@ public final class Creeperborn implements ModInitializer {
         });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
             InteractionResult caught=ZoanPowers.catchFish(player,hand,entity);if(caught!=InteractionResult.PASS)return caught;
-            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;}
+            if(LuffyPowers.overrides(player)&&player.getItemInHand(hand).isEmpty())return InteractionResult.SUCCESS;if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;}
             if(Relics.kind(player.getItemInHand(hand)).equals("op:heart")&&player.isShiftKeyDown()&&entity instanceof net.minecraft.world.entity.LivingEntity target){
                 if(level instanceof ServerLevel)say(player,Hearts.giveBack(player,target,player.getItemInHand(hand))?"Heart returned.":"This heart belongs to someone else.");
                 return InteractionResult.SUCCESS;
@@ -158,7 +158,7 @@ public final class Creeperborn implements ModInitializer {
                 chat(p,"Elements unlocked: "+known);for(String f:ZoanPowers.FRUITS)chat(p,ZoanPowers.status(p,f));
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
-                chat(p,"Elements: "+Mastery.elements(p)+"/4 | strength "+Mastery.elementalPercent(p)+"%"+(Mastery.harmony(p)?" | Harmony":""));chat(p,CelestialPowers.status(p,"glint"));chat(p,CelestialPowers.status(p,"straw"));chat(p,NaturePowers.status(p,"tree"));chat(p,NaturePowers.status(p,"petal"));chat(p,Azure.status(p));chat(p,Rubber.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));chat(p,Dark.status(p));chat(p,Op.status(p));chat(p,Gravity.status(p));chat(p,StringFruit.status(p));chat(p,Paw.status(p));chat(p,Tremor.status(p));chat(p,PairPowers.status(p,"love"));chat(p,PairPowers.status(p,"sand"));chat(p,ClimatePowers.status(p,"ice"));chat(p,ClimatePowers.status(p,"magma"));
+                chat(p,"Elements: "+Mastery.elements(p)+"/4 | strength "+Mastery.elementalPercent(p)+"%"+(Mastery.harmony(p)?" | Harmony":""));chat(p,CelestialPowers.status(p,"glint"));chat(p,CelestialPowers.status(p,"straw"));chat(p,NaturePowers.status(p,"tree"));chat(p,NaturePowers.status(p,"petal"));chat(p,Azure.status(p));chat(p,LuffyPowers.status(p));chat(p,DoorFruit.status(p));chat(p,Phoenix.status(p));chat(p,Lightning.status(p));chat(p,Dark.status(p));chat(p,Op.status(p));chat(p,Gravity.status(p));chat(p,StringFruit.status(p));chat(p,Paw.status(p));chat(p,Tremor.status(p));chat(p,PairPowers.status(p,"love"));chat(p,PairPowers.status(p,"sand"));chat(p,ClimatePowers.status(p,"ice"));chat(p,ClimatePowers.status(p,"magma"));
                 chat(p,"Dark claim: "+(FruitClaims.darkAvailable()?"available":FruitClaims.ownsDark(p)?"yours":"another living owner or reserved capture"));
                 chat(p,"Lightning claim: "+(FruitClaims.lightningAvailable()?"available":FruitClaims.ownsLightning(p)?"yours":"another living player"));
                 chat(p,"Phoenix claim: "+(FruitClaims.phoenixAvailable()?"available":FruitClaims.ownsPhoenix(p)?"yours":"another living player"));
@@ -294,7 +294,7 @@ public final class Creeperborn implements ModInitializer {
                     else if(Lightning.unlocked(p)){Lightning.grant(p,tier);chat(p,Lightning.status(p));}
                     else if(Phoenix.unlocked(p)){Phoenix.grant(p,tier);chat(p,Phoenix.status(p));}
                     else if(DoorFruit.unlocked(p)){DoorFruit.grant(p,tier);chat(p,DoorFruit.status(p));}
-                    else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,Rubber.status(p));}
+                    else if(Rubber.unlocked(p)){Rubber.grant(p,tier);chat(p,LuffyPowers.status(p));}
                     else {chat(p,"Eat a Devil Fruit first; fruitmastery changes the fruit you own.");return 0;}
                     return 1;
                 })));

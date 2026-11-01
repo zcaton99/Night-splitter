@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
 
 public final class CreeperbornClient implements ClientModInitializer {
     private boolean combat, fruit, checkedBindings;
-    private Element selected;
+    private Element selected;private int selectedPower=-1;
     private int ticks, lastAirStep=-100;
     private final boolean[] held=new boolean[3];
     private boolean waitingForRelease;
@@ -26,6 +26,7 @@ public final class CreeperbornClient implements ClientModInitializer {
     private void cancel(){if(holding()||StringVisuals.controlling())send(8,0);java.util.Arrays.fill(held,false);waitingForRelease=true;}
     private void changeSelection(){boolean wasHolding=holding();cancel();waitingForRelease=wasHolding;}
     @Override public void onInitializeClient(){
+        ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.LuffyPayload.TYPE,(payload,context)->LuffyVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.ZoanPayload.TYPE,(payload,context)->ZoanVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.CelestialPayload.TYPE,(payload,context)->CelestialVisuals.update(payload.entity(),payload.flags()));
         ClientPlayNetworking.registerGlobalReceiver(com.sibcraft.creeperborn.NatureVisualPayload.TYPE,(payload,context)->{NatureVisuals.update(payload.entity(),payload.flags());var p=net.minecraft.client.Minecraft.getInstance().player;if(p!=null&&p.getId()==payload.entity())com.sibcraft.creeperborn.NaturePowers.clientGrapple((payload.flags()&16384)!=0?new net.minecraft.world.phys.Vec3(payload.x(),payload.y(),payload.z()):null);});
@@ -39,7 +40,7 @@ public final class CreeperbornClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
             if(payload.action()==12)com.sibcraft.creeperborn.ClimatePowers.clientFloor(payload.value());
             if(payload.action()==11&&net.minecraft.client.Minecraft.getInstance().player!=null)com.sibcraft.creeperborn.ClimatePowers.clientState(net.minecraft.client.Minecraft.getInstance().player.getUUID(),payload.value());
-            if(payload.action()==3){fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
+            if(payload.action()==3){selectedPower=payload.value();com.sibcraft.creeperborn.LuffyPowers.clientSelected(selectedPower==4);fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
         });
         ClientPlayNetworking.registerGlobalReceiver(WaterStatePayload.TYPE,(payload,context)->{
             var player=net.minecraft.client.Minecraft.getInstance().player;
@@ -47,8 +48,9 @@ public final class CreeperbornClient implements ClientModInitializer {
         });
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ticks++;
-            if(client.player==null||client.getConnection()==null){ZoanVisuals.clear();CelestialVisuals.clear();NatureVisuals.clear();StringVisuals.clear();AzureVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
+            if(client.player==null||client.getConnection()==null){LuffyVisuals.clear();com.sibcraft.creeperborn.LuffyPowers.clientSelected(false);selectedPower=-1;ZoanVisuals.clear();CelestialVisuals.clear();NatureVisuals.clear();StringVisuals.clear();AzureVisuals.clear();WaterRules.clearClient();com.sibcraft.creeperborn.ClimatePowers.clearClient();PhoenixVisuals.clear();LightningVisuals.clear();DarkVisuals.clear();combat=false;fruit=false;selected=null;java.util.Arrays.fill(held,false);waitingForRelease=true;return;}
             ZoanVisuals.tick(client);CelestialVisuals.tick(client);NatureVisuals.tick(client);StringVisuals.tick(client,ticks);AzureVisuals.tick(client);
+            if(ticks%2==0&&(selectedPower==4||LuffyVisuals.flags(client.player.getId())!=0)&&ClientPlayNetworking.canSend(com.sibcraft.creeperborn.LuffyInputPayload.TYPE)){boolean active=client.gui.screen()==null&&!client.isPaused();int buttons=!active?4:selectedPower==4?((client.options.keyAttack.isDown()?1:0)|(client.options.keyUse.isDown()&&client.player.getMainHandItem().isEmpty()?2:0)):0;int keys=active?((client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0)):0;ClientPlayNetworking.send(new com.sibcraft.creeperborn.LuffyInputPayload(buttons,keys,client.player.getYRot(),client.player.getXRot()));}
             int azureKeys=client.gui.screen()!=null||client.isPaused()?0:(client.options.keyUp.isDown()?1:0)|(client.options.keyDown.isDown()?2:0)|(client.options.keyLeft.isDown()?4:0)|(client.options.keyRight.isDown()?8:0)|(client.options.keyJump.isDown()?16:0)|(client.options.keyShift.isDown()?32:0)|(client.options.keyAttack.isDown()?64:0);
             if(ticks%2==0&&((CelestialVisuals.flags(client.player.getId())&8192)!=0||(CelestialVisuals.flags(client.player.getId())&4100)==4100))send(12,client.gui.screen()!=null||client.isPaused()?0:(client.options.keyAttack.isDown()?1:0)|(client.options.keyUse.isDown()?2:0));
             com.sibcraft.creeperborn.CelestialPowers.clientInput(azureKeys);com.sibcraft.creeperborn.NaturePowers.clientInput(azureKeys);com.sibcraft.creeperborn.Azure.clientInput(azureKeys);
