@@ -89,6 +89,7 @@ jobs:
             build/multiplayer/server/multiplayer-report.json
             build/multiplayer/*/logs/latest.log
             build/multiplayer/*/crash-reports/*.txt
+            build/multiplayer/*/screenshots/*.png
 
       - name: Upload test JAR
         uses: actions/upload-artifact@v4

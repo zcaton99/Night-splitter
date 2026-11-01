@@ -15,7 +15,7 @@ public abstract class ZoanCameraMixin {
     private float creeperborn$zoanZoom(float distance){var c=Minecraft.getInstance();if(c.player==null||((Camera)(Object)this).entity()!=c.player)return distance;int f=ZoanVisuals.flags(c.player.getId());if(((f>>2)&3)==3)return 4;if((f&3)==2&&((f>>2)&3)==1)return 3;return distance;}
     @Inject(method="alignWithEntity",at=@At("TAIL"))
     private void creeperborn$headAim(float partial,CallbackInfo ci){var c=Minecraft.getInstance();var cam=(Camera)(Object)this;if(c.player==null||c.level==null||cam.entity()!=c.player)return;int f=ZoanVisuals.flags(c.player.getId());if(((f>>2)&3)!=3)return;
-        Vec3 eye=c.player.getEyePosition(partial),look=c.player.getViewVector(partial);if(!cam.isDetached()){setPosition(eye);setRotation(c.player.getViewYRot(partial),c.player.getViewXRot(partial));return;}
+        Vec3 eye=(f&3)==1?com.sibcraft.creeperborn.ZoanPowers.foxViewEye(c.player,partial):c.player.getEyePosition(partial),look=c.player.getViewVector(partial);if(!cam.isDetached()){setPosition(eye);setRotation(c.player.getViewYRot(partial),c.player.getViewXRot(partial));return;}
         Vec3 to=eye.subtract(look.scale(3.5)).add(0,(f&3)==1?1.6:1.1,0);var wall=c.level.clip(new ClipContext(eye,to,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,c.player));Vec3 at=wall.getType()==HitResult.Type.MISS?to:wall.getLocation().lerp(eye,.08);setPosition(at);Vec3 aim=eye.add(look.scale(60));var hit=c.level.clip(new ClipContext(eye,aim,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,c.player));if(hit.getType()!=HitResult.Type.MISS)aim=hit.getLocation();Vec3 d=aim.subtract(at);setRotation((float)Math.toDegrees(Math.atan2(-d.x,d.z)),(float)-Math.toDegrees(Math.atan2(d.y,d.horizontalDistance())));
     }
 }
