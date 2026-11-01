@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class RubberDamageMixin {
     @Inject(method="hurtServer",at=@At("HEAD"),cancellable=true)
     private void creeperborn$masteryImmunity(ServerLevel level,DamageSource source,float amount,CallbackInfoReturnable<Boolean> cir){
+        if((Object)this instanceof Player time&&com.sibcraft.creeperborn.TimePowers.intercept(time,source,amount)){cir.setReturnValue(false);return;}
         if((Object)this instanceof Player luffy&&com.sibcraft.creeperborn.LuffyPowers.intercept(luffy,source,amount)){cir.setReturnValue(false);return;}
         if((Object)this instanceof Player ax&&com.sibcraft.creeperborn.ZoanPowers.intercept(ax,source,amount)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.CelestialPowers.redirect((LivingEntity)(Object)this,source,amount)){cir.setReturnValue(false);return;}
@@ -40,6 +41,7 @@ public abstract class RubberDamageMixin {
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         if((Object)this instanceof Player climate&&com.sibcraft.creeperborn.ClimatePowers.piercing(climate,source))return com.sibcraft.creeperborn.ClimatePowers.damage(climate,source,amount);
         if((Object)this instanceof Player zoan)amount=com.sibcraft.creeperborn.ZoanPowers.damage(zoan,source,amount);
+        if((Object)this instanceof Player time&&com.sibcraft.creeperborn.TimePowers.intercept(time,source,amount)){cir.setReturnValue(false);return;}
         if((Object)this instanceof Player luffy)amount=com.sibcraft.creeperborn.LuffyPowers.damage(luffy,source,amount);
         amount=com.sibcraft.creeperborn.CelestialPowers.damage((LivingEntity)(Object)this,source,amount);
         float value=(Object)this instanceof Player p ? Rubber.damage(p,source,Phoenix.damage(p,source,Lightning.damage(p,source,Dark.damage(p,source,com.sibcraft.creeperborn.Gravity.damage(p,source,com.sibcraft.creeperborn.StringFruit.damage(p,source,amount)))))) : amount;

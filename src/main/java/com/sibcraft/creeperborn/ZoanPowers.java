@@ -35,7 +35,7 @@ public final class ZoanPowers {
     private static final Map<UUID,State> states=new HashMap<>();
     private static final List<Shot> shots=new ArrayList<>();
     private static final Map<UUID,Visual> visuals=new HashMap<>();
-    private record Origin(Player p,String power){}
+    private record Origin(LivingEntity p,String power){}
     private static final ThreadLocal<Origin> origin=new ThreadLocal<>();
     private static final Map<UUID,Integer> clientStates=new HashMap<>();
     private static int clientFlags(Player p){return clientStates.getOrDefault(p.getUUID(),0);}
@@ -109,13 +109,13 @@ public final class ZoanPowers {
     private static LivingEntity target(Player p,double range,boolean hostile){Vec3 from=p.getEyePosition(),end=aim(p,from,p.getLookAngle(),range);LivingEntity best=null;double near=from.distanceTo(end)+.01;for(var e:p.level().getEntitiesOfClass(LivingEntity.class,new AABB(from,end).inflate(.6))){if(e==p||!e.isAlive()||e.isSpectator()||hostile&&!enemy(p,e))continue;var cross=e.getBoundingBox().inflate(.35).clip(from,end);if(cross.isPresent()&&cross.get().distanceTo(from)<near){near=cross.get().distanceTo(from);best=e;}}return best;}
     private static Vec3 aim(Player p,Vec3 from,Vec3 dir,double length){var hit=p.level().clip(new ClipContext(from,from.add(dir.scale(length)),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,p));return hit.getType()==HitResult.Type.MISS?from.add(dir.scale(length)):hit.getLocation();}
     public static String power(LivingEntity target){if(target instanceof Player p){String extra=Dark.unlocked(p)?Dark.choice(p):"";if(!extra.isEmpty()&&Dark.fruitTier(p,extra)>0)return extra;if(p.entityTags().contains("cb_mode_fruit"))for(String f:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(f)))return f;Element element=Progress.selected(p);if(element!=null)return element.key();for(String f:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(f)))return f;}Element e=Guardians.element(target);if(e!=null)return e.key();e=ElementalCreepers.element(target);if(e!=null)return e.key();for(String f:Dark.FRUITS)if(target.entityTags().contains("cb_fruitborn_"+f))return f;return "";}
-    public static boolean poweredHit(Player p,LivingEntity e,String power,DamageSource source,float amount){Origin old=origin.get();origin.set(new Origin(p,power));try{if(e instanceof Player victim&&LuffyPowers.intercept(victim,source,amount))return false;return e.hurtServer((ServerLevel)p.level(),source,amount);}finally{if(old==null)origin.remove();else origin.set(old);}}
-    public static void beginElement(Player p,Element e){origin.set(new Origin(p,e.key()));}
+    public static boolean poweredHit(Player p,LivingEntity e,String power,DamageSource source,float amount){Origin old=origin.get();origin.set(new Origin(p,power));try{if(e instanceof Player victim&&(TimePowers.intercept(victim,source,amount)||LuffyPowers.intercept(victim,source,amount)))return false;return e.hurtServer((ServerLevel)p.level(),source,amount);}finally{if(old==null)origin.remove();else origin.set(old);}}
+    public static void beginElement(LivingEntity p,Element e){origin.set(new Origin(p,e.key()));}
     public static void endElement(){origin.remove();}
-    public static String damagePower(Player p){Origin o=origin.get();return o!=null&&o.p==p?o.power:"";}
+    public static String damagePower(Entity p){Origin o=origin.get();return o!=null&&o.p==p?o.power:"";}
     public static String activeFruit(Player p,String... choices){for(String f:choices)if(p.getUUID().equals(FruitClaims.owner(f)))return f;return "";}
     public static boolean intercept(Player p,DamageSource source,float amount){if(unlocked(p,"fox")&&mode(p)>0&&source.is(DamageTypeTags.IS_FALL)&&!Phoenix.bypass(source))return true;if(amount<=0||Phoenix.bypass(source)||!guarding(p))return false;Origin attack=origin.get();if(attack==null||attack.p==p||attack.p.level()!=p.level()||!known(attack.power))return false;State s=states.get(p.getUUID());store(s,attack.power);s.absorbedSource=source;s.guardUntil=0;s.held=-1;value(p,"cb_axolotl_ready_1_",now(p)+40);value(p,"cb_axolotl_catch_ready_",now(p)+(s.mode==3?100:160));if(source.getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile projectile)projectile.discard();p.heal(s.mode==3?3:1);Creeperborn.say(p,"Absorbed! "+borrowedName(attack.power)+" — tap C to use.");credit(s);sync(s);return true;}
-    public static boolean absorbed(LivingEntity e,DamageSource source){State s=states.get(e.getUUID());return s!=null&&s.absorbedSource==source||LuffyPowers.absorbed(e,source);}
+    public static boolean absorbed(LivingEntity e,DamageSource source){State s=states.get(e.getUUID());return s!=null&&s.absorbedSource==source||LuffyPowers.absorbed(e,source)||TimePowers.evaded(e,source);}
     private static boolean known(String power){return Dark.FRUITS.contains(power)||Element.parse(power)!=null;}
     private static void store(State s,String power){clearBorrow(s.p);s.p.addTag("cb_axolotl_borrow_"+power);value(s.p,"cb_axolotl_expiry_",now(s.p)+(tier(s.p,"axolotl")*600));particles(s.p,s.p.getEyePosition(),0x67E8D4,24);}
     private static void clearBorrow(Player p){for(String tag:Set.copyOf(p.entityTags()))if(tag.startsWith("cb_axolotl_borrow_")||tag.startsWith("cb_axolotl_expiry_"))p.removeTag(tag);}

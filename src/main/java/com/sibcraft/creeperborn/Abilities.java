@@ -171,9 +171,9 @@ public final class Abilities {
         if (caster instanceof Player p) damage *= (float)Mastery.multiplier(p);
         if(caster instanceof Player p&&e==Element.FIRE)damage*=(float)CelestialPowers.fireBonus(p);
         if (damage > 0) {
-            Rubber.fireBending(e == Element.FIRE);if(caster instanceof Player player){ClimatePowers.beginElement(player,e);NaturePowers.beginElement(player,e);CelestialPowers.beginElement(player,e);ZoanPowers.beginElement(player,e);}
+            Rubber.fireBending(e == Element.FIRE);if(caster instanceof Player player){ClimatePowers.beginElement(player,e);NaturePowers.beginElement(player,e);CelestialPowers.beginElement(player,e);}ZoanPowers.beginElement(caster,e);
             var elementalSource=caster instanceof Player p ? caster.damageSources().playerAttack(p) : caster.damageSources().mobAttack(caster);
-            try { if(!(target instanceof Player victim&&LuffyPowers.intercept(victim,elementalSource,damage)))target.hurtServer(level,elementalSource,damage); }
+            try { if(!(target instanceof Player victim&&(TimePowers.intercept(victim,elementalSource,damage)||LuffyPowers.intercept(victim,elementalSource,damage))))target.hurtServer(level,elementalSource,damage); }
             finally { Rubber.fireBending(false);ClimatePowers.endElement();NaturePowers.endElement();CelestialPowers.endElement();ZoanPowers.endElement(); }
             if(ZoanPowers.absorbed(target,elementalSource))return;
         }
