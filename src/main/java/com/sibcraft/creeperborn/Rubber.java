@@ -101,9 +101,9 @@ public final class Rubber {
         if (move < 0 || move > 2 || tier(p) < move+1) return "Rubber move locked: tier 2 needs 10 uses + 5 active minutes; tier 3 needs 40 uses + 1 active hour.";
         State s=state(p); long now=now(p); boolean charged=held>=7;
         if (move==0) {
-            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?6:10);
+            if(now<s.punchReady)return "Stretch Punch cooling down."; s.punchReady=now+(gear(p)?3:4);
             boolean left=s.nextLeft;s.nextLeft=!s.nextLeft;
-            Punches.launch(p,gear(p)?20:charged?14:8,(float)((charged?8:5)*(gear(p)?1.75:1)),charged,gear(p),left);
+            Punches.launch(p,gear(p)?30:charged?28:20,(float)((charged?8:5)*(gear(p)?1.75:1)),charged,gear(p),left);
             return charged ? "Charged Stretch Punch!" : "Stretch Punch!";
         }
         if(move==1) {

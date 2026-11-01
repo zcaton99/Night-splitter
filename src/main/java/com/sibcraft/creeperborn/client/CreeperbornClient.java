@@ -40,7 +40,7 @@ public final class CreeperbornClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(ControlPayload.TYPE,(payload,context)->{
             if(payload.action()==12)com.sibcraft.creeperborn.ClimatePowers.clientFloor(payload.value());
             if(payload.action()==11&&net.minecraft.client.Minecraft.getInstance().player!=null)com.sibcraft.creeperborn.ClimatePowers.clientState(net.minecraft.client.Minecraft.getInstance().player.getUUID(),payload.value());
-            if(payload.action()==3){selectedPower=payload.value();com.sibcraft.creeperborn.LuffyPowers.clientSelected(selectedPower==4);fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
+            if(payload.action()==3){selectedPower=payload.value();if(selectedPower>=0)combat=true;com.sibcraft.creeperborn.LuffyPowers.clientSelected(selectedPower==4);fruit=payload.value()>=4;selected=payload.value()>=0&&payload.value()<4?Element.values()[payload.value()]:null;}
         });
         ClientPlayNetworking.registerGlobalReceiver(WaterStatePayload.TYPE,(payload,context)->{
             var player=net.minecraft.client.Minecraft.getInstance().player;

@@ -14,7 +14,7 @@ public final class CombatNetwork {
         long second = p.level().getGameTime() / 20;
         Window w = limits.get(p.getUUID());
         if (w == null || w.second() != second) { limits.put(p.getUUID(), new Window(second, 1)); return true; }
-        if (w.used() >= 20) return false;
+        if (w.used() >= 64) return false;
         limits.put(p.getUUID(), new Window(second, w.used() + 1)); return true;
     }
     public static void clear() { limits.clear();sentSelection.clear(); }

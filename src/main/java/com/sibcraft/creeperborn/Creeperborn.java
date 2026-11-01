@@ -276,6 +276,9 @@ public final class Creeperborn implements ModInitializer {
                     var p=ctx.getSource().getPlayerOrException();if(!Phoenix.unlocked(p))return 0;
                     Phoenix.grant(p,IntegerArgumentType.getInteger(ctx,"tier"));say(p,Phoenix.status(p));return 1;
                 })));
+            for(String fruit:Dark.FRUITS){
+                if(java.util.Set.of("time","rubber").contains(fruit))root.then(Commands.literal(fruit+"mastery").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx->{var player=ctx.getSource().getPlayerOrException();if(!player.getUUID().equals(FruitClaims.owner(fruit))){chat(player,"Eat the "+fruit+" Creeper fruit first.");return 0;}Dark.grantFruit(player,fruit,IntegerArgumentType.getInteger(ctx,"tier"));chat(player,fruit+" mastery set to tier "+IntegerArgumentType.getInteger(ctx,"tier"));return 1;})));
+            }
             root.then(Commands.literal("fruitmastery").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.argument("tier",IntegerArgumentType.integer(1,3)).executes(ctx -> {
                     ServerPlayer p=ctx.getSource().getPlayerOrException();int tier=IntegerArgumentType.getInteger(ctx,"tier");
