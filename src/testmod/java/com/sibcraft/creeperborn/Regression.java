@@ -1787,7 +1787,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         Player airOnly=player(level);Mastery.grant(airOnly,Element.AIR,3);
         check(Rubber.damage(airOnly,airOnly.damageSources().fall(),4)==4,"Air-only mastery does not grant the all-four reward");
         Player budget = player(level);
-        for (int i = 0; i < 20; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
+        for (int i = 0; i < 64; i++) check(CombatNetwork.allow(budget), "Normal input packet budget accepted");
         check(!CombatNetwork.allow(budget), "Excess combat packets ignored");
     }
     private void checkStretchPunches(ServerLevel level){
