@@ -54,8 +54,7 @@ public abstract class PunchDisplayRendererMixin {
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
         var time=((BoltVisualState)state).creeperborn$time();if(time!=null){TimeRenderer.submit(time,state.ageInTicks,poses,collector);ci.cancel();return;}
-        int celestial=((BoltVisualState)state).creeperborn$time(TimeRenderer.extract(display));
-        ((BoltVisualState)state).creeperborn$celestialKind();if(celestial>0){CelestialRenderer.submit(celestial,state.ageInTicks,poses,collector);ci.cancel();return;}
+        int celestial=((BoltVisualState)state).creeperborn$celestialKind();if(celestial>0){CelestialRenderer.submit(celestial,state.ageInTicks,poses,collector);ci.cancel();return;}
         int natureKind=((BoltVisualState)state).creeperborn$natureKind();if(natureKind>0){NatureRenderer.submit(natureKind,((BoltVisualState)state).creeperborn$naturePalette(),state.ageInTicks,poses,collector);ci.cancel();return;}
         int fireKind=((BoltVisualState)state).creeperborn$fireKind();if(fireKind>0){if(fireKind==1)FireRenderer.submit(((BoltVisualState)state).creeperborn$fireballLength(),state.ageInTicks,poses,collector);else FireRenderer.submitRing(((BoltVisualState)state).creeperborn$fireballLength(),state.ageInTicks,poses,collector);ci.cancel();return;}
         int waterKind=((BoltVisualState)state).creeperborn$waterKind();if(waterKind>0){WaterRenderer.submit(waterKind,((BoltVisualState)state).creeperborn$waterLength(),state.ageInTicks,poses,collector);ci.cancel();return;}
