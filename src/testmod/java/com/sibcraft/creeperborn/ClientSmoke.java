@@ -136,7 +136,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 for(int kind=28;kind<=32;kind++)for(int frame:new int[]{0,8,20}){com.sibcraft.creeperborn.client.CelestialRenderer.submit(kind,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Zoan effect pose leak");}
                 com.sibcraft.creeperborn.client.LuffyRenderer.validate();for(var texture:com.sibcraft.creeperborn.client.LuffyRenderer.textures())if(client.getResourceManager().getResource(texture).isEmpty())throw new AssertionError("Missing Luffy texture "+texture);
                 for(int flags:new int[]{1,2,3}){com.sibcraft.creeperborn.client.LuffyRenderer.avatar(state,pawPoses,nodes,flags);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Luffy avatar pose leak");}
-                for(int kind=33;kind<=39;kind++)for(int frame:new int[]{0,6,12,24}){com.sibcraft.creeperborn.client.CelestialRenderer.submit(kind,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Luffy effect pose leak");}
+                for(int kind=33;kind<=43;kind++)for(int frame:new int[]{0,6,12,24}){com.sibcraft.creeperborn.client.CelestialRenderer.submit(kind,frame,pawPoses,nodes);if(!pawBefore.equals(pawPoses.last().pose()))throw new AssertionError("Luffy effect pose leak");}
                 System.out.println("CREEPERBORN_CLIENT_SMOKE_PASSED");
                 client.stop();
             }catch(Throwable error){error.printStackTrace();System.exit(1);}

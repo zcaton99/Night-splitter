@@ -76,7 +76,7 @@ public final class Punches {
             Vec3 end=wall.getType()==HitResult.Type.MISS?next:wall.getLocation();
             LivingEntity victim=null;Vec3 hit=null;double nearest=p.tip.distanceTo(end);double radius=p.charged?.22:.12;
             for(LivingEntity target:p.level.getEntitiesOfClass(LivingEntity.class,new AABB(p.tip,end).inflate(radius+.5))){
-                if(!(target instanceof Enemy)||!target.isAlive()||!p.owner.hasLineOfSight(target))continue;
+                if(!(target instanceof Enemy||target instanceof Player)||target==p.owner||p.owner.isAlliedTo(target)||LuffyPowers.ownedPuppet(target,p.owner)||!target.isAlive()||target.isSpectator()||!p.owner.hasLineOfSight(target))continue;
                 var intersection=target.getBoundingBox().inflate(radius).clip(p.tip,end);
                 if(intersection.isPresent()&&p.tip.distanceTo(intersection.get())<=nearest){
                     victim=target;hit=intersection.get();nearest=p.tip.distanceTo(hit);
