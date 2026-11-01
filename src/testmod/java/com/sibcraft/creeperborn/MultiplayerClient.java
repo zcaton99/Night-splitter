@@ -15,7 +15,7 @@ public final class MultiplayerClient implements ClientModInitializer {
    if(stage==1||stage==5||stage==8){if(tick<70){c.player.setYRot(0);c.player.setXRot(0);c.options.keyUp.setDown(tick>15);c.options.keyJump.setDown(tick>15&&tick<35);}else if(tick<100){c.player.setYRot(35);c.options.keyUp.setDown(true);}else{c.player.setYRot(0);c.player.setXRot(0);}}
    if(stage==8&&(ZoanVisuals.flags(c.player.getId())&3)==1)c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
    if(stage==12&&(LuffyVisuals.flags(c.player.getId())&1)!=0)c.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-   if(stage==8&&tick==130||stage==10&&tick==70||stage==12&&tick==90)net.minecraft.client.Screenshot.grab(c.gameDirectory,"fruit-stage-"+stage+".png",c.mainRenderTarget(),1,message->{});
+   if(stage==8&&tick==130||stage==10&&tick==70||stage==12&&tick==90)net.minecraft.client.Screenshot.grab(c.gameDirectory,"fruit-stage-"+stage+".png",c.gameRenderer.mainRenderTarget(),1,message->{});
    if(stage==19){c.options.setCameraType(tick%100<50?net.minecraft.client.CameraType.FIRST_PERSON:net.minecraft.client.CameraType.THIRD_PERSON_BACK);c.player.setYRot(tick*.8f);c.player.setXRot((float)Math.sin(tick*.04)*20);}
    if(stage==10&&tick>15&&(ZoanVisuals.flags(c.player.getId())&15)==13&&c.options.getCameraType()!=net.minecraft.client.CameraType.FIRST_PERSON)throw new AssertionError("Native full Fox did not enter first-person head aiming");
    if(stage==10&&(ZoanVisuals.flags(c.player.getId())&3)==2){c.player.setYRot(0);c.player.setXRot(0);c.options.keyUp.setDown(tick>15&&tick<55);}
