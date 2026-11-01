@@ -1794,7 +1794,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         Player p=player(level);p.snapTo(-12,y+8,-14);
         check(Rubber.consume(p,Relics.fruit()),"Animation fixture acquires Rubber");Rubber.grant(p,3);
         var body=p.getBoundingBox();
-        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);target.snapTo(-12,y+8,-2);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
+        Zombie target=EntityTypes.ZOMBIE.create(level,EntitySpawnReason.COMMAND);target.snapTo(-12,y+8,6);target.setNoAi(true);target.setNoGravity(true);level.addFreshEntity(target);
         Rubber.cast(p,0,8);
         check(Punches.activeCount()==1&&!Punches.lastLeft(p),"First punch uses right arm");
         check(target.getHealth()==20,"Distant target is not hit before fist reaches it");
