@@ -151,13 +151,13 @@ public final class FruitClaims {
     }
     /** Upgrade old alpha saves on join. Disconnects and dimension changes never release a claim. */
     public static void reconcile(Player p){
-        for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
         if(p.entityTags().contains("cb_fruit_azure")){if(azureOwner==null)setOwner("azure",p.getUUID());else if(!p.getUUID().equals(azureOwner))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_azure")||t.startsWith("cb_azure_"))p.removeTag(t);}
 
-        for(String f:java.util.List.of("ice","magma"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        for(String f:java.util.List.of("ice","magma"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
-        for(String f:java.util.List.of("love","sand"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        for(String f:java.util.List.of("love","sand"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
         if(p.entityTags().contains("cb_fruit_tremor")){if(tremorOwner==null)setOwner("tremor",p.getUUID());else if(!p.getUUID().equals(tremorOwner))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_tremor")||t.startsWith("cb_tremor_"))p.removeTag(t);}
 
@@ -219,12 +219,12 @@ public final class FruitClaims {
     public static void releaseOnDeath(Player p){
         TimePowers.forget(p);
         ZoanPowers.forget(p);
-        CelestialPowers.forget(p);NaturePowers.forget(p);for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        CelestialPowers.forget(p);NaturePowers.forget(p);for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
         Azure.forget(p);if(p.getUUID().equals(azureOwner))setOwner("azure",null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_azure")||t.startsWith("cb_azure_"))p.removeTag(t);
-        ClimatePowers.forget(p);for(String f:java.util.List.of("ice","magma")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        ClimatePowers.forget(p);for(String f:java.util.List.of("ice","magma")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
-        PairPowers.forget(p);for(String f:java.util.List.of("love","sand")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith("cb_"+f+"_"))p.removeTag(t);}
+        PairPowers.forget(p);for(String f:java.util.List.of("love","sand")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
         Tremor.forget(p);if(p.getUUID().equals(tremorOwner))setOwner("tremor",null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_tremor")||t.startsWith("cb_tremor_"))p.removeTag(t);
         Paw.forget(p);if(p.getUUID().equals(pawOwner))setOwner("paw",null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_paw")||t.startsWith("cb_paw_"))p.removeTag(t);

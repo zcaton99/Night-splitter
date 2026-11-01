@@ -150,7 +150,7 @@ public final class Paw {
     public static boolean startFlight(Player owner,LivingEntity target,double distance,boolean step){
         Flight previous=flights.get(target.getUUID());boolean replacing=previous!=null&&step&&previous.step&&previous.owner==owner&&target==owner;
         if(previous!=null&&!replacing||flights.size()>=32&&!replacing||flights.values().stream().filter(f->f.owner==owner&&f!=previous).count()>=2||StringFruit.controlled(target)||!target.isAlive())return false;
-        ServerLevel level=(ServerLevel)target.level();Vec3 heading=step?owner.getLookAngle():new Vec3(owner.getLookAngle().x,0,owner.getLookAngle().z).normalize();if(heading.lengthSqr()<.01)heading=new Vec3(0,0,1);
+        if(!step&&ZoanPowers.evadePower(owner,target,"paw"))return false;ServerLevel level=(ServerLevel)target.level();Vec3 heading=step?owner.getLookAngle():new Vec3(owner.getLookAngle().x,0,owner.getLookAngle().z).normalize();if(heading.lengthSqr()<.01)heading=new Vec3(0,0,1);
         Vec3 initial=step?heading.scale(.8):new Vec3(0,1,0);if(!level.noCollision(target,target.getBoundingBox().expandTowards(initial))||StringFruit.blocked(target,target.position().add(initial)))return false;
         if(replacing)endFlight(previous);Flight f=new Flight();f.owner=owner;f.target=target;f.level=level;f.direction=heading;f.remaining=distance;f.step=step;f.phase=step?1:0;f.cruise=level.getMaxY()-8-target.getBbHeight();f.ends=now(owner)+600;target.stopRiding();target.ejectPassengers();target.resetFallDistance();flights.put(target.getUUID(),f);landing.put(target.getUUID(),new Landing(target,now(target)+800));flash(level,target.position().add(0,1,0),heading,2,1,10);return true;
     }

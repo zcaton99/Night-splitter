@@ -139,6 +139,7 @@ public final class Dark{
         State s=state(p);ServerLevel level=(ServerLevel)p.level();double power=Mastery.multiplier(p);
         if(move==0){
             LivingEntity target=target(p,charged?6:24);if(target==null)return "No enemy in your aim.";
+            if(ZoanPowers.evadePower(p,target,"dark")){value(p,"cb_dark_ready_0_"+charged+"_",now(p)+(charged?160:40));return "Time mirage evaded the Dark grasp.";}
             if(charged){
                 if(target instanceof Player victim)suppress(victim,graspTicks(p),true);
                 tethers.put(target.getUUID(),new Tether(p,target,level,now(p)+graspTicks(p)));

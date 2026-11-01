@@ -134,7 +134,7 @@ public final class Gravity{
                 for(var e:level.getEntitiesOfClass(LivingEntity.class,p.getBoundingBox().inflate(waveRange(p)))){
                     Vec3 direction=e.position().subtract(p.position());double distance=direction.length();
                     if(!enemy(p,e)||distance>waveRange(p)||!p.hasLineOfSight(e)||distance>.1&&direction.normalize().dot(p.getLookAngle())<.35)continue;
-                    pins.remove(e.getUUID());e.stopRiding();hit(p,e,waveDamage(p));impulse(e,direction.normalize().scale(scale(p,14,17,20)/10.0).add(0,.35,0));
+                    if(!hit(p,e,waveDamage(p)))continue;pins.remove(e.getUUID());e.stopRiding();impulse(e,direction.normalize().scale(scale(p,14,17,20)/10.0).add(0,.35,0));
                 }
                 ring(level,p.position().add(0,1,0),waveRange(p));credit(p);
             }else{
@@ -143,7 +143,7 @@ public final class Gravity{
                 if(targets.isEmpty())return "No visible enemies within "+range(p)+" blocks.";
                 if(!fuel(p,1))return "Eat before using Gravity.";
                 for(LivingEntity t:targets){
-                    hit(p,t,scale(p,6,7,8));t.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,pinTicks(p),2,false,false,true));
+                    if(!hit(p,t,scale(p,6,7,8)))continue;t.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,pinTicks(p),2,false,false,true));
                     t.stopRiding();impulse(t,new Vec3(0,-1,0));pins.put(t.getUUID(),new Pin(p,t,level,now(p)+pinTicks(p)));column(level,t.position(),4);
                 }credit(p);
             }
