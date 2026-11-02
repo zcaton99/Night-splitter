@@ -43,6 +43,7 @@
     "AzureHiddenStateMixin",
     "NatureCameraMixin",
     "ZoanCameraMixin",
-    "LuffySpinMixin"
+    "LuffySpinMixin",
+    "RasenganPoseMixin"
   ]
 }

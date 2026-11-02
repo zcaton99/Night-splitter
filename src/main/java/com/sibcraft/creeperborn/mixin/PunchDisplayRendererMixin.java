@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
-        ((BoltVisualState)state).creeperborn$time(TimeRenderer.extract(display));ZoanRenderer.followClaw(display,state,partial);
+        ((BoltVisualState)state).creeperborn$time(TimeRenderer.extract(display));ZoanRenderer.followClaw(display,state,partial);RasenganRenderer.follow(display,state,partial);
         ((BoltVisualState)state).creeperborn$celestialKind(CelestialRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         String natureName=display.getCustomName()==null?"":display.getCustomName().getString();((BoltVisualState)state).creeperborn$natureKind(NatureRenderer.kind(natureName));((BoltVisualState)state).creeperborn$naturePalette(NatureRenderer.palette(natureName));
         NatureRenderer.followOwner(display,state,partial);
