@@ -44,6 +44,7 @@
     "NatureCameraMixin",
     "ZoanCameraMixin",
     "LuffySpinMixin",
-    "RasenganPoseMixin"
+    "RasenganPoseMixin",
+    "RasenganHandsMixin"
   ]
 }
