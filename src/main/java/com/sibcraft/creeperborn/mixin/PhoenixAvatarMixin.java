@@ -15,6 +15,7 @@ public abstract class PhoenixAvatarMixin{
     private void creeperborn$bird(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
         if(((AzureHiddenState)state).creeperborn$azureHidden()){ci.cancel();return;}
         if(state instanceof AvatarRenderState avatar){
+            var local=net.minecraft.client.Minecraft.getInstance().player;if(local!=null&&avatar.id==local.getId()&&(ZoanVisuals.flags(avatar.id)&15)==13&&ZoanVisuals.hideLocalFoxBody()){ci.cancel();return;}
             int overlayLuffy=LuffyVisuals.flags(avatar.id);if((overlayLuffy&1)!=0&&(overlayLuffy&2)==0)LuffyRenderer.avatar(avatar,poses,nodes,overlayLuffy);int overlayZoan=ZoanVisuals.flags(avatar.id);if((overlayZoan&3)==2&&((overlayZoan>>2)&3)!=0&&!ZoanRenderer.full(overlayZoan))ZoanRenderer.avatar(avatar,poses,nodes,overlayZoan);
             int luffy=LuffyVisuals.flags(avatar.id);if((luffy&2)!=0){LuffyRenderer.avatar(avatar,poses,nodes,luffy);ci.cancel();return;}int zoan=ZoanVisuals.flags(avatar.id);if(ZoanRenderer.full(zoan)){ZoanRenderer.avatar(avatar,poses,nodes,zoan);ci.cancel();return;}
             int celestial=CelestialVisuals.flags(avatar.id);if((celestial&3)==1&&(celestial&12)!=0||(celestial&7)==6){CelestialRenderer.avatar(avatar,poses,nodes,celestial,false);ci.cancel();return;}
