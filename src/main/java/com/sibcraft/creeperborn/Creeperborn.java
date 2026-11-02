@@ -81,7 +81,7 @@ public final class Creeperborn implements ModInitializer {
         });
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player,level,hand,hit)->{if(!CelestialPowers.spears(player))return InteractionResult.PASS;if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;});
         UseItemCallback.EVENT.register((player, level, hand) -> {
-            if(LuffyPowers.overrides(player)&&player.getItemInHand(hand).isEmpty())return InteractionResult.SUCCESS;if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;} ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
+            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;} ItemStack stack = player.getItemInHand(hand); if(CelestialPowers.lightSword(stack)){if(level instanceof ServerLevel)say(player,CelestialPowers.throwSword(player));return InteractionResult.SUCCESS;} if(Azure.kanabo(stack)){if(level instanceof ServerLevel)say(player,Azure.kanaboSlash(player));return InteractionResult.SUCCESS;} String kind = Relics.kind(stack);
             if (kind.isEmpty()) return InteractionResult.PASS;
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
@@ -122,7 +122,7 @@ public final class Creeperborn implements ModInitializer {
         });
         UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
             InteractionResult caught=ZoanPowers.catchFish(player,hand,entity);if(caught!=InteractionResult.PASS)return caught;
-            if(LuffyPowers.overrides(player)&&player.getItemInHand(hand).isEmpty())return InteractionResult.SUCCESS;if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;}
+            if(CelestialPowers.spears(player)){if(level instanceof ServerLevel)CelestialPowers.basicButtons(player,2);return InteractionResult.SUCCESS;}
             if(Relics.kind(player.getItemInHand(hand)).equals("op:heart")&&player.isShiftKeyDown()&&entity instanceof net.minecraft.world.entity.LivingEntity target){
                 if(level instanceof ServerLevel)say(player,Hearts.giveBack(player,target,player.getItemInHand(hand))?"Heart returned.":"This heart belongs to someone else.");
                 return InteractionResult.SUCCESS;
