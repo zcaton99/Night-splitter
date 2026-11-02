@@ -48,7 +48,7 @@ public final class Rasengan {
     private static boolean valid(Strike s){return s.owner.isAlive()&&!s.owner.isRemoved()&&s.owner.level()==s.level&&ZoanPowers.unlocked(s.owner,"fox")&&!Dark.suppressed(s.owner)&&!WaterRules.suppressed(s.owner);}
     public static void tick(){for(Strike s:List.copyOf(strikes.values())){if(!valid(s)){forget(s.owner);continue;}float t=Math.min(1,(s.level.getGameTime()-s.start)/8f);Vec3 at=s.from.lerp(s.end,t*t*(3-2*t));s.display.snapTo(at.x,at.y,at.z);if(t<1)continue;
         for(var e:s.level.getEntitiesOfClass(LivingEntity.class,new AABB(s.end,s.end).inflate(s.radius+1)))if(enemy(s.owner,e)&&e.getBoundingBox().getCenter().distanceTo(s.end)<=s.radius+e.getBbWidth()*.5&&s.owner.hasLineOfSight(e)&&s.level.clip(new ClipContext(s.end,e.getBoundingBox().getCenter(),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,s.owner)).getType()==HitResult.Type.MISS){
-            if(ZoanPowers.poweredHit(s.owner,e,"fox",s.owner.damageSources().playerAttack(s.owner),s.damage)){Vec3 push=e.position().subtract(s.owner.position()).multiply(1,0,1).normalize().scale(s.tier==3?2.4:1.5).add(0,.45,0);e.setDeltaMovement(e.getDeltaMovement().add(push));e.hurtMarked=true;}
+            if(ZoanPowers.poweredHit(s.owner,e,"fox",s.owner.damageSources().playerAttack(s.owner),s.damage)){Vec3 push=e.position().subtract(s.owner.position()).multiply(1,0,1).normalize().scale(s.tier==3?2.4:1.5).add(0,.45,0);if(e instanceof Player victim)Rubber.impulse(victim,push);else e.setDeltaMovement(e.getDeltaMovement().add(push));}
         }
         ZoanPowers.effect(s.owner,s.end,kind(s.tier,s.mask),16,size(s.tier,1)*1.15f,0);s.display.discard();strikes.remove(s.owner.getUUID());
     }}
