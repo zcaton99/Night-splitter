@@ -16,16 +16,18 @@ import org.joml.Quaternionf;
 public final class RasenganRenderer {
     private static Identifier tex(String n){return Identifier.withDefaultNamespace("textures/block/"+n+".png");}
     private static final Identifier BLUE=tex("light_blue_concrete"),WHITE=tex("white_concrete"),CYAN=tex("cyan_concrete"),EARTH=tex("moss_block"),WATER=tex("blue_concrete"),FIRE=tex("orange_concrete"),AIR=tex("white_wool"),GOLD=tex("yellow_concrete");
-    private static final ModelPart BALL=ball(),THREAD=thread(),SHARD=shard();
+    private static final ModelPart BALL=ball(),THREAD=thread(),SWIRL=swirl(),SHARD=shard();
     private static ModelPart bake(MeshDefinition m){return LayerDefinition.create(m,16,16).bakeRoot();}
     private static void box(PartDefinition r,String n,float x,float y,float z,float w,float h,float d){r.addOrReplaceChild(n,CubeListBuilder.create().texOffs(0,0).addBox(x,y,z,w,h,d),PartPose.ZERO);}
     private static ModelPart ball(){var m=new MeshDefinition();for(int i=-7;i<8;i++){float radius=(float)Math.sqrt(64-(i+.5f)*(i+.5f));box(m.getRoot(),"slice"+i,-radius,i,-radius,radius*2,1,radius*2);}return bake(m);}
     private static ModelPart thread(){var m=new MeshDefinition();for(int i=0;i<48;i++){double a=i*Math.PI/24;var r=m.getRoot().addOrReplaceChild("strand"+i,CubeListBuilder.create(),PartPose.offsetAndRotation((float)Math.cos(a)*8.2f,(float)Math.sin(a)*8.2f,0,0,0,(float)a));box(r,"line",-.2f,-.7f,-.18f,.4f,1.6f,.36f);}return bake(m);}
+    private static ModelPart swirl(){var m=new MeshDefinition();for(int i=0;i<112;i++){double latitude=-1.5+i*3.0/111,angle=i*.24;float radius=(float)Math.cos(latitude)*8.1f;box(m.getRoot(),"flow"+i,(float)Math.cos(angle)*radius-.2f,(float)Math.sin(latitude)*8.1f-.2f,(float)Math.sin(angle)*radius-.2f,.42f,.42f,.42f);}return bake(m);}
     private static ModelPart shard(){var m=new MeshDefinition();box(m.getRoot(),"core",-1.2f,-2,-1.2f,2.4f,4,2.4f);return bake(m);}
     private static void draw(ModelPart mesh,Identifier texture,PoseStack p,SubmitNodeCollector n){n.submitModelPart(mesh,p,RenderTypes.eyes(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
     private static void sphere(PoseStack p,SubmitNodeCollector n,float age,Identifier inner){
-        p.pushPose();p.scale(.7f,.7f,.7f);draw(BALL,inner,p,n);p.popPose();
-        for(int i=0;i<7;i++){p.pushPose();p.rotate(new Quaternionf().rotationXYZ(i*.63f+age*(i%2==0?.09f:-.07f),i*.9f+age*.05f,i*.47f));float scale=.78f+i*.035f;p.scale(scale,scale,scale);draw(THREAD,i%3==0?WHITE:BLUE,p,n);p.popPose();}
+        p.pushPose();p.scale(.45f,.45f,.45f);draw(BALL,inner==CYAN?WHITE:inner,p,n);p.popPose();
+        p.pushPose();p.scale(.83f,.83f,.83f);n.submitModelPart(BALL,p,RenderTypes.entityTranslucent(BLUE),0xF000F0,OverlayTexture.NO_OVERLAY,null,0x5599DDFF);p.popPose();
+        for(int i=0;i<5;i++){p.pushPose();p.rotate(new Quaternionf().rotationXYZ(i*.63f+age*(i%2==0?.09f:-.07f),i*.9f+age*.05f,i*.47f));float scale=.82f+i*.035f;p.scale(scale,scale,scale);draw(SWIRL,i%3==0?WHITE:BLUE,p,n);p.popPose();}
     }
     public static void submit(int kind,float age,PoseStack p,SubmitNodeCollector n){int tier=Rasengan.tier(kind),mask=tier==3?kind-46:0;p.pushPose();sphere(p,n,age,CYAN);
         if(tier==3)for(int i=0;i<4;i++){p.pushPose();float a=age*.055f+i*(float)Math.PI/2;p.rotate(new Quaternionf().rotationY(a));p.translate(1.05,Math.sin(a*1.4)*.28,0);p.scale(.3f,.3f,.3f);Identifier element=(mask&(1<<i))==0?CYAN:switch(i){case 0->EARTH;case 1->WATER;case 2->FIRE;default->AIR;};sphere(p,n,-age,element);
@@ -36,7 +38,7 @@ public final class RasenganRenderer {
     public static void follow(Display.BlockDisplay d,BlockDisplayEntityRenderState s,float partial){if(d.getCustomName()==null)return;String name=d.getCustomName().getString();if(!name.endsWith("|charge"))return;int kind=CelestialRenderer.kind(name);if(kind<44||kind>61)return;try{String[] data=name.split("\\|");var c=net.minecraft.client.Minecraft.getInstance();var owner=c.level==null?null:c.level.getPlayerByUUID(java.util.UUID.fromString(data[1]));if(owner==null)return;int tier=Rasengan.tier(kind);float fraction=Rasengan.chargeFraction(tier,(long)(d.tickCount+partial+8));var at=Rasengan.anchor(owner,tier,fraction,partial);s.x=at.x;s.y=at.y;s.z=at.z;}catch(IllegalArgumentException ignored){}}
     public static void hands(PoseStack poses,SubmitNodeCollector nodes,int flags,float partial){
         var c=net.minecraft.client.Minecraft.getInstance();var owner=c.player;if(owner==null)return;boolean left=owner.getMainArm()==net.minecraft.world.entity.HumanoidArm.LEFT;int tier=(flags>>4)&3;boolean strike=(flags&512)!=0;
-        var look=owner.getViewVector(partial);double yaw=Math.toRadians(owner.getViewYRot(partial));var right=new net.minecraft.world.phys.Vec3(Math.cos(yaw),0,-Math.sin(yaw));var up=look.cross(right).normalize();
+        var look=owner.getViewVector(partial);double yaw=Math.toRadians(owner.getViewYRot(partial));var right=new net.minecraft.world.phys.Vec3(-Math.cos(yaw),0,-Math.sin(yaw));var up=right.cross(look).normalize();
         var palm=strike?Rasengan.hand(owner,partial).add(look.scale(.45)):Rasengan.anchor(owner,tier,1,partial).subtract(0,tier==1?.12:Rasengan.size(tier,1)*.5,0);if(tier>=2&&!strike)palm=palm.add(new net.minecraft.world.phys.Vec3(look.x,0,look.z).normalize().scale(.35));var delta=palm.subtract(owner.getEyePosition(partial));
         var skin=owner.getSkin();var data=new PunchRenderer.SkinData(skin.body().texturePath(),left,false,skin.model().getSerializedName().equals("slim"),owner.isModelPartShown(left?net.minecraft.world.entity.player.PlayerModelPart.LEFT_SLEEVE:net.minecraft.world.entity.player.PlayerModelPart.RIGHT_SLEEVE));
         poses.pushPose();poses.translate(delta.dot(right),delta.dot(up),-delta.dot(look));poses.scale(1,-1,-1);PunchRenderer.submit(data,poses,nodes,0xF000F0);poses.popPose();

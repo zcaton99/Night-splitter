@@ -22,8 +22,8 @@ public final class Rasengan {
     public static float size(int tier,float charge){return (tier==1?.55f:tier==2?2.4f:3.6f)*(.2f+.8f*charge);}
     public static float damage(int tier,int mask,float charge){float base=tier==1?22:tier==2?44:70;return base*(.55f+.45f*charge)*(tier==3?(1+.12f*Integer.bitCount(mask&15))*(mask==15?1.6f:1):1);}
     public static double radius(int tier,int mask){return tier==1?1:tier==2?3:6+(mask==15?2:0);}
-    public static Vec3 hand(Player p,float partial){Vec3 look=p.getViewVector(partial);double yaw=Math.toRadians(p.getViewYRot(partial));double side=p.getMainArm()==HumanoidArm.LEFT?-1:1;return p.getEyePosition(partial).add(look.scale(.8)).add(Math.cos(yaw)*.38*side,-.28,-Math.sin(yaw)*.38*side);}
-    public static Vec3 anchor(Player p,int tier,float charge,float partial){if(tier==1)return hand(p,partial);double yaw=Math.toRadians(p.getViewYRot(partial)),side=p.getMainArm()==HumanoidArm.LEFT?-1:1;return p.getPosition(partial).add(Math.cos(yaw)*.4*side,2.2+size(tier,charge)*.5,-Math.sin(yaw)*.4*side);}
+    public static Vec3 hand(Player p,float partial){Vec3 look=p.getViewVector(partial);double yaw=Math.toRadians(p.getViewYRot(partial));double side=p.getMainArm()==HumanoidArm.LEFT?-1:1;return p.getEyePosition(partial).add(look.scale(.8)).add(-Math.cos(yaw)*.38*side,-.28,-Math.sin(yaw)*.38*side);}
+    public static Vec3 anchor(Player p,int tier,float charge,float partial){if(tier==1)return hand(p,partial);double yaw=Math.toRadians(p.getViewYRot(partial)),side=p.getMainArm()==HumanoidArm.LEFT?-1:1;return p.getPosition(partial).add(-Math.cos(yaw)*.4*side,2.2+size(tier,charge)*.5,-Math.sin(yaw)*.4*side);}
     public static boolean charging(Player p){return charges.containsKey(p.getUUID());}
     public static int chargeCount(){return charges.size();}
     public static int strikeCount(){return strikes.size();}
