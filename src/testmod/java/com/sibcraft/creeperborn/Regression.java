@@ -1529,7 +1529,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
             LuffyPowers.cancelInput(p);check(LuffyPowers.windupCount(p)==0,"Cancelling removes the attached wind-up immediately: gear="+gear);
             for(long held:new long[]{0,50}){p.setYRot(0);p.setXRot(0);clock(level,level.getGameTime()+200);p.getFoodData().setFoodLevel(20);check(LuffyPowers.cast(p,0,held).contains(held==0?"Red Rocket":"Kong Gun"),"Moving shot starts its real retraction: "+held);for(int i=0;i<6;i++){p.snapTo(p.getX()-p.getLookAngle().x*.8,p.getY(),p.getZ()-p.getLookAngle().z*.8);p.setYRot(p.getYRot()+10);luffyTicks(level,1,p);check(LuffyPowers.windupBehind(p),"Post-release retraction follows backward movement instead of its old world position");}luffyTicks(level,1,p);check(LuffyPowers.windupCount(p)==0&&LuffyPowers.shotCount()>0,"Released punch becomes visible on its damaging forward phase");luffyTicks(level,30,p);}
             LuffyPowers.forget(p);Rubber.forget(p);
-        }p.snapTo(420,y+12,400);p.setYRot(0);p.setXRot(0);p.getFoodData().setFoodLevel(20);
+        }clock(level,level.getGameTime()+2401);p.snapTo(420,y+12,400);p.setYRot(0);p.setXRot(0);p.getFoodData().setFoodLevel(20);
     }
     private void checkLuffy(ServerLevel level){
         LuffyPowers.clear();Rubber.clear();Player p=player(level),caster=player(level);p.snapTo(420,y+12,400);p.setYRot(0);p.setXRot(0);caster.snapTo(430,y+12,400);
