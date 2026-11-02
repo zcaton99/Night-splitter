@@ -21,12 +21,11 @@ public final class RasenganRenderer {
     private static void box(PartDefinition r,String n,float x,float y,float z,float w,float h,float d){r.addOrReplaceChild(n,CubeListBuilder.create().texOffs(0,0).addBox(x,y,z,w,h,d),PartPose.ZERO);}
     private static ModelPart ball(){var m=new MeshDefinition();for(int i=-7;i<8;i++){float radius=(float)Math.sqrt(64-(i+.5f)*(i+.5f));box(m.getRoot(),"slice"+i,-radius,i,-radius,radius*2,1,radius*2);}return bake(m);}
     private static ModelPart thread(){var m=new MeshDefinition();for(int i=0;i<48;i++){double a=i*Math.PI/24;var r=m.getRoot().addOrReplaceChild("strand"+i,CubeListBuilder.create(),PartPose.offsetAndRotation((float)Math.cos(a)*8.2f,(float)Math.sin(a)*8.2f,0,0,0,(float)a));box(r,"line",-.2f,-.7f,-.18f,.4f,1.6f,.36f);}return bake(m);}
-    private static ModelPart swirl(){var m=new MeshDefinition();for(int i=0;i<112;i++){double latitude=-1.5+i*3.0/111,angle=i*.24;float radius=(float)Math.cos(latitude)*8.1f;box(m.getRoot(),"flow"+i,(float)Math.cos(angle)*radius-.2f,(float)Math.sin(latitude)*8.1f-.2f,(float)Math.sin(angle)*radius-.2f,.42f,.42f,.42f);}return bake(m);}
+    private static ModelPart swirl(){var m=new MeshDefinition();for(int i=0;i<192;i++){double latitude=-1.5+i*3.0/191,angle=i*.14;float radius=(float)Math.cos(latitude)*8.1f;box(m.getRoot(),"flow"+i,(float)Math.cos(angle)*radius-.32f,(float)Math.sin(latitude)*8.1f-.32f,(float)Math.sin(angle)*radius-.32f,.65f,.65f,.65f);}return bake(m);}
     private static ModelPart shard(){var m=new MeshDefinition();box(m.getRoot(),"core",-1.2f,-2,-1.2f,2.4f,4,2.4f);return bake(m);}
     private static void draw(ModelPart mesh,Identifier texture,PoseStack p,SubmitNodeCollector n){n.submitModelPart(mesh,p,RenderTypes.eyes(texture),0xF000F0,OverlayTexture.NO_OVERLAY,null);}
     private static void sphere(PoseStack p,SubmitNodeCollector n,float age,Identifier inner){
-        p.pushPose();p.scale(.45f,.45f,.45f);draw(BALL,inner==CYAN?WHITE:inner,p,n);p.popPose();
-        p.pushPose();p.scale(.83f,.83f,.83f);n.submitModelPart(BALL,p,RenderTypes.entityTranslucent(BLUE),0xF000F0,OverlayTexture.NO_OVERLAY,null,0x5599DDFF);p.popPose();
+        p.pushPose();float core=inner==CYAN?.5f:.7f;p.scale(core,core,core);draw(BALL,inner==CYAN?WHITE:inner,p,n);p.popPose();
         for(int i=0;i<5;i++){p.pushPose();p.rotate(new Quaternionf().rotationXYZ(i*.63f+age*(i%2==0?.09f:-.07f),i*.9f+age*.05f,i*.47f));float scale=.82f+i*.035f;p.scale(scale,scale,scale);draw(SWIRL,i%3==0?WHITE:BLUE,p,n);p.popPose();}
     }
     public static void submit(int kind,float age,PoseStack p,SubmitNodeCollector n){int tier=Rasengan.tier(kind),mask=tier==3?kind-46:0;p.pushPose();sphere(p,n,age,CYAN);
