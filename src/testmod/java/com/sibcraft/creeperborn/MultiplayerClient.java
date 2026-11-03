@@ -47,6 +47,7 @@ public final class MultiplayerClient implements ClientModInitializer {
     }
    }
    if(stage==30){
+    for(var e:c.level.entitiesForRendering())if(e instanceof net.minecraft.world.entity.monster.Creeper creeper){creeper.setYRot(180);creeper.yBodyRot=180;creeper.yBodyRotO=180;creeper.yHeadRot=180;creeper.yHeadRotO=180;}
     c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
     var direction=new net.minecraft.world.phys.Vec3(0,121.85,6).subtract(c.player.getEyePosition());
     c.player.setYRot((float)Math.toDegrees(Math.atan2(-direction.x,direction.z)));c.player.setXRot((float)-Math.toDegrees(Math.atan2(direction.y,direction.horizontalDistance())));
