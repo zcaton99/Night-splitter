@@ -31,14 +31,15 @@ public final class CreeperBadges {
     public static void extract(net.minecraft.world.entity.monster.Creeper creeper, net.minecraft.client.renderer.entity.state.EntityRenderState state) {
         String key = key(creeper.getCustomName() == null ? "" : creeper.getCustomName().getString());
         var badge = (CreeperBadgeState)state;
+        String previous=badge.creeperborn$badge();
         badge.creeperborn$badge(key);
-        badge.creeperborn$badgeItem().clear();
         if (!key.isEmpty()) {
+            badge.creeperborn$badgeItem().clear();
             state.nameTag = null;
             var client = net.minecraft.client.Minecraft.getInstance();
             client.getItemModelResolver().updateForTopItem(badge.creeperborn$badgeItem(), stack(key),
                 net.minecraft.world.item.ItemDisplayContext.FIXED, client.level, null, creeper.getId());
-        }
+        } else if (!previous.isEmpty()) badge.creeperborn$badgeItem().clear();
     }
     public static void submit(LivingEntityRenderState state, PoseStack poses, SubmitNodeCollector nodes) {
         String key = ((CreeperBadgeState)state).creeperborn$badge();
@@ -53,6 +54,7 @@ public final class CreeperBadges {
     }
     public static void validate() {
         if (LABELS.size() != 28) throw new AssertionError("Every special creeper needs a chest icon");
-        for (String key : LABELS.values()) if (stack(key).isEmpty()) throw new AssertionError("Missing chest icon: " + key);
+        for (String fruit : com.sibcraft.creeperborn.Dark.FRUITS) if (!LABELS.containsValue("fruit_"+fruit)) throw new AssertionError("Missing chest icon: " + fruit);
+        for (Element element : Element.values()) if (!LABELS.containsValue("element_"+element.key())) throw new AssertionError("Missing element chest icon: " + element);
     }
 }
