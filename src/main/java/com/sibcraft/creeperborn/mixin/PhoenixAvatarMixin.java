@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PhoenixAvatarMixin{
     @Inject(method="submit(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$bird(LivingEntityRenderState state,PoseStack poses,SubmitNodeCollector nodes,CameraRenderState camera,CallbackInfo ci){
+        if(state instanceof net.minecraft.client.renderer.entity.state.CreeperRenderState)CreeperBadges.submit(state,poses,nodes);
         if(((AzureHiddenState)state).creeperborn$azureHidden()){ci.cancel();return;}
         if(state instanceof AvatarRenderState avatar){
             var local=net.minecraft.client.Minecraft.getInstance().player;if(local!=null&&avatar.id==local.getId()&&(ZoanVisuals.flags(avatar.id)&15)==13&&ZoanVisuals.hideLocalFoxBody()){ci.cancel();return;}

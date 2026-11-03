@@ -35,12 +35,18 @@ public final class Creeperborn implements ModInitializer {
     public static final Abilities ABILITIES = new Abilities();
     public static final Guardians GUARDIANS = new Guardians();
     public static final ElementalCreepers CREEPERS = new ElementalCreepers();
-    public static final class Config { public boolean naturalCreepers = true; public double elementalChance = .02; public double fruitChance = .002; }
+    public static final class Config { public boolean naturalCreepers = true; public double elementalChance = .02; public double fruitChance = .002;
+        public boolean limitSpecialSpawns = true;
+        public int specialSpawnWindowSeconds = 600, specialSpawnRadius = 128;
+        public int elementSpawnsPerArea = 4, fruitSpawnsPerArea = 1;
+        public int elementSpawnsPerPlayer = 8, fruitSpawnsPerPlayer = 2; }
     private static Config config = new Config();
     public static Config config() { return config; }
     @Override public void onInitialize() {
         CombatNetwork.init();
         ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
+        ServerLifecycleEvents.SERVER_STARTING.register(SpawnBudget::load);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpawnBudget.clear());
         ServerLifecycleEvents.SERVER_STARTING.register(Hearts::load);
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { ZoanPowers.recover(handler.player);NaturePowers.recover(handler.player);DoorSpace.recover(handler.player); Rubber.recoverFlight(handler.player); Phoenix.recoverFlight(handler.player); Lightning.recoverFlight(handler.player); FruitClaims.reconcile(handler.player);Hearts.join(handler.player);Relics.refreshFruitModels(handler.player); });
         Path path = FabricLoader.getInstance().getConfigDir().resolve("creeperborn.json");
@@ -49,6 +55,13 @@ public final class Creeperborn implements ModInitializer {
             if (Files.exists(path)) config = gson.fromJson(Files.readString(path), Config.class);
             if (config == null || !Double.isFinite(config.elementalChance) || config.elementalChance < 0 || config.elementalChance > 1 || !Double.isFinite(config.fruitChance) || config.fruitChance < 0 || config.fruitChance > 1)
                 throw new IllegalArgumentException("elementalChance must be 0–1");
+            if (config.specialSpawnWindowSeconds < 1 || config.specialSpawnWindowSeconds > 86400
+                || config.specialSpawnRadius < 16 || config.specialSpawnRadius > 512
+                || config.elementSpawnsPerArea < 0 || config.elementSpawnsPerArea > 1024
+                || config.fruitSpawnsPerArea < 0 || config.fruitSpawnsPerArea > 1024
+                || config.elementSpawnsPerPlayer < 0 || config.elementSpawnsPerPlayer > 1024
+                || config.fruitSpawnsPerPlayer < 0 || config.fruitSpawnsPerPlayer > 1024)
+                throw new IllegalArgumentException("Invalid special spawn budget settings");
             Files.createDirectories(path.getParent()); Files.writeString(path, gson.toJson(config) + "\n");
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { if(entity instanceof net.minecraft.world.entity.item.ItemEntity item)Relics.updateFruitModel(item.getItem()); FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });

@@ -41,7 +41,7 @@ public final class Regression implements ModInitializer {
     @Override public void onInitialize() {
         if(Boolean.getBoolean("creeperborn.multiplayer"))return;
         ServerLifecycleEvents.SERVER_STARTED.register(s -> {
-            server = s; Creeperborn.config().naturalCreepers = false;
+            server = s; Creeperborn.config().naturalCreepers = false; Creeperborn.config().limitSpecialSpawns = false;
             for (int x = -1; x <= 0; x++) for (int z = -1; z <= 2; z++) s.overworld().setChunkForced(x, z, true);
         });
         ServerTickEvents.END_SERVER_TICK.register(s -> {
@@ -1780,6 +1780,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         check(CastPayload.CODEC.decode(buffer).equals(new CastPayload(2,1)), "Combat packet codec round trip"); buffer.release();
         checkHarmony(level);
         checkRubber(level);
+        checkSpawnBudget(level);
         checkFruitWater(level);
         checkMoveRouting(level);
         checkReachAndNourishment(level);
@@ -2192,6 +2193,30 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         Creeper night=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);night.addTag("ns_creeper");FruitCreepers.track(night);
         check(!FruitCreepers.fruit(night),"Night Splitters creepers excluded from fruit conversion");
         Creeperborn.config().fruitChance=.002;Creeperborn.config().naturalCreepers=false;Rubber.clear();FruitCreepers.clear();
+    }
+    private void checkSpawnBudget(ServerLevel level) {
+        var ledger=new SpawnBudget.Ledger();
+        for(int i=0;i<4;i++)check(ledger.take("overworld",0,0,"a",false,10,12000,128,4,8),"Area allows elemental discovery "+i);
+        check(!ledger.take("overworld",1,1,"b",false,10,12000,128,4,8),"Extra players and nearby chunk borders do not multiply farm allowance");
+        check(ledger.take("overworld",0,0,"a",true,10,12000,128,1,2),"Fruit and element budgets are independent");
+        check(!ledger.take("overworld",0,0,"b",true,10,12000,128,1,2),"Fruit budget survives killing or unloading the preceding fruit creeper");
+        check(ledger.take("overworld",500,0,"b",false,10,12000,128,4,8),"A sibling exploring separately retains opportunities");
+        for(int i=1;i<=4;i++)check(ledger.take("overworld",i*500,500,"a",false,10,12000,128,4,8),"Exploration can use personal allowance "+i);
+        check(!ledger.take("nether",9000,9000,"a",false,10,12000,128,4,8),"Moving the farm or changing dimensions cannot bypass personal allowance");
+        var gson=new com.google.gson.Gson();
+        var restored=new SpawnBudget.Ledger(java.util.Arrays.asList(gson.fromJson(gson.toJson(ledger.snapshot()),SpawnBudget.Entry[].class)));
+        check(!restored.take("overworld",0,0,"b",false,11,12000,128,4,8),"Serialized world budget preserves caps across restart");
+        check(restored.take("overworld",0,0,"a",false,12010,12000,128,4,8),"Rolling allowance recovers when its ten-minute window expires");
+        var config=Creeperborn.config();double chance=config.elementalChance;int limit=config.elementSpawnsPerArea;
+        config.limitSpecialSpawns=true;config.naturalCreepers=true;config.elementalChance=1;config.elementSpawnsPerArea=1;
+        Creeper first=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);first.snapTo(30000,y,30000);Creeperborn.CREEPERS.track(first);
+        Creeper second=EntityTypes.CREEPER.create(level,EntitySpawnReason.COMMAND);second.snapTo(30001,y,30000);Creeperborn.CREEPERS.track(second);
+        check(ElementalCreepers.element(first)!=null&&ElementalCreepers.element(second)==null,"Successful conversion budget leaves excess creepers ordinary");
+        config.elementSpawnsPerArea=100;Creeperborn.CREEPERS.track(second);
+        check(ElementalCreepers.element(second)==null,"A denied creeper never rerolls when allowance or settings change");
+        check(ElementalCreepers.element(first)!=null,"Previously marked special creepers retain identity after area cap");
+        config.elementalChance=chance;config.elementSpawnsPerArea=limit;config.limitSpecialSpawns=false;config.naturalCreepers=false;
+        Creeperborn.CREEPERS.unload(first);first.discard();second.discard();
     }
     private void checkHarmony(ServerLevel level) {
         Creeperborn.ABILITIES.clear();

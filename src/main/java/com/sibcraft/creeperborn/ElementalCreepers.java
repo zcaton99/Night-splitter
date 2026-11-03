@@ -17,7 +17,7 @@ public final class ElementalCreepers {
         if (!FruitCreepers.fruit(c) && element(c) == null && !c.entityTags().contains("cb_checked") && !c.entityTags().contains("ns_creeper")) {
             c.addTag("cb_checked");
             if (Creeperborn.config().naturalCreepers && level.getDifficulty() != Difficulty.PEACEFUL
-                    && level.getRandom().nextDouble() < Creeperborn.config().elementalChance)
+                    && level.getRandom().nextDouble() < Creeperborn.config().elementalChance && SpawnBudget.allow(c, false))
                 assign(c, Element.values()[level.getRandom().nextInt(4)]);
         }
         if (element(c) != null) loaded.put(c.getUUID(), c);

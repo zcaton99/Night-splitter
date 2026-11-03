@@ -46,6 +46,17 @@ public final class MultiplayerClient implements ClientModInitializer {
      c.player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,net.minecraft.world.item.ItemStack.EMPTY);
     }
    }
+   if(stage==30){
+    c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+    var direction=new net.minecraft.world.phys.Vec3(0,121.85,6).subtract(c.player.getEyePosition());
+    c.player.setYRot((float)Math.toDegrees(Math.atan2(-direction.x,direction.z)));c.player.setXRot((float)-Math.toDegrees(Math.atan2(direction.y,direction.horizontalDistance())));
+    if(tick==60){int badges=0;for(var entity:c.level.entitiesForRendering())if(entity instanceof net.minecraft.world.entity.monster.Creeper creeper&&!CreeperBadges.key(creeper.getCustomName()==null?"":creeper.getCustomName().getString()).isEmpty()){
+     var renderer=(net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.monster.Creeper,net.minecraft.client.renderer.entity.state.CreeperRenderState>)(Object)c.getEntityRenderDispatcher().getRenderer(creeper);
+     var state=renderer.createRenderState();renderer.extractRenderState(creeper,state,0);
+     var badge=(CreeperBadgeState)state;if(badge.creeperborn$badge().isEmpty()||badge.creeperborn$badgeItem().isEmpty()||state.nameTag!=null)throw new AssertionError("Special creeper must show its baked item badge and hide its name");badges++;
+    }if(badges!=4)throw new AssertionError("Both native clients must track all four chest badge fixtures; saw "+badges);
+    net.minecraft.client.Screenshot.grab(c.gameDirectory,"creeper-chest-icons.png",c.gameRenderer.mainRenderTarget(),1,message->{});}
+   }
    if(stage==19){c.options.setCameraType(tick%100<50?net.minecraft.client.CameraType.FIRST_PERSON:net.minecraft.client.CameraType.THIRD_PERSON_BACK);c.player.setYRot(tick*.8f);c.player.setXRot((float)Math.sin(tick*.04)*20);}
    if(stage==10&&(ZoanVisuals.flags(c.player.getId())&15)==13){testedFox=true;if(tick>=5&&tick<=12&&c.options.getCameraType()!=net.minecraft.client.CameraType.THIRD_PERSON_BACK)throw new AssertionError("Full Fox must reveal its full body before head view");if(tick==8||tick==32)net.minecraft.client.Screenshot.grab(c.gameDirectory,"fox-reveal-"+tick+".png",c.gameRenderer.mainRenderTarget(),1,message->{});boolean visible=false;for(var e:c.level.entitiesForRendering())if(e.getCustomName()!=null&&e.getCustomName().getString().equals("cb_celestial_30|"+c.player.getUUID()))visible=true;if(visible&&clawSeen<0)clawSeen=tick;if(clawSeen>=0&&tick>=clawSeen+2&&!clawCaptured){net.minecraft.client.Screenshot.grab(c.gameDirectory,"fox-head-claw.png",c.gameRenderer.mainRenderTarget(),1,message->{});clawCaptured=true;}}
    if(stage==11&&tick==20&&testedFox&&c.options.getCameraType()!=net.minecraft.client.CameraType.FIRST_PERSON)throw new AssertionError("Fox cleanup must retain the restored first-person camera");

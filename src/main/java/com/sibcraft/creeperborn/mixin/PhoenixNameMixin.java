@@ -9,6 +9,10 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderer.class)
 public abstract class PhoenixNameMixin{
+    @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;F)V",at=@At("TAIL"))
+    private void creeperborn$creeperBadge(Entity entity,EntityRenderState state,float partialTick,CallbackInfo ci){
+        if(entity instanceof net.minecraft.world.entity.monster.Creeper creeper)com.sibcraft.creeperborn.client.CreeperBadges.extract(creeper,state);
+    }
     @Inject(method="extractNameTags(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;FDD)V",at=@At("RETURN"))
     private void creeperborn$hidePhoenixName(Entity entity,EntityRenderState state,float partialTick,double nameRange,double scoreRange,CallbackInfo ci){
         ((com.sibcraft.creeperborn.client.AzureHiddenState)state).creeperborn$azureHidden(entity.getCustomName()!=null&&(entity.getCustomName().getString().startsWith("cb_celestial_copy:")||entity.getCustomName().getString().startsWith("cb_azure_hitbox:")||entity.getCustomName().getString().startsWith("cb_nature_limb:")||entity.getCustomName().getString().startsWith("cb_nature_body:")));

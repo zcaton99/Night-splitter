@@ -38,6 +38,7 @@ public final class ClientSmoke implements ClientModInitializer{
                 com.sibcraft.creeperborn.client.RoomRenderer.validate();
                 com.sibcraft.creeperborn.client.GravityRenderer.validate();
                 com.sibcraft.creeperborn.client.StringRenderer.validate();com.sibcraft.creeperborn.client.PawRenderer.validate();com.sibcraft.creeperborn.client.TremorRenderer.validate();com.sibcraft.creeperborn.client.PairRenderer.validate();com.sibcraft.creeperborn.client.ClimateRenderer.validate();
+                com.sibcraft.creeperborn.client.CreeperBadges.validate();
                 PhoenixRenderer.validate();com.sibcraft.creeperborn.client.StormRenderer.validate();
                 var identity=new AvatarRenderState();
                 identity.nameTag=net.minecraft.network.chat.Component.literal("Visible");
