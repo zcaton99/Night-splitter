@@ -36,7 +36,7 @@ The boss has a shared body-health pool and three separate head-health pools. Its
 
 Head damage also chips away at body health. Severing a head removes its model and attacks and exposes the body to double damage for ten seconds. All heads severed leaves the body vulnerable. Below 25% body health, surviving heads attack more frequently. The boss makes gradual low passes so melee attacks can reach it.
 
-Killing the boss drops **exactly one physical Holy Bag**, irrespective of player count. The bag is protected from ordinary item damage and has an extended pickup lifetime. Decide which sibling gets it; repeat the ritual for another bag.
+Killing the boss drops **exactly one physical Holy Bag**, irrespective of player count. In the End, the reward appears above the central exit portal so it cannot be lost over the void. The bag is protected from ordinary item damage and has an extended pickup lifetime. Decide which sibling gets it; repeat the ritual for another bag.
 
 ## Permanent fruit collection
 

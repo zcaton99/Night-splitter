@@ -143,7 +143,10 @@ public final class ThreeHeadedDragon {
         if(!fight.active||fight.rewarded)return;
         // Commit the one-time reward flag before spawning the single physical bag.
         fight.active=false;fight.rewarded=true;fight.health=0;save();
-        var item=new net.minecraft.world.entity.item.ItemEntity(l,fight.x,l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,BlockPos.containing(fight.at())).getY()+1,fight.z,Relics.holyBag());
+        // Keep the single reward reachable even if the fight finishes over the void.
+        double rewardX=l.dimension()==Level.END?.5:fight.x,rewardZ=l.dimension()==Level.END?.5:fight.z;
+        int rewardY=l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,BlockPos.containing(rewardX,64,rewardZ)).getY()+1;
+        var item=new net.minecraft.world.entity.item.ItemEntity(l,rewardX,rewardY,rewardZ,Relics.holyBag());
         item.setNoGravity(true);item.setExtendedLifetime();l.addFreshEntity(item);
         cleanup(l);if(bar!=null)bar.removeAllPlayers();
     }
