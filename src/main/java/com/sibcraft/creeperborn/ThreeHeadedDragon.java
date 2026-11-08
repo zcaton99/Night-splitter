@@ -3,7 +3,8 @@ package com.sibcraft.creeperborn;
 import java.nio.file.Path;
 import java.util.*;
 import com.mojang.math.Transformation;
-import org.joml.*;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -13,7 +14,7 @@ import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Slime;
+
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -73,8 +74,8 @@ public final class ThreeHeadedDragon {
         fight.body=proxy(l,at,12).getUUID().toString();for(int i=0;i<3;i++)fight.heads[i]=proxy(l,head(i),4).getUUID().toString();
         build(l);wait=0;save();
     }
-    private static Slime proxy(ServerLevel l,Vec3 at,int size){
-        Slime m=EntityTypes.SLIME.create(l,EntitySpawnReason.EVENT);if(m==null)throw new IllegalStateException("Dragon hitbox unavailable");
+    private static Mob proxy(ServerLevel l,Vec3 at,int size){
+        var m=EntityTypes.SLIME.create(l,EntitySpawnReason.EVENT);if(m==null)throw new IllegalStateException("Dragon hitbox unavailable");
         m.setSize(size,true);m.setNoAi(true);m.setNoGravity(true);m.setInvisible(true);m.setSilent(true);m.noPhysics=true;m.setPersistenceRequired();
         m.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);m.setHealth(1000);m.addTag("cb_dragon_part_"+fight.id);m.snapTo(at.x,at.y,at.z);
         if(!l.addFreshEntity(m))throw new IllegalStateException("Dragon hitbox could not spawn");return m;
@@ -89,27 +90,27 @@ public final class ThreeHeadedDragon {
     }
     private static void build(ServerLevel l){
         for(Part part:parts)part.entity.discard();parts.clear();
-        box(l,Blocks.BLACK_CONCRETE,new Vec3(-3,-1,-3),new Vec3(6,4,9),-1,0);
+        box(l,Blocks.OBSIDIAN,new Vec3(-3,-1,-3),new Vec3(6,4,9),-1,0);
         box(l,Blocks.CRYING_OBSIDIAN,new Vec3(-2,0,-3.08),new Vec3(4,2,.18),-1,0);
         // Segmented tail, spine, legs and claws establish a dragon silhouette from every angle.
         for(int i=0;i<6;i++){
-            double w=2.4-i*.3;box(l,Blocks.BLACK_CONCRETE,new Vec3(-w/2,.5-i*.13,6+i*1.8),new Vec3(w,w,2.2),-1,0);
+            double w=2.4-i*.3;box(l,Blocks.OBSIDIAN,new Vec3(-w/2,.5-i*.13,6+i*1.8),new Vec3(w,w,2.2),-1,0);
             if(i<5)box(l,Blocks.AMETHYST_BLOCK,new Vec3(-.3,3.1,-1+i*1.6),new Vec3(.6,1,.8),-1,0);
         }
         for(int side:new int[]{-1,1}){
             for(int leg=0;leg<2;leg++){
-                box(l,Blocks.BLACK_CONCRETE,new Vec3(side<0?-4:2.5,-3,leg*5-1),new Vec3(1.5,3,2),-1,0);
+                box(l,Blocks.OBSIDIAN,new Vec3(side<0?-4:2.5,-3,leg*5-1),new Vec3(1.5,3,2),-1,0);
                 for(int claw=0;claw<3;claw++)box(l,Blocks.END_STONE,new Vec3((side<0?-4:2.5)+claw*.5,-3.1,leg*5-2),new Vec3(.3,.4,1.5),-1,0);
             }
             for(int span=0;span<5;span++){
                 double x=side<0?-4-span*2:3+span*2;
-                box(l,Blocks.PURPLE_CONCRETE,new Vec3(x,2,span*.7-1),new Vec3(2.2,.18,6-span*.8),-1,side);
-                box(l,Blocks.BLACK_CONCRETE,new Vec3(x,2.15,span*.7-1),new Vec3(2.2,.3,.35),-1,side);
+                box(l,Blocks.PURPUR_BLOCK,new Vec3(x,2,span*.7-1),new Vec3(2.2,.18,6-span*.8),-1,side);
+                box(l,Blocks.OBSIDIAN,new Vec3(x,2.15,span*.7-1),new Vec3(2.2,.3,.35),-1,side);
             }
         }
         for(int i=0;i<3;i++)if(fight.headHealth[i]>0){
             double x=(i==0?0:i==1?-4:4);
-            box(l,Blocks.BLACK_CONCRETE,new Vec3(x-.8,1,-5),new Vec3(1.6,2,4),i,0);
+            box(l,Blocks.OBSIDIAN,new Vec3(x-.8,1,-5),new Vec3(1.6,2,4),i,0);
             box(l,Blocks.DRAGON_HEAD,new Vec3(x-1.5,3,-8-Math.abs(i-1)),new Vec3(3,3,3),i,0);
         }
     }
@@ -129,7 +130,7 @@ public final class ThreeHeadedDragon {
         if(part>=0){
             if(fight.headHealth[part]<=0)return true;
             fight.headHealth[part]=Math.max(0,fight.headHealth[part]-dealt);fight.health-=dealt*.25f;
-            if(fight.headHealth[part]==0){fight.exposed=fight.age+200;build((ServerLevel)target.level());((ServerLevel)target.level()).sendParticles(ParticleTypes.EXPLOSION,target.getX(),target.getY()+1,target.getZ(),10,1,1,1,0);}
+            if(fight.headHealth[part]==0){target.discard();fight.exposed=fight.age+200;build((ServerLevel)target.level());((ServerLevel)target.level()).sendParticles(ParticleTypes.EXPLOSION,target.getX(),target.getY()+1,target.getZ(),10,1,1,1,0);}
         }else fight.health-=dealt*((fight.age<fight.exposed||Arrays.stream(new double[]{fight.headHealth[0],fight.headHealth[1],fight.headHealth[2]}).allMatch(v->v<=0))?2:1);
         if(fight.health<=0)finish((ServerLevel)target.level());else save();return true;
     }
@@ -137,8 +138,8 @@ public final class ThreeHeadedDragon {
         if(!fight.active||fight.rewarded)return;
         // Commit the one-time reward flag before spawning the single physical bag.
         fight.active=false;fight.rewarded=true;fight.health=0;save();
-        var item=new net.minecraft.world.entity.item.ItemEntity(l,fight.x,fight.y,fight.z,Relics.holyBag());
-        item.setInvulnerable(true);item.setNoGravity(true);item.setExtendedLifetime();l.addFreshEntity(item);
+        var item=new net.minecraft.world.entity.item.ItemEntity(l,fight.x,l.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,BlockPos.containing(fight.at())).getY()+1,fight.z,Relics.holyBag());
+        item.setNoGravity(true);item.setExtendedLifetime();l.addFreshEntity(item);
         cleanup(l);if(bar!=null)bar.removeAllPlayers();
     }
     private static void cleanup(ServerLevel l){
@@ -153,9 +154,9 @@ public final class ThreeHeadedDragon {
         if(!fight.active)return;ServerLevel l=level(s);if(l==null)return;
         if(wait>0){wait--;return;}
         var players=players(l);if(players.isEmpty()){if(bar!=null)bar.removeAllPlayers();return;}
-        Entity raw=l.getEntity(UUID.fromString(fight.body));if(!(raw instanceof Slime body))return; // Unloaded actors never count as a victory.
+        Entity raw=l.getEntity(UUID.fromString(fight.body));if(!(raw instanceof Mob body))return; // Unloaded actors never count as a victory.
         if(parts.isEmpty())build(l);fight.age++;
-        if(bar==null)bar=new ServerBossEvent(Component.literal("Three-Headed Dragon"),BossEvent.BossBarColor.PURPLE,BossEvent.BossBarOverlay.PROGRESS);
+        if(bar==null)bar=new ServerBossEvent(UUID.randomUUID(),Component.literal("Three-Headed Dragon"),BossEvent.BossBarColor.PURPLE,BossEvent.BossBarOverlay.PROGRESS);
         for(ServerPlayer p:List.copyOf(bar.getPlayers()))if(!players.contains(p))bar.removePlayer(p);
         players.forEach(bar::addPlayer);bar.setProgress(Math.max(0,fight.health/fight.max));
         String heads="";for(int i=0;i<3;i++)heads+=(i==0?"":" | ")+(fight.headHealth[i]<=0?"Severed":Math.round(fight.headHealth[i])+" HP");
@@ -173,7 +174,7 @@ public final class ThreeHeadedDragon {
         // Center head: a visible breath telegraph, followed by a damaging lane and close bites.
         if(fight.headHealth[0]>0){
             Player target=players.get(0);Vec3 from=head(0),to=target.getEyePosition(),dir=to.subtract(from).normalize();
-            if(phase<40&&phase%5==0)for(int k=0;k<35;k++)l.sendParticles(ParticleTypes.DRAGON_BREATH,from.x+dir.x*k,from.y+dir.y*k,from.z+dir.z*k,1,.1,.1,.1,0);
+            if(phase<40&&phase%5==0)for(int k=0;k<35;k++)l.sendParticles(ParticleTypes.REVERSE_PORTAL,from.x+dir.x*k,from.y+dir.y*k,from.z+dir.z*k,1,.1,.1,.1,0);
             if(phase==40)for(Player p:players)if(new AABB(from,to).inflate(2).contains(p.position()))strike(l,body,p,20);
             if(fight.age%40==0)for(Player p:players)if(p.position().distanceToSqr(from)<36)strike(l,body,p,14);
         }
@@ -185,7 +186,7 @@ public final class ThreeHeadedDragon {
         // Right head: telegraphed wing sweep and knockback discourage grouping under the boss.
         if(fight.headHealth[2]>0){
             if(phase>=80&&phase<100&&phase%5==0)l.sendParticles(ParticleTypes.SWEEP_ATTACK,fight.x,fight.y-2,fight.z-7,25,10,1,6,0);
-            if(phase==100||enraged&&phase==70)for(Player p:players)if(p.position().distanceToSqr(fight.at())<24*24){strike(l,body,p,12);Vec3 away=p.position().subtract(fight.at()).normalize();p.push(away.x*1.8,.7,away.z*1.8);p.hurtMarked=true;}
+            if(phase==100||enraged&&phase==70)for(Player p:players)if(p.position().distanceToSqr(fight.at())<24*24){strike(l,body,p,12);Vec3 away=p.position().subtract(fight.at()).normalize();p.push(away.x*1.8,.7,away.z*1.8);}
         }
         // Low pass makes melee possible; slow movement keeps all hitboxes and visuals together.
         if(fight.age%200==0){Player p=players.get(0);Vec3 to=p.position().add(0,3,10),step=to.subtract(fight.at());if(step.length()>4)step=step.normalize().scale(4);fight.x+=step.x;fight.y+=Math.clamp(step.y,-2,2);fight.z+=step.z;}

@@ -125,11 +125,16 @@ public final class Nations {
             ServerLevel level=level(s,n);if(level==null)continue;
             boolean present=level.players().stream().anyMatch(p->!p.isSpectator()&&p.isAlive()&&nearby(p,n));
             if(!present)continue;
-            enroll(level,n);if(!n.raiding)continue;
+            advanceTrial(level,n);
+        }
+        if(s.getTickCount()%200==0)save();
+    }
+    static void advanceTrial(ServerLevel level,Nation n){
+            enroll(level,n);if(!n.raiding)return;
             n.remaining-=20;
-            if(n.remaining<=0||living(level,n).isEmpty()){fail(level,n,"Trial failed. Rebuild to 9 living guardians, then activate a retry.");continue;}
+            if(n.remaining<=0||living(level,n).isEmpty()){fail(level,n,"Trial failed. Rebuild to 9 living guardians, then activate a retry.");return;}
             if(n.enemies.isEmpty()){
-                if(n.nextWave>0){n.nextWave-=20;continue;}
+                if(n.nextWave>0){n.nextWave-=20;return;}
                 if(n.wave>=3){n.passed=true;n.raiding=false;announce(level,n,"Nation trial passed! Shared progress saved for everyone.");save();}
                 else wave(level,n);
             }else{
@@ -139,8 +144,6 @@ public final class Nations {
                     if(target!=null){mob.setTarget(target);mob.getNavigation().moveTo(target,1.1);}
                 }}
             }
-        }
-        if(s.getTickCount()%200==0)save();
     }
     public static String offer(Player p,Element e){
         Nation n=get(e);if(n==null||!nearby(p,n)||p.isSpectator()||!p.isAlive())return "Stand inside that nation to make its offering.";

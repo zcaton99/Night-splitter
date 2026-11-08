@@ -48,7 +48,7 @@ public final class Regression implements ModInitializer {
             if (server == null || ++ticks < 30) return;
             if (rubberLive != null) {
                 try {
-                    if (runRubberLive()) { System.out.println("CREEPERBORN_REGRESSION_PASSED"); server=null; s.halt(false); }
+                    if (runRubberLive()) { EndgameRegression.run(s); System.out.println("CREEPERBORN_REGRESSION_PASSED"); server=null; s.halt(false); }
                 } catch (Throwable error) { error.printStackTrace(); server=null; s.halt(false); }
                 return;
             }

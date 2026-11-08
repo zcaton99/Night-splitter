@@ -21,6 +21,7 @@ public final class HolyBag {
         path=server.getWorldPath(LevelResource.ROOT).resolve("creeperborn-holy-bags.json");
         data=WorldJson.read(path,Data.class,new Data());
         if(data.players==null)throw new IllegalStateException("Invalid Holy Bag ledger");
+        for(var c:data.players.values())if(c==null||c.active==null||c.fruits==null||c.fruits.keySet().stream().anyMatch(f->!Dark.FRUITS.contains(f))||c.fruits.values().stream().anyMatch(java.util.Objects::isNull))throw new IllegalStateException("Invalid Holy Bag collection");
     }
     public static boolean unlocked(Player p) { return data.players.containsKey(p.getUUID().toString()); }
     private static Collection collection(Player p) { return data.players.get(p.getUUID().toString()); }
