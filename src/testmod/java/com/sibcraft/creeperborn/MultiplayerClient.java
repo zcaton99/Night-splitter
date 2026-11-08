@@ -50,8 +50,8 @@ public final class MultiplayerClient implements ClientModInitializer {
     c.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
     var direction=new net.minecraft.world.phys.Vec3(0,129,15).subtract(c.player.getEyePosition());c.player.setYRot((float)Math.toDegrees(Math.atan2(-direction.x,direction.z)));c.player.setXRot((float)-Math.toDegrees(Math.atan2(direction.y,direction.horizontalDistance())));
     if(tick==65){int heads=0,proxies=0;for(var e:c.level.entitiesForRendering()){if(e instanceof net.minecraft.world.entity.Display.ItemDisplay&&e.getCustomName()!=null&&e.getCustomName().getString().startsWith("cb_dragon_head|"))heads++;if(e.getType()==net.minecraft.world.entity.EntityTypes.SLIME&&e.isInvisible())proxies++;}
-     if(heads!=(stage==31?3:2)||proxies<3)throw new AssertionError("Dragon must synchronize independent head visuals and hitboxes: heads="+heads+" proxies="+proxies);
      net.minecraft.client.Screenshot.grab(c.gameDirectory,stage==31?"three-headed-dragon.png":"dragon-severed-head.png",c.gameRenderer.mainRenderTarget(),1,message->{});
+     if(heads!=(stage==31?3:2)||proxies<3)throw new AssertionError("Dragon must synchronize independent head visuals and hitboxes: heads="+heads+" proxies="+proxies);
     }
    }
    if(stage==33&&tick==30&&c.player.getName().getString().equals("LanAlpha"))ClientPlayNetworking.send(new ControlPayload(4,0));
