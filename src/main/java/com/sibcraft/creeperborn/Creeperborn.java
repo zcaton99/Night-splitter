@@ -179,6 +179,9 @@ public final class Creeperborn implements ModInitializer {
                 nationCommand.then(command);
             }
             root.then(nationCommand);
+            root.then(Commands.literal("testholybag").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.holyBag());return 1;}));
+            root.then(Commands.literal("testdragon").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).executes(ctx->{var p=ctx.getSource().getPlayerOrException();if(ThreeHeadedDragon.active())return 0;ThreeHeadedDragon.begin((ServerLevel)p.level(),p.position().add(0,6,24),1);return 1;}));
+            root.then(Commands.literal("canceldragon").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).executes(ctx->{ThreeHeadedDragon.dismiss(ctx.getSource().getServer());return 1;}));
             var bagCommand=Commands.literal("bag").executes(ctx->{HolyBag.show(ctx.getSource().getPlayerOrException());return 1;});
             for(String fruit:Dark.FRUITS)bagCommand.then(Commands.literal(fruit).executes(ctx->{var p=ctx.getSource().getPlayerOrException();chat(p,HolyBag.select(p,fruit));return 1;}));
             root.then(bagCommand);

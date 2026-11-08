@@ -12,7 +12,9 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.*;
 
-final class EndgameRegression {
+public final class EndgameRegression implements net.fabricmc.api.ModInitializer {
+    @Override public void onInitialize(){if(Boolean.getBoolean("creeperborn.multiplayer"))return;net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server->{for(Element e:Element.values()){int x=-8+e.ordinal()*256;server.overworld().setChunkForced(x>>4,24>>4,true);}});}
+
     private static void check(boolean value,String text){if(!value)throw new AssertionError(text);System.out.println("ENDGAME_CHECK: "+text);}
     private static Player player(ServerLevel level){return new Player(level,new GameProfile(UUID.randomUUID(),"NationTest")){@Override public GameType gameMode(){return GameType.SURVIVAL;}};}
     static void run(MinecraftServer server){
@@ -23,7 +25,7 @@ final class EndgameRegression {
             int x=-8+e.ordinal()*256,z=24;l.getChunk(x>>4,z>>4);p.snapTo(x,120,z);
             List<Villager> guards=new ArrayList<>();
             for(int i=0;i<9;i++){var v=EntityTypes.VILLAGER.create(l,EntitySpawnReason.COMMAND);v.setNoAi(true);v.snapTo(x+i*.3,120,z);l.addFreshEntity(v);check(Creeperborn.GUARDIANS.assign(p,v,e),"Adult villager accepts "+e.key());guards.add(v);all.add(v);}
-            check(Nations.found(p,e).contains("founded"),"A distinct "+e.key()+" nation can be founded");
+            String founded=Nations.found(p,e);check(founded.contains("founded"),"A distinct "+e.key()+" nation can be founded: "+founded);
             Nations.Nation n=Nations.get(e);check(Nations.living(l,n).size()==9,"Nine distinct living guardians count toward the trial");
             check(!Creeperborn.GUARDIANS.assign(p,guards.getFirst(),Element.values()[(e.ordinal()+1)%4]),"An enrolled villager cannot count for another nation");
             guards.getFirst().setHealth(0);check(Nations.start(p,e).contains("needs 9"),"Dead guardians do not satisfy the starting threshold");guards.getFirst().setHealth(20);

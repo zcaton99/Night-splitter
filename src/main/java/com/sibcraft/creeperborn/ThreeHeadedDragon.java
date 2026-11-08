@@ -192,6 +192,7 @@ public final class ThreeHeadedDragon {
         if(fight.age%200==0){Player p=players.get(0);Vec3 to=p.position().add(0,3,10),step=to.subtract(fight.at());if(step.length()>4)step=step.normalize().scale(4);fight.x+=step.x;fight.y+=Math.clamp(step.y,-2,2);fight.z+=step.z;}
         if(fight.age%100==0)save();
     }
+    public static void dismiss(MinecraftServer s){if(!fight.active)return;ServerLevel l=level(s);fight.active=false;save();if(l!=null)cleanup(l);if(bar!=null)bar.removeAllPlayers();}
     public static void stop(MinecraftServer s){if(fight.active)save();ServerLevel l=level(s);if(l!=null){for(Part p:parts)p.entity.discard();parts.clear();}if(bar!=null)bar.removeAllPlayers();}
     public static void clear(){fight=new Fight();path=null;parts.clear();visualIds.clear();hits.clear();bar=null;wait=0;}
 }
