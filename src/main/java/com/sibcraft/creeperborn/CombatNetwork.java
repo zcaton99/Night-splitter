@@ -101,7 +101,8 @@ public final class CombatNetwork {
             }
             if (payload.action() == 4) {
                 TimePowers.cancelInput(p);ZoanPowers.cancelInput(p);CelestialPowers.cancelInput(p);NaturePowers.cancelInput(p);LuffyPowers.cancelInput(p);Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Op.cancelInput(p);Gravity.cancelInput(p);StringFruit.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);PairPowers.cancelInput(p);ClimatePowers.cancelInput(p);Azure.cancelInput(p);
-                if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
+                if(HolyBag.unlocked(p)){Creeperborn.say(p,HolyBag.cycle(p));}
+                else if(Dark.unlocked(p)){Creeperborn.say(p,Dark.cycle(p));}
                 else if(TimePowers.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,TimePowers.status(p));}
                 else if(ZoanPowers.owns(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,ZoanPowers.status(p,ZoanPowers.owned(p)));}
                 else if(CelestialPowers.unlocked(p,"flame")||CelestialPowers.unlocked(p,"buddha")){String f=CelestialPowers.unlocked(p,"flame")?"flame":"buddha";p.addTag("cb_mode_fruit");Creeperborn.say(p,CelestialPowers.status(p,f));}

@@ -26,6 +26,7 @@ public final class Guardians {
     public boolean assign(Player player, Villager v, Element e) {
         if (!Progress.all(player) || player.isSpectator() || v.isBaby()) return false;
         if (v.entityTags().stream().anyMatch(t -> t.startsWith("cb_owner_")) && !owns(player, v)) return false;
+        if(v.entityTags().stream().anyMatch(t->t.startsWith("cb_nation_")&&!t.equals("cb_nation_"+e.key())))return false;
         for (Element old : Element.values()) v.removeTag("cb_faction_" + old.key());
         v.addTag("cb_faction_" + e.key()); v.addTag("cb_owner_" + player.getUUID());
         post(v, v.blockPosition()); villagers.put(v.getUUID(), v); return true;
@@ -68,7 +69,8 @@ public final class Guardians {
                 v.getLookControl().setLookAt(enemy, 30, 30);
                 if (now >= attacks.getOrDefault(v.getUUID(), 0L)) {
                     attacks.put(v.getUUID(), now + 60);
-                    Abilities.strike(level, v, enemy, e, 4, e == Element.AIR ? 1 : .3);
+                    if(v.entityTags().contains("cb_guard_harmony"))e=Element.values()[(int)(now/60)%4];
+                    Abilities.strike(level, v, enemy, e, v.entityTags().contains("cb_guard_harmony")?7:4, e == Element.AIR ? 1 : .3);
                 }
             } else if (now % 40 == 0) {
                 BlockPos anchor = post(v);

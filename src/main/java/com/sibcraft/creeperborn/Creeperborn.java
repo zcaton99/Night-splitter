@@ -46,6 +46,9 @@ public final class Creeperborn implements ModInitializer {
         CombatNetwork.init();
         ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
         ServerLifecycleEvents.SERVER_STARTING.register(SpawnBudget::load);
+        ServerLifecycleEvents.SERVER_STARTING.register(Nations::load);
+        ServerLifecycleEvents.SERVER_STARTING.register(HolyBag::load);
+        ServerLifecycleEvents.SERVER_STARTING.register(ThreeHeadedDragon::load);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpawnBudget.clear());
         ServerLifecycleEvents.SERVER_STARTING.register(Hearts::load);
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server) -> { ZoanPowers.recover(handler.player);NaturePowers.recover(handler.player);DoorSpace.recover(handler.player); Rubber.recoverFlight(handler.player); Phoenix.recoverFlight(handler.player); Lightning.recoverFlight(handler.player); FruitClaims.reconcile(handler.player);Hearts.join(handler.player);Relics.refreshFruitModels(handler.player); });
@@ -64,17 +67,18 @@ public final class Creeperborn implements ModInitializer {
                 throw new IllegalArgumentException("Invalid special spawn budget settings");
             Files.createDirectories(path.getParent()); Files.writeString(path, gson.toJson(config) + "\n");
         } catch (Exception error) { throw new IllegalStateException("Invalid Creeperborn config", error); }
-        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { if(entity instanceof net.minecraft.world.entity.item.ItemEntity item)Relics.updateFruitModel(item.getItem()); FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity); });
+        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> { if(entity instanceof net.minecraft.world.entity.item.ItemEntity item)Relics.updateFruitModel(item.getItem()); FruitCreepers.track(entity); CREEPERS.track(entity); GUARDIANS.track(entity);Nations.loaded(entity);ThreeHeadedDragon.loaded(entity); });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> { FruitCreepers.unload(entity); CREEPERS.unload(entity); GUARDIANS.unload(entity); });
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {TimePowers.clear();ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear();FireAnimations.clear();WaterAnimations.clear();DoorSpace.clear();Phoenix.clear();Lightning.clear();Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear();});
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> { TimePowers.clear();ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear(); DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear(); Hearts.clear();FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {HolyBag.save(server);ThreeHeadedDragon.stop(server);TimePowers.clear();ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear();FireAnimations.clear();WaterAnimations.clear();DoorSpace.clear();Phoenix.clear();Lightning.clear();Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear();});
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {Nations.clear();HolyBag.clear();ThreeHeadedDragon.clear(); TimePowers.clear();ZoanPowers.clear();FlightReconciliation.clear();CelestialPowers.clear();NaturePowers.clear(); DoorSpace.clear(); DoorFruit.clear(); Phoenix.clear(); Lightning.clear(); Dark.clear();Gravity.clear();StringFruit.clear();Paw.clear();Tremor.clear();PairPowers.clear();ClimatePowers.clear();Azure.clear();Op.clear(); Hearts.clear();FruitClaims.clear(); WaterRules.clear(); Rubber.clear(); FruitCreepers.clear(); ABILITIES.clear(); Mastery.clear(); CombatNetwork.clear(); GUARDIANS.clear(); CREEPERS.clear(); });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            TimePowers.tick(server);LuffyPowers.tick(server);ZoanPowers.tick(server);DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);Gravity.tick(server);StringFruit.tick(server);Paw.tick(server);Tremor.tick(server);PairPowers.tick(server);ClimatePowers.tick(server);Azure.tick(server);CelestialPowers.tick(server);NaturePowers.tick(server);Op.tick(server);Hearts.tick(server);
+            Nations.tick(server);ThreeHeadedDragon.tick(server);if(server.getTickCount()%200==0)HolyBag.save(server);TimePowers.tick(server);LuffyPowers.tick(server);ZoanPowers.tick(server);DoorSpace.tick(server); CombatNetwork.tick(server); WaterRules.tick(server); ABILITIES.tick(); Rubber.tick(server); Phoenix.tick(server); Lightning.tick(server); Dark.tick(server);Gravity.tick(server);StringFruit.tick(server);Paw.tick(server);Tremor.tick(server);PairPowers.tick(server);ClimatePowers.tick(server);Azure.tick(server);CelestialPowers.tick(server);NaturePowers.tick(server);Op.tick(server);Hearts.tick(server);
             if (server.getTickCount() % 20 == 0) {Mastery.tick(server);DoorFruit.tick(server);for(var p:server.getPlayerList().getPlayers())Relics.refreshFruitModels(p);}
             if (server.getTickCount() % 10 == 0) { CREEPERS.tick(); GUARDIANS.tick(); }
         });
         ServerLivingEntityEvents.AFTER_DAMAGE.register((entity,source,baseDamage,damageTaken,blocked)->{if(entity instanceof Player p&&damageTaken>0){TimePowers.damaged(p);StringFruit.damaged(p);LuffyPowers.damaged(p);}Azure.kanaboThorns(entity,source,damageTaken);});
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !ABILITIES.rocks.blocks(entity, source));
+        ServerLivingEntityEvents.AFTER_DEATH.register((entity,source)->Nations.died(entity));
         ServerLivingEntityEvents.AFTER_DEATH.register(Dark::died);
         ServerLivingEntityEvents.AFTER_DEATH.register((entity,source)->Hearts.died(entity));
         ServerLivingEntityEvents.AFTER_DEATH.register(CREEPERS::died);
@@ -87,6 +91,7 @@ public final class Creeperborn implements ModInitializer {
         });
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player,level,hand,hit)->{
             ItemStack cube=player.getItemInHand(hand);
+            if(Relics.kind(cube).equals("dragon_covenant")||Relics.kind(cube).equals("holy_bag")){if(level instanceof ServerLevel)say(player,Relics.kind(cube).equals("dragon_covenant")?ThreeHeadedDragon.summon(player,cube):HolyBag.consume(player,cube)?"Holy Bag unlocked permanently! G cycles your collection.":"Holy Bag already unlocked.");return InteractionResult.SUCCESS;}
             if(!Relics.kind(cube).equals("op:heart"))return InteractionResult.PASS;
             if(player.isSpectator())return InteractionResult.FAIL;
             if(level instanceof ServerLevel)say(player,Hearts.use(player,cube));
@@ -99,7 +104,9 @@ public final class Creeperborn implements ModInitializer {
             if (player.isSpectator()) return InteractionResult.FAIL;
             if (!(level instanceof ServerLevel)) return InteractionResult.SUCCESS;
             if(StringFruit.locked(player))return InteractionResult.FAIL;
-            if(kind.equals("op:heart")){say(player,Hearts.use(player,stack));
+            if(kind.equals("holy_bag")){say(player,HolyBag.consume(player,stack)?"Holy Bag consumed! Fruit collection and mastery now survive death. G cycles collected fruits.":"You already have the Holy Bag unlock.");
+            }else if(kind.equals("dragon_covenant")){say(player,ThreeHeadedDragon.summon(player,stack));
+            }else if(kind.equals("op:heart")){say(player,Hearts.use(player,stack));
             }else if(kind.equals("fruit:time")){say(player,TimePowers.consume(player,stack)?TimePowers.status(player):"Fruit slot full, or Time-Time already claimed.");
             }else if(kind.equals("fruit:fox")||kind.equals("fruit:axolotl")){String f=kind.substring(6);say(player,ZoanPowers.consume(player,stack,f)?ZoanPowers.status(player,f):"Fruit slot full, or fruit already claimed.");
             }else if(kind.equals("fruit:glint")||kind.equals("fruit:straw")||kind.equals("fruit:flame")||kind.equals("fruit:buddha")){String f=kind.substring(6);say(player,CelestialPowers.consume(player,stack,f)?CelestialPowers.status(player,f):"Fruit slot full, or fruit already claimed.");
@@ -163,12 +170,24 @@ public final class Creeperborn implements ModInitializer {
                 ctx.getSource().sendSuccess(() -> Component.literal("Creeperborn: /creeperborn element earth|water|fire|air; /creeperborn move 1|2|3; /creeperborn cast; /creeperborn status. Use your focus to cast; sneak-use to cycle elements."), false);
                 return 1;
             });
+            root.then(Commands.literal("nations").executes(ctx->{Nations.show(ctx.getSource().getPlayerOrException());return 1;}));
+            root.then(Commands.literal("ritual").executes(ctx->{var p=ctx.getSource().getPlayerOrException();chat(p,Nations.ritual(p));return 1;}));
+            var nationCommand=Commands.literal("nation");
+            for(String action:java.util.List.of("found","start","offer")){
+                var command=Commands.literal(action);
+                for(Element element:Element.values())command.then(Commands.literal(element.key()).executes(ctx->{var p=ctx.getSource().getPlayerOrException();chat(p,switch(action){case "found"->Nations.found(p,element);case "start"->Nations.start(p,element);default->Nations.offer(p,element);});return 1;}));
+                nationCommand.then(command);
+            }
+            root.then(nationCommand);
+            var bagCommand=Commands.literal("bag").executes(ctx->{HolyBag.show(ctx.getSource().getPlayerOrException());return 1;});
+            for(String fruit:Dark.FRUITS)bagCommand.then(Commands.literal(fruit).executes(ctx->{var p=ctx.getSource().getPlayerOrException();chat(p,HolyBag.select(p,fruit));return 1;}));
+            root.then(bagCommand);
             root.then(Commands.literal("status").executes(ctx -> {
                 ServerPlayer p = ctx.getSource().getPlayerOrException();
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=TimePowers.selected(p)?"Time-Time":!ZoanPowers.current(p).isEmpty()?ZoanPowers.current(p):CelestialPowers.selected(p,"flame")?"Flame-Flame":CelestialPowers.selected(p,"buddha")?"Golden Buddha":CelestialPowers.selected(p,"glint")?"Glint-Glint":CelestialPowers.selected(p,"straw")?"Straw-Straw":NaturePowers.selected(p,"tree")?"Tree Tree":NaturePowers.selected(p,"petal")?"Petal Petal":Azure.selected(p)?"Azure Dragon":ClimatePowers.selected(p,"ice")?"Ice-Ice":ClimatePowers.selected(p,"magma")?"Magma-Magma":PairPowers.selected(p,"love")?"Love-Love":PairPowers.selected(p,"sand")?"Sand-Sand":Tremor.selected(p)?"Tremor":Paw.selected(p)?"Paw-Paw":StringFruit.selected(p)?"String":Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.85 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.96 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);chat(p,TimePowers.status(p));for(String f:ZoanPowers.FRUITS)chat(p,ZoanPowers.status(p,f));
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");

@@ -102,6 +102,7 @@ public final class FruitClaims {
     }
     private static long ownedCount(Player p){return Dark.FRUITS.stream().filter(f->p.getUUID().equals(owner(f))).count();}
     private static boolean room(Player p,String fruit){
+        if(HolyBag.unlocked(p))return true;
         long count=ownedCount(p);
         return count==0&&!hasFruit(p)||count==1&&(fruit.equals("dark")&&!ownsDark(p)||Dark.unlocked(p)&&!fruit.equals("dark"));
     }
@@ -113,7 +114,7 @@ public final class FruitClaims {
         }else{
             try{if(!UUID.fromString(token).equals(owner(fruit)))return false;}catch(IllegalArgumentException error){return false;}
         }
-        setOwner(fruit,p.getUUID());return true;
+        HolyBag.beforeConsume(p);setOwner(fruit,p.getUUID());return true;
     }
     public static boolean eatCapture(Player p,String fruit,UUID token){
         if(!Dark.unlocked(p)||ownedCount(p)!=1||fruit.equals("dark")||!token.equals(owner(fruit))||!p.isAlive()||p.isSpectator())return false;
@@ -151,6 +152,7 @@ public final class FruitClaims {
     }
     /** Upgrade old alpha saves on join. Disconnects and dimension changes never release a claim. */
     public static void reconcile(Player p){
+        if(HolyBag.unlocked(p))return;
         for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time"))if(p.entityTags().contains("cb_fruit_"+f)){if(owner(f)==null)setOwner(f,p.getUUID());else if(!p.getUUID().equals(owner(f)))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}
 
         if(p.entityTags().contains("cb_fruit_azure")){if(azureOwner==null)setOwner("azure",p.getUUID());else if(!p.getUUID().equals(azureOwner))for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_azure")||t.startsWith("cb_azure_"))p.removeTag(t);}
@@ -217,6 +219,7 @@ public final class FruitClaims {
         for(String tag:Set.copyOf(p.entityTags()))if(tag.equals("cb_fruit_lightning")||tag.startsWith("cb_lightning_"))p.removeTag(tag);
     }
     public static void releaseOnDeath(Player p){
+        if(HolyBag.unlocked(p)){HolyBag.died(p);return;}
         TimePowers.forget(p);
         ZoanPowers.forget(p);
         CelestialPowers.forget(p);NaturePowers.forget(p);for(String f:java.util.List.of("tree","petal","glint","straw","flame","buddha","fox","axolotl","time")){if(p.getUUID().equals(owner(f)))setOwner(f,null);for(String t:Set.copyOf(p.entityTags()))if(t.equals("cb_fruit_"+f)||t.startsWith(f.equals("time")?"cb_chrono_":"cb_"+f+"_"))p.removeTag(t);}

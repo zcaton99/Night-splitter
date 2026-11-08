@@ -75,7 +75,7 @@ public final class Dark{
         TimePowers.cancelInput(victim);ZoanPowers.cancelInput(victim);Rubber.cancelInput(victim);Phoenix.cancelInput(victim);Lightning.cancelInput(victim);Op.cancelInput(victim);Gravity.cancelInput(victim);Paw.cancelInput(victim);Tremor.cancelInput(victim);PairPowers.cancelInput(victim);ClimatePowers.cancelInput(victim);cancelInput(victim);
         if(strong)stopForms(victim);
     }
-    private static void stopForms(Player p){TimePowers.forget(p);ZoanPowers.forget(p);CelestialPowers.forget(p);NaturePowers.forget(p);Azure.stopOwned(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
+    public static void stopForms(Player p){TimePowers.forget(p);ZoanPowers.forget(p);CelestialPowers.forget(p);NaturePowers.forget(p);Azure.stopOwned(p);Paw.forget(p);Tremor.forget(p);PairPowers.stopOwned(p);ClimatePowers.stopOwned(p);StringFruit.strongSuppress(p);Gravity.forget(p);Op.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);DoorSpace.forget(p);endMantle(p);}
     public static boolean rooted(LivingEntity target){
         Tether t=tethers.get(target.getUUID());return t!=null&&target.isAlive()&&t.owner().isAlive()&&target.level()==t.level()&&t.owner().level()==t.level()&&now(t.owner())<t.ends();
     }
@@ -302,6 +302,7 @@ public final class Dark{
         capture(killer,victim);
     }
     static Capture capture(Player killer,Player victim){
+        if(HolyBag.unlocked(victim))return null;
         String fruit=ownedFruit(victim);if(fruit==null||!unlocked(killer))return null;
         int tier=Math.min(2,fruitTier(victim,fruit));UUID token=UUID.randomUUID();
         FruitClaims.setOwner(fruit,token);

@@ -9,6 +9,9 @@ import net.minecraft.world.item.component.CustomData;
 
 public final class Relics {
     private Relics() {}
+    public static ItemStack holyBag(){var item=new ItemStack(Items.BUNDLE);mark(item,"holy_bag");item.set(DataComponents.CUSTOM_NAME,Component.literal("Holy Bag — consume to keep and switch Creeper Fruits forever"));item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);return item;}
+    public static ItemStack covenant(){var item=new ItemStack(Items.DRAGON_BREATH);mark(item,"dragon_covenant");item.set(DataComponents.CUSTOM_NAME,Component.literal("Dragon Covenant — use at the End exit portal"));item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);return item;}
+
     public static boolean updateFruitModel(ItemStack item){
         if(item.isEmpty())return false;
         String kind=kind(item);
