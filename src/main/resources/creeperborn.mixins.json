@@ -5,6 +5,7 @@
   "mixins": [
     "TemporaryRockMixin",
     "HolyBagItemMixin",
+    "DragonHeadDisplayAccessor",
     "NatureEyesMixin",
     "ZoanDimensionsMixin",
     "AirStepConnectionAccessor",
