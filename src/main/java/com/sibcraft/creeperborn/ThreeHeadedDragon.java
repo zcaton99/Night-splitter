@@ -76,7 +76,7 @@ public final class ThreeHeadedDragon {
     }
     private static Mob proxy(ServerLevel l,Vec3 at,int size){
         var m=EntityTypes.SLIME.create(l,EntitySpawnReason.EVENT);if(m==null)throw new IllegalStateException("Dragon hitbox unavailable");
-        m.setSize(size,true);m.setNoAi(true);m.setNoGravity(true);m.setInvisible(true);m.setSilent(true);m.noPhysics=true;m.setPersistenceRequired();
+        m.setSize(size,true);m.setNoAi(true);m.setNoGravity(true);m.setInvisible(true);m.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.INVISIBILITY,Integer.MAX_VALUE,0,false,false,false));m.setSilent(true);m.noPhysics=true;m.setPersistenceRequired();
         m.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);m.setHealth(1000);m.addTag("cb_dragon_part_"+fight.id);m.snapTo(at.x,at.y,at.z);
         if(!l.addFreshEntity(m))throw new IllegalStateException("Dragon hitbox could not spawn");return m;
     }
