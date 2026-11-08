@@ -90,7 +90,7 @@ public final class ThreeHeadedDragon {
         }else{var blockDisplay=EntityTypes.BLOCK_DISPLAY.create(l,EntitySpawnReason.EVENT);if(blockDisplay==null)throw new IllegalStateException("Dragon model unavailable");blockDisplay.setBlockState(block.defaultBlockState());d=blockDisplay;}
         d.addTag("cb_dragon_visual_"+fight.id);
         var access=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;access.creeperborn$duration(3);access.creeperborn$positionDuration(3);access.creeperborn$width(64);access.creeperborn$height(64);access.creeperborn$view(2);
-        Vec3 at=fight.at().add(offset);d.snapTo(at.x,at.y,at.z);d.setTransformation(new Transformation(new Vector3f(),new Quaternionf(),new Vector3f((float)size.x,(float)size.y,(float)size.z),new Quaternionf()));
+        Vec3 at=fight.at().add(offset);d.snapTo(at.x,at.y,at.z);d.setTransformation(new Transformation(new Vector3f(),block==Blocks.DRAGON_HEAD?new Quaternionf().rotationY((float)Math.PI):new Quaternionf(),new Vector3f((float)size.x,(float)size.y,(float)size.z),new Quaternionf()));
         visualIds.add(d.getUUID());l.addFreshEntity(d);parts.add(new Part(d,offset,size,head,wing));
     }
     private static void build(ServerLevel l){
