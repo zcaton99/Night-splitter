@@ -71,7 +71,7 @@ public final class ThreeHeadedDragon {
         fight=new Fight();fight.id=UUID.randomUUID().toString();fight.dimension=l.dimension().identifier().toString();fight.participants=Math.max(1,Math.min(6,participants));
         fight.max=2700+900*(fight.participants-1);fight.health=fight.max;fight.headMax=180+60*(fight.participants-1);
         Arrays.fill(fight.headHealth,fight.headMax);fight.x=at.x;fight.y=at.y;fight.z=at.z;fight.active=true;
-        fight.body=proxy(l,at,12).getUUID().toString();for(int i=0;i<3;i++)fight.heads[i]=proxy(l,head(i),4).getUUID().toString();
+        fight.body=proxy(l,at,12).getUUID().toString();for(int i=0;i<3;i++)fight.heads[i]=proxy(l,head(i),6).getUUID().toString();
         build(l);wait=0;save();
     }
     private static Mob proxy(ServerLevel l,Vec3 at,int size){
@@ -80,7 +80,7 @@ public final class ThreeHeadedDragon {
         m.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);m.setHealth(1000);m.addTag("cb_dragon_part_"+fight.id);m.snapTo(at.x,at.y,at.z);
         if(!l.addFreshEntity(m))throw new IllegalStateException("Dragon hitbox could not spawn");return m;
     }
-    private static Vec3 head(int i){return fight.at().add((i==0?0:i==1?-4:4),3,-6-Math.abs(i-1));}
+    private static Vec3 head(int i){return fight.at().add((i==0?0:i==1?-4:4),5.5,-6-Math.abs(i-1));}
     private static void box(ServerLevel l,Block block,Vec3 offset,Vec3 size,int head,int wing){
         Display d;
         if(block==Blocks.DRAGON_HEAD){
