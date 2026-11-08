@@ -115,7 +115,7 @@ public final class ThreeHeadedDragon {
         }
         for(int i=0;i<3;i++)if(fight.headHealth[i]>0){
             double x=(i==0?0:i==1?-4:4);
-            box(l,Blocks.OBSIDIAN,new Vec3(x-.8,1,-5),new Vec3(1.6,2,4),i,0);
+            box(l,Blocks.OBSIDIAN,new Vec3(x-.8,1,-8-Math.abs(i-1)),new Vec3(1.6,4.5,7),i,0);
             box(l,Blocks.DRAGON_HEAD,new Vec3(x,4,-6.5-Math.abs(i-1)),new Vec3(3,3,3),i,0);
         }
     }
