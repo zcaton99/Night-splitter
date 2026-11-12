@@ -25,7 +25,7 @@ public final class PlayerReset {
         Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);
         PairPowers.forget(p);ClimatePowers.forget(p);DoorSpace.forget(p);DoorFruit.forget(p);
         Creeperborn.ABILITIES.forget(p);Mastery.forget(p);FlightReconciliation.forget(p.getUUID());
-        Azure.resetGrace(p);Paw.resetGrace(p);Tremor.resetGrace(p);NaturePowers.resetGrace(p);
+        GasPowers.resetGrace(p);Azure.resetGrace(p);Paw.resetGrace(p);Tremor.resetGrace(p);NaturePowers.resetGrace(p);
         CelestialPowers.resetGrace(p);PairPowers.resetGrace(p);ClimatePowers.resetGrace(p);Phoenix.resetGrace(p);
         HolyBag.reset(p);
         for(String fruit:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(fruit)))FruitClaims.setOwner(fruit,null);

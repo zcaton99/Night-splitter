@@ -44,7 +44,7 @@ public final class FormCarry {
             if(HolyBag.unlocked(p)&&!pin.equals(active))HolyBag.removeTags(p,pin);
         }
     }
-    private static void clearGrace(Player p,String f){switch(f){case "azure"->Azure.resetGrace(p);case "paw"->Paw.resetGrace(p);case "tremor"->Tremor.resetGrace(p);case "tree","petal"->NaturePowers.resetGrace(p);case "glint","straw","flame","buddha"->CelestialPowers.resetGrace(p);case "love","sand"->PairPowers.resetGrace(p);case "ice","magma"->ClimatePowers.resetGrace(p);}}
+    private static void clearGrace(Player p,String f){switch(f){case "gas"->GasPowers.resetGrace(p);case "azure"->Azure.resetGrace(p);case "paw"->Paw.resetGrace(p);case "tremor"->Tremor.resetGrace(p);case "tree","petal"->NaturePowers.resetGrace(p);case "glint","straw","flame","buddha"->CelestialPowers.resetGrace(p);case "love","sand"->PairPowers.resetGrace(p);case "ice","magma"->ClimatePowers.resetGrace(p);}}
     private static String family(String f){return switch(f){case "fox","axolotl"->"zoan";case "tree","petal"->"nature";case "glint","straw","flame","buddha"->"celestial";case "ice","magma"->"climate";case "love","sand"->"pair";default->f;};}
     public static void useSelected(Player p){
         if(!p.entityTags().contains("cb_mode_fruit"))return;String selected=attacks(p);if(selected.isEmpty())return;
