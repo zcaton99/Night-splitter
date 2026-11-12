@@ -81,7 +81,7 @@ public final class HolyBag {
         String f=active(p);int i=known.indexOf(f);
         return select(p,!p.entityTags().contains("cb_mode_fruit")&&i>=0?f:known.get((i+1)%known.size()));
     }
-    public static void died(Player p) { Dark.stopForms(p);snapshot(p);FormCarry.drop(p);WorldJson.write(path,data); }
+    public static void died(Player p) { FormCarry.cancel(p);WorldJson.write(path,data); }
     public static void show(Player p) {
         if(!unlocked(p)){p.sendSystemMessage(Component.literal("Earn the Holy Bag by defeating the Three-Headed Dragon."));return;}
         snapshot(p);p.sendSystemMessage(Component.literal("Holy Bag — permanent collection, retained on death. Active: "+active(p)));
