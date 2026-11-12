@@ -19,7 +19,7 @@ public final class PlayerReset {
     public static void apply(Player p) {
         // Restore saved movement/game mode before deleting the tags used for recovery.
         FormCarry.cancel(p);
-        TimePowers.forget(p);ZoanPowers.forget(p);CelestialPowers.forget(p);NaturePowers.forget(p);
+        GasPowers.forget(p);TimePowers.forget(p);ZoanPowers.forget(p);CelestialPowers.forget(p);NaturePowers.forget(p);
         Azure.forget(p);Rubber.forget(p);Phoenix.forget(p);Lightning.forget(p);
         Dark.resetCaptures(p);Dark.forget(p);Op.forget(p);Hearts.reset(p);
         Gravity.forget(p);StringFruit.forget(p);Paw.forget(p);Tremor.forget(p);

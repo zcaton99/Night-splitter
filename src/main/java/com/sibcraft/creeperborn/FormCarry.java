@@ -15,11 +15,13 @@ public final class FormCarry {
         if(Azure.form(p)>0)forms.add("azure");
         String nature=NaturePowers.formFruit(p);if(!nature.isEmpty())forms.add(nature);
         String celestial=CelestialPowers.formFruit(p);if(!celestial.isEmpty())forms.add(celestial);
+        if(GasPowers.body(p)||GasPowers.veil(p))forms.add("gas");
         if(Rubber.gear(p))forms.add("rubber");if(Phoenix.form(p)||Phoenix.wing(p))forms.add("phoenix");
         if(Lightning.storm(p))forms.add("lightning");if(ClimatePowers.cloaked(p))forms.add("magma");if(Dark.mantle(p))forms.add("dark");
         return forms;
     }
     private static void stop(Player p,String f){switch(f){
+        case "gas"->GasPowers.forget(p);
         case "fox","axolotl"->{if(ZoanPowers.formFruit(p).equals(f))ZoanPowers.forget(p);}
         case "tree","petal"->{if(NaturePowers.formFruit(p).equals(f))NaturePowers.forget(p);}
         case "glint","straw","flame","buddha"->{if(CelestialPowers.formFruit(p).equals(f))CelestialPowers.forget(p);}
@@ -32,7 +34,7 @@ public final class FormCarry {
         if(forms.contains(active))pin=active;else if(!forms.contains(pin))pin=forms.isEmpty()?"":forms.getFirst();
         if(pin.isEmpty()){held.remove(p.getUUID());Dark.stopForms(p);return;}
         held.put(p.getUUID(),pin);for(String f:forms)if(!f.equals(pin))stop(p,f);
-        TimePowers.cancelInput(p);ZoanPowers.cancelInput(p);CelestialPowers.cancelInput(p);NaturePowers.cancelInput(p);LuffyPowers.cancelInput(p);Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Azure.cancelInput(p);ClimatePowers.cancelInput(p);PairPowers.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);StringFruit.cancelInput(p);Gravity.cancelInput(p);Op.cancelInput(p);
+        GasPowers.cancelInput(p);TimePowers.cancelInput(p);ZoanPowers.cancelInput(p);CelestialPowers.cancelInput(p);NaturePowers.cancelInput(p);LuffyPowers.cancelInput(p);Rubber.cancelInput(p);Phoenix.cancelInput(p);Lightning.cancelInput(p);Dark.cancelInput(p);Azure.cancelInput(p);ClimatePowers.cancelInput(p);PairPowers.cancelInput(p);Paw.cancelInput(p);Tremor.cancelInput(p);StringFruit.cancelInput(p);Gravity.cancelInput(p);Op.cancelInput(p);
     }
     public static void tick(Player p){
         String pin=held(p);if(pin.isEmpty())return;
@@ -48,7 +50,7 @@ public final class FormCarry {
         if(!p.entityTags().contains("cb_mode_fruit"))return;String selected=attacks(p);if(selected.isEmpty())return;
         replacing(p,selected);Set<String> old=pending.remove(p.getUUID());if(old==null)return;
         for(String f:old)if(!family(f).equals(family(selected))){switch(f){
-            case "time"->TimePowers.forget(p);case "fox","axolotl"->ZoanPowers.forget(p);
+            case "gas"->GasPowers.forget(p);case "time"->TimePowers.forget(p);case "fox","axolotl"->ZoanPowers.forget(p);
             case "tree","petal"->NaturePowers.forget(p);case "glint","straw","flame","buddha"->CelestialPowers.forget(p);
             case "ice","magma"->ClimatePowers.forget(p);case "love","sand"->PairPowers.forget(p);
             case "azure"->Azure.forget(p);case "rubber"->Rubber.forget(p);case "phoenix"->{Phoenix.forget(p);Phoenix.stopBlessings(p);}

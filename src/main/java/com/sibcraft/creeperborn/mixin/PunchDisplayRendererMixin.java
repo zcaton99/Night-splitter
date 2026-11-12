@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PunchDisplayRendererMixin {
     @Inject(method="extractRenderState(Lnet/minecraft/world/entity/Display$BlockDisplay;Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;F)V",at=@At("TAIL"))
     private void creeperborn$extractSkin(Display.BlockDisplay display,BlockDisplayEntityRenderState state,float partial,CallbackInfo ci){
+        ((BoltVisualState)state).creeperborn$gasKind(GasRenderer.kind(display.getCustomName()==null?"":display.getCustomName().getString()));
         ((BoltVisualState)state).creeperborn$time(TimeRenderer.extract(display));ZoanRenderer.followClaw(display,state,partial);RasenganRenderer.follow(display,state,partial);
         var luffyClient=Minecraft.getInstance();String luffyName=display.getCustomName()==null?"":display.getCustomName().getString();boolean rearWindup=LuffyRenderer.hideWindup(luffyName,luffyClient.player==null?null:luffyClient.player.getUUID(),luffyClient.options.getCameraType().isFirstPerson());((BoltVisualState)state).creeperborn$celestialKind(rearWindup?-1:CelestialRenderer.kind(luffyName));
         String natureName=display.getCustomName()==null?"":display.getCustomName().getString();((BoltVisualState)state).creeperborn$natureKind(NatureRenderer.kind(natureName));((BoltVisualState)state).creeperborn$naturePalette(NatureRenderer.palette(natureName));
@@ -53,6 +54,7 @@ public abstract class PunchDisplayRendererMixin {
     }
     @Inject(method="submitInner(Lnet/minecraft/client/renderer/entity/state/BlockDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V",at=@At("HEAD"),cancellable=true)
     private void creeperborn$submitArm(BlockDisplayEntityRenderState state,PoseStack poses,SubmitNodeCollector collector,int light,float partial,CallbackInfo ci){
+        int gas=((BoltVisualState)state).creeperborn$gasKind();if(gas>0){GasRenderer.submit(gas,state.ageInTicks,poses,collector);ci.cancel();return;}
         var time=((BoltVisualState)state).creeperborn$time();if(time!=null){TimeRenderer.submit(time,state.ageInTicks,poses,collector);ci.cancel();return;}
         int celestial=((BoltVisualState)state).creeperborn$celestialKind();if(celestial<0){ci.cancel();return;}if(celestial>0){CelestialRenderer.submit(celestial,state.ageInTicks,poses,collector);ci.cancel();return;}
         int natureKind=((BoltVisualState)state).creeperborn$natureKind();if(natureKind>0){NatureRenderer.submit(natureKind,((BoltVisualState)state).creeperborn$naturePalette(),state.ageInTicks,poses,collector);ci.cancel();return;}

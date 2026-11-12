@@ -32,7 +32,7 @@ public abstract class RubberDamageMixin {
         if(com.sibcraft.creeperborn.ClimatePowers.immune((LivingEntity)(Object)this,source)){cir.setReturnValue(false);return;}
         if(com.sibcraft.creeperborn.PairPowers.immune((LivingEntity)(Object)this,source)||com.sibcraft.creeperborn.Tremor.immune((LivingEntity)(Object)this,source)||com.sibcraft.creeperborn.Paw.immune((LivingEntity)(Object)this,source)||(Object)this instanceof Player paw&&com.sibcraft.creeperborn.Paw.guard(paw,source)){cir.setReturnValue(false);return;}
         // Zero damage alone still enters vanilla's hurt sound, animation and knockback path.
-        if((Object)this instanceof Player p&&(Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)||Lightning.immune(p,source)||com.sibcraft.creeperborn.Gravity.immune(p,source)||com.sibcraft.creeperborn.StringFruit.immune(p,source)))cir.setReturnValue(false);
+        if((Object)this instanceof Player p&&(com.sibcraft.creeperborn.GasPowers.immune(p,source)||Rubber.masteryImmune(p,source)||Phoenix.immune(p,source)||Lightning.immune(p,source)||com.sibcraft.creeperborn.Gravity.immune(p,source)||com.sibcraft.creeperborn.StringFruit.immune(p,source)))cir.setReturnValue(false);
     }
     @org.spongepowered.asm.mixin.Unique private float creeperborn$armorIncoming;
     @Inject(method="getDamageAfterArmorAbsorb",at=@At("HEAD"))
@@ -42,6 +42,7 @@ public abstract class RubberDamageMixin {
     @ModifyVariable(method="hurtServer",at=@At("HEAD"),argsOnly=true,ordinal=0)
     private float creeperborn$rubberDamage(float amount,ServerLevel level,DamageSource source,float original){
         if((Object)this instanceof Player climate&&com.sibcraft.creeperborn.ClimatePowers.piercing(climate,source))return com.sibcraft.creeperborn.ClimatePowers.damage(climate,source,amount);
+        if((Object)this instanceof Player gas)amount=com.sibcraft.creeperborn.GasPowers.damage(gas,source,amount);
         if((Object)this instanceof Player zoan)amount=com.sibcraft.creeperborn.ZoanPowers.damage(zoan,source,amount);
         if((Object)this instanceof Player luffy)amount=com.sibcraft.creeperborn.LuffyPowers.damage(luffy,source,amount);
         amount=com.sibcraft.creeperborn.CelestialPowers.damage((LivingEntity)(Object)this,source,amount);

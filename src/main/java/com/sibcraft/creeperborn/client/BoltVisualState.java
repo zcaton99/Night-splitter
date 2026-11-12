@@ -1,5 +1,6 @@
 package com.sibcraft.creeperborn.client;
 public interface BoltVisualState{
+    int creeperborn$gasKind();void creeperborn$gasKind(int value);
     TimeRenderer.Data creeperborn$time();void creeperborn$time(TimeRenderer.Data value);
     int creeperborn$celestialKind();void creeperborn$celestialKind(int value);
     int creeperborn$natureKind();void creeperborn$natureKind(int value);

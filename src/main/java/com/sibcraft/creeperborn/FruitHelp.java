@@ -7,6 +7,7 @@ public final class FruitHelp {
         String f=HolyBag.unlocked(p)?HolyBag.active(p):Dark.unlocked(p)?Dark.choice(p):Dark.ownedFruit(p);
         if(f==null||f.isEmpty())return "Find and consume a Creeper Fruit first.";
         String help=switch(f){
+            case "gas"->GasPowers.status(p);
             case "rubber"->LuffyPowers.status(p);
             case "fox","axolotl"->ZoanPowers.status(p,f);
             case "glint","straw","flame","buddha"->CelestialPowers.status(p,f);

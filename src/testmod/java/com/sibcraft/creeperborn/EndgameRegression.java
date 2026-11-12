@@ -18,11 +18,11 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
     private static void check(boolean value,String text){if(!value)throw new AssertionError(text);System.out.println("ENDGAME_CHECK: "+text);}
     private static Player player(ServerLevel level){return new Player(level,new GameProfile(UUID.randomUUID(),"NationTest")){@Override public GameType gameMode(){return GameType.SURVIVAL;}};}
     private static boolean eat(Player p,String f){var item=Relics.fruit(f);return switch(f){
-        case "time"->TimePowers.consume(p,item);case "fox","axolotl"->ZoanPowers.consume(p,item,f);
+        case "gas"->GasPowers.consume(p,item);case "time"->TimePowers.consume(p,item);case "fox","axolotl"->ZoanPowers.consume(p,item,f);
         case "rubber"->Rubber.consume(p,item);case "door"->DoorFruit.consume(p,item);case "phoenix"->Phoenix.consume(p,item);case "lightning"->Lightning.consume(p,item);case "dark"->Dark.consume(p,item);case "op"->Op.consume(p,item);case "gravity"->Gravity.consume(p,item);case "string"->StringFruit.consume(p,item);case "paw"->Paw.consume(p,item);case "tremor"->Tremor.consume(p,item);
         case "love","sand"->PairPowers.consume(p,item,f);case "ice","magma"->ClimatePowers.consume(p,item,f);case "azure"->Azure.consume(p,item);case "tree","petal"->NaturePowers.consume(p,item,f);case "glint","straw","flame","buddha"->CelestialPowers.consume(p,item,f);default->false;};}
     static void run(MinecraftServer server){
-        ServerLevel l=server.overworld();Player p=player(l);
+        ServerLevel l=server.overworld();GasRegression.run(l,l.getMaxY()-40);Player p=player(l);
         for(Element e:Element.values())Progress.consume(p,Relics.heart(e));
         List<Villager> all=new ArrayList<>();
         for(Element e:Element.values()){
@@ -93,7 +93,7 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         HolyBag.died(owner);HolyBag.load(server);FruitClaims.load(server);
         for(String fruit:Dark.FRUITS){HolyBag.select(owner,fruit);check(Dark.fruitTier(owner,fruit)==3&&Dark.FRUITS.stream().filter(fruitId->owner.entityTags().contains("cb_fruit_"+fruitId)).allMatch(fruitId->fruitId.equals(fruit)||FormCarry.carries(owner,fruitId)),"All-fruit collection restores only "+fruit+" at its own mastery");}
         owner.hurtServer(l,l.damageSources().genericKill(),10000);
-        check(!owner.isAlive()&&HolyBag.unlocked(owner)&&Dark.FRUITS.stream().allMatch(fruit->owner.getUUID().equals(FruitClaims.owner(fruit))),"Actual player death retains all 24 fruit claims");
+        check(!owner.isAlive()&&HolyBag.unlocked(owner)&&Dark.FRUITS.stream().allMatch(fruit->owner.getUUID().equals(FruitClaims.owner(fruit))),"Actual player death retains all 25 fruit claims");
         for(String fruit:Dark.FRUITS)FruitClaims.setOwner(fruit,null);
         all.forEach(Entity::discard);ThreeHeadedDragon.clear();ThreeHeadedDragon.load(server);
         HotfixRegression.run(server);System.out.println("CREEPERBORN_ENDGAME_REGRESSION_PASSED");

@@ -19,7 +19,7 @@ public final class CreeperBadges {
             {"tremor","Tremor-Tremor"},{"love","Love-Love"},{"sand","Sand-Sand"},{"ice","Ice-Ice"},
             {"magma","Magma-Magma"},{"azure","Azure Dragon"},{"tree","Tree-Tree"},{"petal","Petal-Petal"},
             {"glint","Glint-Glint"},{"straw","Straw-Straw"},{"flame","Flame-Flame"},{"buddha","Golden Buddha"},
-            {"fox","Nine-Tailed Fox"},{"axolotl","Axolotl"},{"time","Time-Time"}};
+            {"fox","Nine-Tailed Fox"},{"axolotl","Axolotl"},{"time","Time-Time"},{"gas","Gas-Gas"}};
         for (String[] f : fruits) result.put(f[1] + " Fruitborn Creeper", "fruit_" + f[0]);
         return Map.copyOf(result);
     }
@@ -53,7 +53,7 @@ public final class CreeperBadges {
         poses.popPose();
     }
     public static void validate() {
-        if (LABELS.size() != 28) throw new AssertionError("Every special creeper needs a chest icon");
+        if (LABELS.size() != com.sibcraft.creeperborn.Dark.FRUITS.size()+Element.values().length) throw new AssertionError("Every special creeper needs a chest icon");
         for (String fruit : com.sibcraft.creeperborn.Dark.FRUITS) if (!LABELS.containsValue("fruit_"+fruit)) throw new AssertionError("Missing chest icon: " + fruit);
         for (Element element : Element.values()) if (!LABELS.containsValue("element_"+element.key())) throw new AssertionError("Missing element chest icon: " + element);
     }
