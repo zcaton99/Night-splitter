@@ -17,9 +17,12 @@ final class HotfixRegression {
         l.setBlock(new BlockPos(-8,130,24),Blocks.WATER.defaultBlockState(),3);
         check(!WaterRules.submerged(p)&&WaterRules.suppressed(p),"Surface water suppresses Fox even with eyes above water");
         WaterRules.apply(p);check(p.getDeltaMovement().y<0&&ZoanPowers.flags(p)==0,"Fox sinks and transformation ends when body enters water");
+        l.setBlock(new BlockPos(-8,131,24),Blocks.WATER.defaultBlockState(),3);l.setBlock(new BlockPos(-8,132,24),Blocks.WATER.defaultBlockState(),3);
+        check(WaterRules.submerged(p)&&!p.canBreatheUnderwater(),"Unmastered Fox has no underwater-breathing exemption");
+        p.baseTick();p.setAirSupply(-19);p.damageCooldownTime=0;float beforeDrowning=p.getHealth();p.baseTick();check(p.getHealth()<beforeDrowning,"Unmastered Fox takes real drowning damage");
         for(Element e:Element.values())Mastery.grant(p,e,3);
         check(WaterRules.protectedWater(p)&&!WaterRules.suppressed(p),"All four mastered elements protect Fox at the water surface");
-        FruitClaims.releaseOnDeath(p);l.setBlock(new BlockPos(-8,130,24),Blocks.AIR.defaultBlockState(),3);
+        FruitClaims.releaseOnDeath(p);for(int y=130;y<=132;y++)l.setBlock(new BlockPos(-8,y,24),Blocks.AIR.defaultBlockState(),3);
         ThreeHeadedDragon.begin(l,new Vec3(-8,140,24),1);var f=ThreeHeadedDragon.state();
         var body=(LivingEntity)l.getEntity(UUID.fromString(f.body));check(body.getName().getString().equals("Three-Headed Dragon"),"Dragon damage source has the correct name");
         p.snapTo(-8,140,24);p.setHealth(20);p.damageCooldownTime=0;boolean hurt=p.hurtServer(l,l.damageSources().mobAttack(body),100);
