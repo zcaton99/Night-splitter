@@ -64,6 +64,7 @@ public final class Mastery {
         set(p, "cb_uses_" + e.key() + "_", tier == 3 ? 40 : tier == 2 ? 10 : 0);
         set(p, "cb_time_" + e.key() + "_", tier == 3 ? 1200 : tier == 2 ? 300 : 0);
     }
+    public static void forget(Player p){String prefix=p.getUUID()+":";lastCredit.keySet().removeIf(k->k.startsWith(prefix));lastPosition.remove(p.getUUID());recentAction.remove(p.getUUID());}
     public static void clear() { lastCredit.clear(); lastPosition.clear(); recentAction.clear(); }
 }
 

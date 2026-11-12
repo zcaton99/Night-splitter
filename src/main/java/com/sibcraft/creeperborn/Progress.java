@@ -41,9 +41,7 @@ public final class Progress {
         if (!kind.startsWith("heart:") || stack.isEmpty() || player.isSpectator()) return false;
         Element e = Element.parse(kind.substring(6));
         if (e == null || unlocked(player, e)) return false;
-        boolean first = selected(player) == null;
         player.addTag("cb_unlock_" + e.key()); select(player, e); stack.shrink(1);
-        if (first) give(player, Relics.focus());
         if (all(player) && !player.entityTags().contains("cb_trident_claimed")) {
             give(player, Relics.trident()); player.addTag("cb_trident_claimed");
         }

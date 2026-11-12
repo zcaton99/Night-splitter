@@ -132,10 +132,10 @@ public final class Creeperborn implements ModInitializer {
             } else if (kind.startsWith("heart:")) {
                 say(player, Progress.consume(player, stack) ? "Element unlocked! "+Mastery.elements(player)+"/4 | elemental strength "+Mastery.elementalPercent(player)+"% — R changes elements; Z/X/C moves."
                     : "You already know this element. Keep the heart for a friend.");
-            } else if (kind.equals("focus") || kind.equals("trident")) {
+            } else if (kind.equals("trident")) {
                 if (player.isShiftKeyDown()) {
                     Element e = Progress.cycle(player); say(player, e == null ? "No elements unlocked." : "Selected " + e.title);
-                } else if (kind.equals("focus")) say(player, ABILITIES.cast(player));
+                }
                 else say(player, "Use on an adult villager to grant the selected element. Sneak-use to change element.");
             }
             return InteractionResult.SUCCESS;
@@ -167,7 +167,7 @@ public final class Creeperborn implements ModInitializer {
         });
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> {
             var root = Commands.literal("creeperborn").executes(ctx -> {
-                ctx.getSource().sendSuccess(() -> Component.literal("Creeperborn: /creeperborn element earth|water|fire|air; /creeperborn move 1|2|3; /creeperborn cast; /creeperborn status. Use your focus to cast; sneak-use to cycle elements."), false);
+                ctx.getSource().sendSuccess(() -> Component.literal("Creeperborn: /creeperborn element earth|water|fire|air; /creeperborn move 1|2|3; /creeperborn cast; /creeperborn status. R changes elements; Z/X/C cast moves."), false);
                 return 1;
             });
             root.then(Commands.literal("nations").executes(ctx->{Nations.show(ctx.getSource().getPlayerOrException());return 1;}));
@@ -179,6 +179,9 @@ public final class Creeperborn implements ModInitializer {
                 nationCommand.then(command);
             }
             root.then(nationCommand);
+            root.then(Commands.literal("reset").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+                .executes(ctx->{var p=ctx.getSource().getPlayerOrException();PlayerReset.apply(p);chat(p,"Creeperborn reset: elements, fruits, Holy Bag, mastery and power items cleared. Ordinary gear and XP kept.");return 1;})
+                .then(Commands.argument("player",net.minecraft.commands.arguments.EntityArgument.player()).executes(ctx->{var p=net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx,"player");PlayerReset.apply(p);ctx.getSource().sendSuccess(()->Component.literal("Creeperborn reset for "+p.getName().getString()+". Ordinary gear and XP kept."),true);return 1;})));
             root.then(Commands.literal("formoff").executes(ctx->{var p=ctx.getSource().getPlayerOrException();FormCarry.cancel(p);chat(p,"Transformation ended.");return 1;}));
             root.then(Commands.literal("testholybag").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).executes(ctx->{Progress.give(ctx.getSource().getPlayerOrException(),Relics.holyBag());return 1;}));
             root.then(Commands.literal("testdragon").requires(source->source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)).executes(ctx->{var p=ctx.getSource().getPlayerOrException();if(ThreeHeadedDragon.active())return 0;ThreeHeadedDragon.begin((ServerLevel)p.level(),p.position().add(0,6,24),1);return 1;}));
@@ -191,7 +194,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=TimePowers.selected(p)?"Time-Time":!ZoanPowers.current(p).isEmpty()?ZoanPowers.current(p):CelestialPowers.selected(p,"flame")?"Flame-Flame":CelestialPowers.selected(p,"buddha")?"Golden Buddha":CelestialPowers.selected(p,"glint")?"Glint-Glint":CelestialPowers.selected(p,"straw")?"Straw-Straw":NaturePowers.selected(p,"tree")?"Tree Tree":NaturePowers.selected(p,"petal")?"Petal Petal":Azure.selected(p)?"Azure Dragon":ClimatePowers.selected(p,"ice")?"Ice-Ice":ClimatePowers.selected(p,"magma")?"Magma-Magma":PairPowers.selected(p,"love")?"Love-Love":PairPowers.selected(p,"sand")?"Sand-Sand":Tremor.selected(p)?"Tremor":Paw.selected(p)?"Paw-Paw":StringFruit.selected(p)?"String":Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.97 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.98 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);chat(p,TimePowers.status(p));for(String f:ZoanPowers.FRUITS)chat(p,ZoanPowers.status(p,f));
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
@@ -236,19 +239,6 @@ public final class Creeperborn implements ModInitializer {
                 })));
             }
             root.then(use); root.then(mastery);
-            root.then(Commands.literal("focus").executes(ctx -> {
-                ServerPlayer p = ctx.getSource().getPlayerOrException();
-                if (Progress.selected(p) == null) { say(p, "Unlock an element first."); return 0; }
-                for (int i = 0; i < p.getInventory().getContainerSize(); i++)
-                    if (Relics.kind(p.getInventory().getItem(i)).equals("focus")) { say(p, "You already carry a focus."); return 0; }
-                for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
-                    ItemStack item = p.getInventory().getItem(i);
-                    if (item.is(net.minecraft.world.item.Items.STICK) && Relics.kind(item).isEmpty()) {
-                        item.shrink(1); Progress.give(p, Relics.focus()); return 1;
-                    }
-                }
-                say(p, "Carry one plain stick to replace your focus."); return 0;
-            }));
             root.then(Commands.literal("guardpost").executes(ctx -> {
                 ServerPlayer p = ctx.getSource().getPlayerOrException(); Villager v = nearestOwned(p);
                 if (v == null) { say(p, "Stand within six blocks of one of your guardians."); return 0; }

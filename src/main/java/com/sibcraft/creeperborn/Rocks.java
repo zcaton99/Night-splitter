@@ -6,6 +6,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,6 +35,7 @@ public final class Rocks {
         return guard == null ? 0 : Math.max(0, guard.expires() - p.level().getGameTime());
     }
     public boolean guarded(Player p) { return guards.containsKey(p.getUUID()); }
+    public void forget(Player p){for(Boulder b:List.copyOf(boulders))if(b.caster==p){b.visual.discard();boulders.remove(b);}Guard g=guards.remove(p.getUUID());if(g!=null)g.visuals().forEach(Entity::discard);}
     public void clear() {
         boulders.forEach(b -> b.visual.discard()); boulders.clear();
         guards.values().forEach(g -> g.visuals().forEach(v -> v.discard())); guards.clear();

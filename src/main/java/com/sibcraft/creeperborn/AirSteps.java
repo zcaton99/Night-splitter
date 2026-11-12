@@ -21,5 +21,6 @@ public final class AirSteps {
     public long recoverySeconds(Player player,long now){
         Burst b=bursts.get(player.getUUID());return b==null?0:Math.max(0,(b.ready-now+19)/20);
     }
+    public void forget(Player p){bursts.remove(p.getUUID());}
     public void clear(){bursts.clear();}
 }

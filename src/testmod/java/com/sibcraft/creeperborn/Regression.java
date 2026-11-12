@@ -1598,7 +1598,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
             ItemStack duplicate = Relics.heart(e);
             check(!Progress.consume(p, duplicate) && duplicate.getCount() == 1, "Duplicates stay available for trading");
         }
-        check(Progress.all(p) && count(p, "trident") == 1 && count(p, "focus") == 1, "One focus and one all-elements trident");
+        check(Progress.all(p) && count(p, "trident") == 1 && count(p, "focus") == 0, "Hearts grant no focus; all four elements still grant exactly one trident");
         check(Mastery.tier(p, Element.EARTH) == 1 && !Mastery.allowed(p, Element.EARTH, 1), "Heart starts with basic move only");
         check(Mastery.tier(9, 300) == 1 && Mastery.tier(10, 299) == 1 && Mastery.tier(10, 300) == 2,
             "Second move requires both use count and active time");

@@ -1,23 +1,23 @@
-# Creeperborn — 0.1.0-alpha.13
+# Creeperborn — 0.1.0-alpha.98
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 
 ## First alpha scope
 
-Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0+26.3**. Install the JAR on the server or in singleplayer. Install the same JAR on a Fabric client to get the optional combat keys. Vanilla clients can still connect and use focus/commands. No resource pack is required. Test in a copied world. This prototype is not yet published to Modrinth.
+Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+**, Fabric API **0.161.0+26.3**. Install the JAR on the server or in singleplayer. Install the same JAR on a Fabric client to get the optional combat keys. Vanilla clients can still connect and use commands. No resource pack is required. Test in a copied world. This prototype is not yet published to Modrinth.
 
 - **2%** of unexamined vanilla creepers become a random Earth, Water, Fire, or Air creeper when loaded. Each creeper is checked only once; unloading/reloading does not reroll it. Existing unexamined creepers can also convert. Night Splitters' marked creepers are excluded.
 - Elemental creepers have visible names/particles and a short elemental attack every six seconds against their vanilla target within ten blocks. They retain normal creeper explosions. Hearts drop once only when a player kills one before it explodes.
 - Right-click a marked heart to consume it and permanently unlock that element's basic move. Duplicate hearts are not consumed, so they can be shared. Element unlocks and mastery counters survive logout and player respawn.
-- The first heart grants an **Elemental Focus** (named stick). Collecting all four grants one **Elemental Trident**. Vanilla items with matching names do not grant powers.
-- Right-click the focus to cast. Sneak-right-click it or the trident to cycle unlocked elements. `/creeperborn element earth|water|fire|air` selects directly. `/creeperborn move 1|2|3` selects a move. `/creeperborn cast` is an alternative to focus use.
+- The first heart unlocks its element without granting a casting item. Collecting all four grants one **Elemental Trident**. Vanilla items with matching names do not grant powers.
+- Use **R** to cycle unlocked elements and **Z/X/C** to cast. Sneak-right-click the trident to cycle unlocked elements. `/creeperborn element earth|water|fire|air` selects directly. `/creeperborn move 1|2|3` selects a move. `/creeperborn cast` casts the selected move.
 - All player attacks target hostile mobs only. No PvP, friendly fire, terrain removal, placed fire, or permanent barriers in this alpha.
 
 ## Combat controls and mastery
 
 Press **B** to toggle elemental combat (starts OFF). **R** cycles through unlocked elements in Earth → Water → Fire → Air order; **Shift + R** cycles backward. **Z/X/C** cast moves 1/2/3 for the selected element. The server selects the element and shows its name and move list onscreen when cycling. Normal movement, jumping, sprinting, weapon attacks, and offhand swap remain available. Hold **X** with Air selected to repeat Air Step. **V** is free for voice chat. All five bindings can be changed in Options → Controls → Key Binds → Creeperborn Combat; resolve conflicts with other mods there. Keys are ignored while menus/chat are open. The mode resets OFF after disconnecting.
 
-Combat keys send a small custom packet to the server, not chat commands. The server validates element unlocks, mastery, cooldowns, and packet bounds. You do not need to hold a focus when using combat keys, so you can keep a sword/shield equipped. Focus/command activation remains available without the client component.
+Combat keys send a small custom packet to the server, not chat commands. The server validates element unlocks, mastery, cooldowns, and packet bounds. No casting item is required, so you can keep a sword/shield equipped. Command activation remains available without the client component.
 
 Each element progresses separately. A heart grants **tier 1 / move 1**. **Move 2** unlocks at **10 meaningful uses AND 5 active minutes** with that element selected. **Move 3** unlocks at **40 uses AND 20 active minutes**. Active time counts while moving or shortly after a meaningful cast; standing AFK does not accumulate it. Hostile hits, successful rock blocks, and actual healing count as meaningful use, at most once per second per element. Empty casts and Air Step do not grant use credit. Repeated Air Step can count as active movement, but cannot satisfy the combat-use requirement on its own. `/creeperborn status` shows selected-element uses, active seconds, mastery tier, and current environmental power.
 
@@ -61,7 +61,9 @@ Guardians use a ranged elemental strike (4 damage, 3s cooldown, line of sight, 1
 
 ## Commands and testing
 
-Ordinary players can use status, element, move, cast, focus, guardpost and release. Test item/mob commands require operator permission.
+**Operator testing reset:** `/creeperborn reset` clears your own elements, mastery, fruits, permanent Holy Bag collection, active forms, power effects and Creeperborn power items in your carried inventory. `/creeperborn reset <player>` targets one online player and also works from the server console. Ordinary inventory items, XP, game mode, other players and shared village/dragon progression are preserved. Released fruits can spawn again. This intentionally erases progression, including the normally death-proof Holy Bag. Existing old Elemental Focus sticks are retired; no new focus is granted or craftable through commands.
+
+Ordinary players can use status, element, move, cast, guardpost and release. Test item/mob commands require operator permission.
 
 ```
 /creeperborn status
@@ -75,10 +77,9 @@ Ordinary players can use status, element, move, cast, focus, guardpost and relea
 /creeperborn testheart air
 /creeperborn move 1
 /creeperborn cast
-/creeperborn focus
 ```
 
-Test creepers spawn five blocks east if there is collision-free space. Their explosions can damage terrain: use a disposable test area. `/focus` consumes one plain stick to replace a lost focus if an element is unlocked and no focus is already in your inventory. The progression trident is granted once; protect it like other valuable gear.
+Test creepers spawn five blocks east if there is collision-free space. Their explosions can damage terrain: use a disposable test area. The progression trident is granted once; protect it like other valuable gear.
 
 Configuration: `config/creeperborn.json`, `naturalCreepers` (true/false) and `elementalChance` (0–1, default 0.02). Restart after editing. Names/particle visuals use vanilla assets. The public Minecraft display is English for this first prototype.
 

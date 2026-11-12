@@ -83,12 +83,6 @@ public final class Relics {
         ItemStack item = new ItemStack(Items.CHORUS_FRUIT); mark(item,"fruit:rubber");
         item.set(DataComponents.CUSTOM_NAME, Component.literal("Rubber Fruit — right-click to consume")); return item;
     }
-    public static ItemStack focus() {
-        ItemStack item = new ItemStack(Items.STICK);
-        mark(item, "focus");
-        item.set(DataComponents.CUSTOM_NAME, Component.literal("Elemental Focus — sneak-use to change element"));
-        return item;
-    }
     public static ItemStack trident() {
         ItemStack item = new ItemStack(Items.TRIDENT);
         mark(item, "trident");

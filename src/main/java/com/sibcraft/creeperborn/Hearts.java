@@ -160,6 +160,7 @@ public final class Hearts {
         removed+=removeStale(p.containerMenu.getCarried());
         return removed;
     }
+    public static void reset(Player p){String id=p.getUUID().toString();if(links.values().removeIf(l->l.owner.equals(id)||l.victim.equals(id)))save();forget(p);}
     public static void forget(Player p){crushing.remove(p.getUUID());squeezeReady.remove(p.getUUID());}
     public static void clear(){links.clear();squeezeReady.clear();crushing.clear();server=null;path=null;}
 }

@@ -45,7 +45,16 @@ final class HotfixRegression {
         ZoanPowers.cast(p,"fox",1,20);check(ZoanPowers.mode(p)>0&&!Rubber.gear(p)&&p.getAbilities().flying,"A new Fox cloak replaces Gear 5 and restores its own flight");
         HolyBag.select(p,"rubber");HolyBag.died(p);check(FormCarry.held(p).isEmpty()&&!ZoanPowers.unlocked(p,"fox")&&Rubber.selected(p)&&HolyBag.unlocked(p),"Death clears carried fruit flags and keeps the selected kit and permanent collection");
         FormCarry.cancel(p);check(ZoanPowers.mode(p)==0&&!Rubber.gear(p),"Explicit form cancellation clears carried transformations");
-        for(String fruit:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(fruit)))FruitClaims.setOwner(fruit,null);
+        p.getInventory().setItem(8,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,3));p.addTag("keep_vanilla_tag");p.giveExperienceLevels(7);int xp=p.experienceLevel;
+        Creeperborn.ABILITIES.rocks.guard(p,100);check(Creeperborn.ABILITIES.rocks.guarded(p),"Reset fixture has an active elemental guard");
+        PlayerReset.apply(p);
+        check(!HolyBag.unlocked(p)&&!FruitClaims.hasFruit(p)&&Mastery.elements(p)==0&&CombatNetwork.selection(p)==-1,"Reset removes elements, selected fruit and permanent Holy Bag");
+        check(!Creeperborn.ABILITIES.rocks.guarded(p)&&ZoanPowers.mode(p)==0&&!Rubber.gear(p)&&!p.getAbilities().mayfly,"Reset ends guards, forms and temporary flight");
+        check(p.getInventory().getItem(8).is(net.minecraft.world.item.Items.DIAMOND)&&p.getInventory().getItem(8).getCount()==3&&p.experienceLevel==xp&&p.entityTags().contains("keep_vanilla_tag"),"Reset preserves ordinary inventory, XP and unrelated tags");
+        HolyBag.save(server);HolyBag.load(server);FruitClaims.reconcile(p);check(!HolyBag.unlocked(p)&&!FruitClaims.hasFruit(p),"Cleared Holy Bag and claims stay cleared after ledger reload");
+        check(Progress.consume(p,Relics.heart(Element.EARTH))&&Mastery.tier(p,Element.EARTH)==1,"Reset player can restart normal elemental progression at tier one");
+        PlayerReset.apply(p);
+
         System.out.println("CREEPERBORN_HOTFIX_REGRESSION_PASSED");
     }
 }

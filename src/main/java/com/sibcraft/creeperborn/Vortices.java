@@ -17,6 +17,7 @@ public final class Vortices {
     }
     private final List<Swirl> active=new ArrayList<>();
     public int activeCount(){return active.size();}
+    public void forget(Player p){active.removeIf(s->s.owner==p);}
     public void clear(){active.clear();}
     public void start(Player owner,double power){
         if(!(owner.level() instanceof ServerLevel level))return;

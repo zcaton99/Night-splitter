@@ -91,5 +91,6 @@ public final class HolyBag {
         for(var p:server.getPlayerList().getPlayers())snapshot(p);
         WorldJson.write(path,data);
     }
+    public static void reset(Player p) { data.players.remove(p.getUUID().toString());WorldJson.write(path,data); }
     public static void clear() { data=new Data();path=null;FormCarry.clear(); }
 }

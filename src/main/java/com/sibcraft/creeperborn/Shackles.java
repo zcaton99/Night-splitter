@@ -41,5 +41,6 @@ public final class Shackles {
             b.target().setDeltaMovement(0,0,0);if(b.target() instanceof Mob mob)mob.getNavigation().stop();position(b);
         }
     }
+    public static void forget(Player p){for(Binding b:List.copyOf(bindings.values()))if(b.caster()==p||b.target()==p){b.slabs().forEach(Entity::discard);bindings.remove(b.target().getUUID());}}
     public static void clear(){bindings.values().forEach(b->b.slabs().forEach(Entity::discard));bindings.clear();}
 }

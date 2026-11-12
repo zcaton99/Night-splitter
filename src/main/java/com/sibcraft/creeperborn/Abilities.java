@@ -32,6 +32,7 @@ public final class Abilities {
     private final Map<UUID, Push> pushes = new HashMap<>();
     public double pushRemaining(LivingEntity target) { Push p = pushes.get(target.getUUID()); return p == null ? 0 : p.remaining; }
     public static double elementRadius(Player p,Element e,double base){return Mastery.harmony(p)?12.5:Mastery.tier(p,e)>=3?10:base;}
+    public void forget(Player p){cooldowns.remove(p.getUUID());moves.remove(p.getUUID());pushes.remove(p.getUUID());rocks.forget(p);Shackles.forget(p);vortices.forget(p);airSteps.forget(p);FireAnimations.forget(p);WaterAnimations.forget(p);}
     public void clear() { FireAnimations.clear(); WaterAnimations.clear(); cooldowns.clear(); moves.clear(); rocks.clear(); pushes.clear(); Shackles.clear(); vortices.clear(); airSteps.clear(); }
     public void tick() {
         rocks.tick(); Shackles.tick(); vortices.tick(); WaterAnimations.tick(); FireAnimations.tick();

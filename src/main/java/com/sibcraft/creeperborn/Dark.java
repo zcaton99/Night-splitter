@@ -328,6 +328,7 @@ public final class Dark{
         }
         p.removeTag(c.tag());return eat?"Captured power eaten at tier "+c.tier()+"! G switches your two powers.":"Fruit materialized!";
     }
+    public static void resetCaptures(Player p){for(Capture c:captures(p))if(c.token().equals(FruitClaims.owner(c.fruit())))FruitClaims.setOwner(c.fruit(),null);}
     public static void ownerDied(Player p){
         for(Capture c:captures(p))if(c.token().equals(FruitClaims.owner(c.fruit()))&&p.level() instanceof ServerLevel level){
             if(p.spawnAtLocation(level,Relics.captured(c.fruit(),c.token().toString(),c.tier()))!=null)p.removeTag(c.tag());
