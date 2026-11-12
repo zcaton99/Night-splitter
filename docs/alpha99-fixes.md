@@ -6,3 +6,5 @@
 - Glint flight now explicitly updates the server's player chunk tracking after accepted custom movement, so chunk streaming follows Light Body.
 
 Replace the JAR in both server and client mods folders with Minecraft closed and the server stopped. Test G at a large GUI scale, then use a new fruit while a prior form is carried. Test sustained Glint flight across chunks and the dragon's one-head final phase.
+
+Flight audit follow-up: Magma cloak, Ice Slide, nature grapple and Fox dash explicitly refresh server player chunk tracking after custom movement. Phoenix, Nine-Tails cloak and Gear 5 use vanilla flight abilities; String glide uses ordinary velocity/movement packets. Azure/Tree/Petal predicted flight already refreshes tracking through FlightReconciliation. The native multiplayer scenario additionally drives Magma and Ice past their starting view and checks client chunks and settled positions.
