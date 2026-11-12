@@ -118,6 +118,7 @@ public final class PairPowers {
     /** Death/disconnect also releases any restraint on the departing player. */
     public static void forget(Player p){stopOwned(p);for(Stone s:List.copyOf(stones.values()))if(s.target==p){releaseStone(s);stones.remove(s.target.getUUID());}Coffin c=coffins.get(p.getUUID());if(c!=null)endCoffin(c,false);}
 
+    static void resetGrace(Player p){landing.remove(p.getUUID());}
     public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Visual v:visuals.values())v.display().discard();states.clear();shots.clear();fields.clear();stones.clear();coffins.clear();visuals.clear();landing.clear();moving.clear();}
     public static String status(Player p,String fruit){return unlocked(p,fruit)?(fruit.equals("love")?"Love-Love":"Sand-Sand")+" tier "+tier(p,fruit)+"/3 | "+(fruit.equals("love")?"Z Kiss/Beam | X Kick/Arrows | C Heart Step/Stone Breaker":"Z Spada/Quicksand | X Sables/Storm | C Drift/Coffin Drain"):fruit+" locked";}
 }

@@ -352,5 +352,6 @@ public final class Phoenix {
         }
     }
     public static void forget(Player p){end(p);states.remove(p.getUUID());sent.remove(p.getUUID());}
+    static void resetGrace(Player p){blessings.values().removeIf(b->b.owner==p||b.target==p);}
     public static void clear(){for(State s:List.copyOf(states.values()))end(s.owner);states.clear();sent.clear();blessings.clear();}
 }

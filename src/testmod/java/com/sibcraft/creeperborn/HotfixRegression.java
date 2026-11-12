@@ -51,6 +51,7 @@ final class HotfixRegression {
         check(!HolyBag.unlocked(p)&&!FruitClaims.hasFruit(p)&&Mastery.elements(p)==0&&CombatNetwork.selection(p)==-1,"Reset removes elements, selected fruit and permanent Holy Bag");
         check(!Creeperborn.ABILITIES.rocks.guarded(p)&&ZoanPowers.mode(p)==0&&!Rubber.gear(p)&&!p.getAbilities().mayfly,"Reset ends guards, forms and temporary flight");
         check(p.getInventory().getItem(8).is(net.minecraft.world.item.Items.DIAMOND)&&p.getInventory().getItem(8).getCount()==3&&p.experienceLevel==xp&&p.entityTags().contains("keep_vanilla_tag"),"Reset preserves ordinary inventory, XP and unrelated tags");
+        p.setHealth(20);p.damageCooldownTime=0;check(p.hurtServer(l,p.damageSources().fall(),2)&&p.getHealth()<20,"Reset player takes ordinary fall damage without fruit immunities");
         HolyBag.save(server);HolyBag.load(server);FruitClaims.reconcile(p);check(!HolyBag.unlocked(p)&&!FruitClaims.hasFruit(p),"Cleared Holy Bag and claims stay cleared after ledger reload");
         check(Progress.consume(p,Relics.heart(Element.EARTH))&&Mastery.tier(p,Element.EARTH)==1,"Reset player can restart normal elemental progression at tier one");
         PlayerReset.apply(p);

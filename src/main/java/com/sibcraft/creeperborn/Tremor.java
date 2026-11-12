@@ -142,6 +142,7 @@ public final class Tremor {
     public static void tick(MinecraftServer server){for(var p:server.getPlayerList().getPlayers())if(unlocked(p)||states.containsKey(p.getUUID()))tickPlayer(p);tickEffects();landing.entrySet().removeIf(e->server.overworld().getGameTime()>=e.getValue());}
     public static void forget(Player p){radials.removeIf(q->q.owner==p);for(Carry c:List.copyOf(carries.values()))if(c.owner==p||c.target==p)endCarry(c);for(var id:List.copyOf(visualOwners.keySet()))if(p.getUUID().equals(visualOwners.get(id))){Visual v=visuals.remove(id);if(v!=null)v.display().discard();visualOwners.remove(id);}
         cancelInput(p);states.remove(p.getUUID());Slam s=slams.get(p.getUUID());if(s!=null)endSlam(s,false);for(Pulse q:List.copyOf(pulses))if(q.owner==p){if(q.visual!=null)q.visual.discard();pulses.remove(q);}}
+    static void resetGrace(Player p){landing.remove(p.getUUID());}
     public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Pulse q:pulses)if(q.visual!=null)q.visual.discard();pulses.clear();radials.clear();slams.clear();for(Carry c:List.copyOf(carries.values()))endCarry(c);carries.clear();groundPieces.clear();for(Visual v:visuals.values())v.display().discard();visuals.clear();visualOwners.clear();landing.clear();moving.clear();}
     public static String status(Player p){return unlocked(p)?"Tremor tier "+tier(p)+"/3 | Z Quake Punch/Gekishin | X Shock Ball/Seaquake | C Gurash/Island Shaking":"Tremor locked";}
 }

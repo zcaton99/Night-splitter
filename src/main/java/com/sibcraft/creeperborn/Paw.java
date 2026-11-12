@@ -199,5 +199,6 @@ public final class Paw {
     public static String status(Player p){return unlocked(p)?"Paw tier "+tier(p)+"/3 | Step "+stepCharges(p)+"/"+stepCapacity(p)+" | Z Cannon/Shock | X Step/Launch | C Guard/Pain Bubble":"Paw locked";}
     public static void tick(MinecraftServer server){for(var p:server.getPlayerList().getPlayers())if(unlocked(p)||states.containsKey(p.getUUID()))tickPlayer(p);tickEffects();}
     public static void forget(Player p){State s=states.remove(p.getUUID());if(s!=null){clearBubble(s);if(s.charge!=null)s.charge.discard();if(s.shield!=null)s.shield.discard();}for(Flight f:List.copyOf(flights.values()))if(f.owner==p||f.target==p)endFlight(f);for(Shot s0:List.copyOf(shots))if(s0.owner==p)remove(s0);}
+    static void resetGrace(Player p){landing.remove(p.getUUID());}
     public static void clear(){for(State s:List.copyOf(states.values()))forget(s.owner);for(Flight f:List.copyOf(flights.values()))endFlight(f);for(Shot s:List.copyOf(shots))remove(s);for(Effect e:effects)if(e.display()!=null)e.display().discard();effects.clear();for(Visual v:visuals.values())v.display().discard();visuals.clear();landing.clear();moving.clear();}
 }
