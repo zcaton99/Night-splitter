@@ -760,7 +760,7 @@ public final class Regression implements ModInitializer {
         Dark.cycle(dark);check(Dark.selected(dark)&&!Phoenix.selected(dark),"G cycle selects only Dark");
         Dark.cycle(dark);Phoenix.grant(dark,3);Phoenix.cast(dark,1,8);
         check(Phoenix.form(dark),"Captured Phoenix can progress to full form");
-        Dark.cycle(dark);check(Dark.selected(dark)&&!Phoenix.form(dark)&&!dark.getAbilities().mayfly,"Switching powers ends prior form without flight leak");
+        Dark.cycle(dark);check(Dark.selected(dark)&&Phoenix.form(dark)&&dark.getAbilities().mayfly,"G selects Dark attacks while preserving the Phoenix transformation");FormCarry.cancel(dark);check(!Phoenix.form(dark)&&!dark.getAbilities().mayfly&&Dark.selected(dark),"Explicit cancellation ends carried Phoenix without a flight leak");
         FruitClaims.load(server);FruitClaims.reconcile(dark);
         check(Dark.unlocked(dark)&&Phoenix.unlocked(dark),"Dark plus captured ownership survives world reload and reconciliation");
         Player rubber=player(level);check(Rubber.consume(rubber,Relics.fruit()),"Second victim obtains Rubber");Rubber.grant(rubber,2);
