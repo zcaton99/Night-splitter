@@ -13,7 +13,7 @@ public final class SelectionOverlay {
     public static void show(String text,boolean selection){long now=System.nanoTime();if(selection){help=text;helpUntil=now+HELP_NANOS;toast="";}else{toast=text;toastUntil=now+TOAST_NANOS;}}
     public static void clear(){help=toast="";helpUntil=toastUntil=0;}
     public static String help(){return help;}
-    public static List<FormattedCharSequence> lines(String text,int width){return Minecraft.getInstance().font.split(Component.literal(text),Math.max(1,Math.min(360,width-16)));}
+    public static List<FormattedCharSequence> lines(String text,int width){return Minecraft.getInstance().font.split(Component.literal(text),Math.max(1,Math.min(360,width-24)));}
     public static void render(GuiGraphicsExtractor gui){
         var c=Minecraft.getInstance();if(c.player==null||c.gui.screen()!=null)return;long now=System.nanoTime();
         int bottom=gui.guiHeight()-58;
