@@ -25,7 +25,7 @@ public final class FormCarry {
         case "glint","straw","flame","buddha"->{if(CelestialPowers.formFruit(p).equals(f))CelestialPowers.forget(p);}
         case "azure"->Azure.forget(p);case "rubber"->Rubber.forget(p);case "phoenix"->{Phoenix.forget(p);Phoenix.stopBlessings(p);}
         case "lightning"->Lightning.forget(p);case "magma"->ClimatePowers.stopOwned(p);case "dark"->Dark.forget(p);
-    }}
+    }clearGrace(p,f);}
     public static void prepare(Player p){
         String previous=attacks(p);if(!previous.isEmpty())pending.computeIfAbsent(p.getUUID(),id->new HashSet<>()).add(previous);
         List<String> forms=bodies(p);String pin=held(p),active=attacks(p);
@@ -42,18 +42,19 @@ public final class FormCarry {
             if(HolyBag.unlocked(p)&&!pin.equals(active))HolyBag.removeTags(p,pin);
         }
     }
+    private static void clearGrace(Player p,String f){switch(f){case "azure"->Azure.resetGrace(p);case "paw"->Paw.resetGrace(p);case "tremor"->Tremor.resetGrace(p);case "tree","petal"->NaturePowers.resetGrace(p);case "glint","straw","flame","buddha"->CelestialPowers.resetGrace(p);case "love","sand"->PairPowers.resetGrace(p);case "ice","magma"->ClimatePowers.resetGrace(p);}}
     private static String family(String f){return switch(f){case "fox","axolotl"->"zoan";case "tree","petal"->"nature";case "glint","straw","flame","buddha"->"celestial";case "ice","magma"->"climate";case "love","sand"->"pair";default->f;};}
     public static void useSelected(Player p){
         if(!p.entityTags().contains("cb_mode_fruit"))return;String selected=attacks(p);if(selected.isEmpty())return;
         replacing(p,selected);Set<String> old=pending.remove(p.getUUID());if(old==null)return;
-        for(String f:old)if(!family(f).equals(family(selected)))switch(f){
+        for(String f:old)if(!family(f).equals(family(selected))){switch(f){
             case "time"->TimePowers.forget(p);case "fox","axolotl"->ZoanPowers.forget(p);
             case "tree","petal"->NaturePowers.forget(p);case "glint","straw","flame","buddha"->CelestialPowers.forget(p);
             case "ice","magma"->ClimatePowers.forget(p);case "love","sand"->PairPowers.forget(p);
             case "azure"->Azure.forget(p);case "rubber"->Rubber.forget(p);case "phoenix"->{Phoenix.forget(p);Phoenix.stopBlessings(p);}
             case "lightning"->Lightning.forget(p);case "dark"->Dark.forget(p);case "door"->{DoorSpace.forget(p);DoorFruit.forget(p);}
             case "op"->Op.forget(p);case "gravity"->Gravity.forget(p);case "string"->StringFruit.forget(p);case "paw"->Paw.forget(p);case "tremor"->Tremor.forget(p);
-        }
+        }clearGrace(p,f);}
     }
     public static void replacing(Player p,String next){
         String pin=held(p);if(pin.isEmpty()||pin.equals(next))return;
