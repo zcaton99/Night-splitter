@@ -150,9 +150,10 @@ public final class ThreeHeadedDragon {
     public static void loaded(Entity e){tickEntity(e);}
     public static boolean cancelContact(DamageSource source){return part(source.getEntity())&&source.is(net.minecraft.world.damagesource.DamageTypes.MOB_ATTACK)&&!scriptedDamage.get();}
     private static void purgeLoaded(MinecraftServer server){
-        for(ServerLevel l:server.getAllLevels())for(Entity e:loadedEntities(l)){
-            if(e instanceof AreaEffectCloud cloud&&part(cloud.getOwner()))e.addTag("cb_dragon_attack_"+fight.id);
-            if(visual(e)||part(e)||attack(e))e.discard();
+        for(ServerLevel l:server.getAllLevels()){
+            List<Entity> entities=loadedEntities(l);
+            for(Entity e:entities)if(e instanceof AreaEffectCloud cloud&&part(cloud.getOwner()))e.addTag("cb_dragon_attack_"+fight.id);
+            for(Entity e:entities)if(visual(e)||part(e)||attack(e))e.discard();
         }
         parts.clear();visualIds.clear();hits.clear();hurtAt.clear();breathAim=null;
     }

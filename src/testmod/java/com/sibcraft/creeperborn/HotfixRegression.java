@@ -41,7 +41,7 @@ final class HotfixRegression {
         HolyBag.select(p,"fox");check(Rubber.gear(p)&&!Rubber.selected(p),"G can also carry Gear 5 while selecting Fox attacks");
         ZoanPowers.cast(p,"fox",1,20);check(ZoanPowers.mode(p)>0&&!Rubber.gear(p)&&p.getAbilities().flying,"A new Fox cloak replaces Gear 5 and restores its own flight");
         FormCarry.cancel(p);check(ZoanPowers.mode(p)==0&&!Rubber.gear(p),"Explicit form cancellation clears carried transformations");
-        for(String f:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(f)))FruitClaims.setOwner(f,null);
+        for(String fruit:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(fruit)))FruitClaims.setOwner(fruit,null);
         System.out.println("CREEPERBORN_HOTFIX_REGRESSION_PASSED");
     }
 }

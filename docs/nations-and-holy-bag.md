@@ -1,4 +1,4 @@
-# Four Nations and the Holy Bag — alpha.96
+# Four Nations and the Holy Bag — alpha.97
 
 Progress is shared by everyone in the world. A Holy Bag is an individual, permanent unlock.
 
@@ -42,7 +42,7 @@ Killing the boss drops **exactly one physical Holy Bag**, irrespective of player
 
 Use the bag to consume it and permanently unlock fruit storage. It does not grant fruits automatically: discover and eat them as usual. Existing fruit-ownership rules still apply; fruits reserved by another owner cannot be eaten.
 
-Press **G** to cycle collected fruits, or use `/creeperborn bag` for clickable choices. `/creeperborn bag fox` equips a specific collected fruit. Each fruit retains its own mastery. Only the equipped fruit contributes passive powers; stored fruit defenses cannot stack.
+Press **G** to cycle collected fruits, or use `/creeperborn bag` for clickable choices. `/creeperborn bag fox` equips a specific collected fruit. Each fruit retains its own mastery. G changes the selected attack kit without canceling one already-active transformation. Its timer continues, and starting a different transformation replaces it. Other stored fruits remain inactive. Use `/creeperborn formoff` to end a form explicitly.
 
 Death retains the bag unlock, equipped fruit, stored fruits and their mastery. Dark's capture cannot steal a Holy Bag owner's collection. Players without the bag keep the original death and fruit-slot rules. Elemental progression is retained as before.
 
