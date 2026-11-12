@@ -34,7 +34,13 @@ public final class WaterRules {
         var fluid=p.level().getFluidState(pos);
         return fluid.is(FluidTags.WATER)&&eye.y<pos.getY()+fluid.getHeight(p.level(),pos);
     }
-    public static boolean suppressed(Player p){return vulnerable(p)&&submerged(p);}
+    public static boolean immersed(Player p){
+        if(submerged(p))return true;
+        // Check the body as well as the eyes: large Fox heads can remain above deep water.
+        BlockPos pos=p.blockPosition();var fluid=p.level().getFluidState(pos);
+        return fluid.is(FluidTags.WATER)&&p.getY()<pos.getY()+fluid.getHeight(p.level(),pos)-.35;
+    }
+    public static boolean suppressed(Player p){return vulnerable(p)&&immersed(p);}
     public static Vec3 sinkingVelocity(Vec3 motion){return new Vec3(motion.x*.8,Math.max(-.18,Math.min(-.08,motion.y-.025)),motion.z*.8);}
     /** Run in both normal client prediction and server travel; collision remains vanilla. */
     public static void travel(Player p,Vec3 input){

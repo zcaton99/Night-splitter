@@ -1971,7 +1971,7 @@ Azure.grant(p,2);check(Azure.kanaboSlashRange(p)==48,"Tier two increases lightni
         Progress.select(fruit,Element.WATER);
         check(WaterRules.suppressed(fruit)&&Creeperborn.ABILITIES.cast(fruit).contains("disabled"),
             "Owning all hearts or selecting Water cannot bypass fruit weakness");
-        fruit.snapTo(8.5,y+3,-8.5);
+        fruit.snapTo(8.5,y+3.8,-8.5);
         check(!WaterRules.suppressed(fruit),"Feet in shallow water with head above surface are safe");
         fruit.snapTo(.5,y,.5);check(!WaterRules.suppressed(fruit),"Dry land does not trigger fruit weakness");
         fruit.snapTo(8.5,y+1,-8.5);

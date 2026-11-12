@@ -94,6 +94,6 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         check(!owner.isAlive()&&HolyBag.unlocked(owner)&&Dark.FRUITS.stream().allMatch(fruit->owner.getUUID().equals(FruitClaims.owner(fruit))),"Actual player death retains all 24 fruit claims");
         for(String fruit:Dark.FRUITS)FruitClaims.setOwner(fruit,null);
         all.forEach(Entity::discard);ThreeHeadedDragon.clear();ThreeHeadedDragon.load(server);
-        System.out.println("CREEPERBORN_ENDGAME_REGRESSION_PASSED");
+        HotfixRegression.run(server);System.out.println("CREEPERBORN_ENDGAME_REGRESSION_PASSED");
     }
 }

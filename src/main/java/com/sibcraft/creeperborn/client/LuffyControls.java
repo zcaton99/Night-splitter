@@ -15,6 +15,10 @@ public final class LuffyControls {
     }
 
     public static boolean use(Minecraft client) {
-        return attack(client) && client.player.getOffhandItem().isEmpty();
+        if(!attack(client)||!client.player.getOffhandItem().isEmpty())return false;
+        if(client.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit
+            && !(hit.getEntity() instanceof net.minecraft.world.entity.monster.Enemy)
+            && !(hit.getEntity() instanceof net.minecraft.world.entity.player.Player))return false;
+        return true;
     }
 }

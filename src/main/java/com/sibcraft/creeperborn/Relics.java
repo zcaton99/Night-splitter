@@ -9,12 +9,13 @@ import net.minecraft.world.item.component.CustomData;
 
 public final class Relics {
     private Relics() {}
-    public static ItemStack holyBag(){var item=new ItemStack(Items.BUNDLE);mark(item,"holy_bag");item.set(DataComponents.CUSTOM_NAME,Component.literal("Holy Bag — consume to keep and switch Creeper Fruits forever"));item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);return item;}
+    public static ItemStack holyBag(){var item=new ItemStack(Items.BUNDLE);mark(item,"holy_bag");item.set(DataComponents.CUSTOM_NAME,Component.literal("Holy Bag — consume to keep and switch Creeper Fruits forever"));item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);item.set(DataComponents.ITEM_MODEL,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","holy_bag"));return item;}
     public static ItemStack covenant(){var item=new ItemStack(Items.DRAGON_BREATH);mark(item,"dragon_covenant");item.set(DataComponents.CUSTOM_NAME,Component.literal("Dragon Covenant — use at the End exit portal"));item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);return item;}
 
     public static boolean updateFruitModel(ItemStack item){
         if(item.isEmpty())return false;
         String kind=kind(item);
+        if(kind.equals("holy_bag")){var model=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","holy_bag");boolean changed=!model.equals(item.get(DataComponents.ITEM_MODEL))||!Boolean.TRUE.equals(item.get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE));item.set(DataComponents.ITEM_MODEL,model);item.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE,true);return changed;}
         if(kind.startsWith("heart:")){Element element=Element.parse(kind.substring(6));if(element==null)return false;var icon=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","element_"+element.key());if(icon.equals(item.get(DataComponents.ITEM_MODEL)))return false;item.set(DataComponents.ITEM_MODEL,icon);return true;}
         if(!kind.startsWith("fruit:")||!Dark.FRUITS.contains(kind.substring(6)))return false;
         var model=net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","fruit_"+kind.substring(6));
