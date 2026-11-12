@@ -9,6 +9,7 @@ public final class LuffyControls {
     private LuffyControls() {}
 
     public static boolean attack(Minecraft client) {
+        if(client.hitResult instanceof net.minecraft.world.phys.EntityHitResult hit&&!(hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity))return false;
         return client.player != null && LuffyPowers.overrides(client.player)
             && client.player.getMainHandItem().isEmpty()
             && (client.hitResult == null || client.hitResult.getType() != HitResult.Type.BLOCK);

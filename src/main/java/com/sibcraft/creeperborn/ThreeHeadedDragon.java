@@ -50,11 +50,11 @@ public final class ThreeHeadedDragon {
     public static final int AWAKENING=100;
     private static final Map<String,Long> hits=new HashMap<>();
     private static ServerBossEvent bar;
-    private static long wait;
+    private static long wait,awakeningUntil=AWAKENING;
     public static void load(MinecraftServer s){
         path=s.getWorldPath(LevelResource.ROOT).resolve("creeperborn-dragon.json");fight=WorldJson.read(path,Fight.class,new Fight());
         if(fight.active&&(fight.id==null||fight.dimension==null||fight.heads==null||fight.heads.length!=3||fight.headHealth==null||fight.headHealth.length!=3||!Float.isFinite(fight.health)||fight.max<=0))throw new IllegalStateException("Invalid dragon encounter ledger");
-        wait=100;
+        wait=0;awakeningUntil=fight.age+AWAKENING;
     }
     public static boolean active(){return fight.active;}
     public static Fight state(){return fight;}
@@ -77,7 +77,7 @@ public final class ThreeHeadedDragon {
         fight.max=2700+900*(fight.participants-1);fight.health=fight.max;fight.headMax=180+60*(fight.participants-1);
         Arrays.fill(fight.headHealth,fight.headMax);fight.x=at.x;fight.y=at.y;fight.z=at.z;fight.active=true;
         fight.body=proxy(l,at,12).getUUID().toString();for(int i=0;i<3;i++)fight.heads[i]=proxy(l,head(i),6).getUUID().toString();
-        build(l);wait=0;save();
+        build(l);wait=0;awakeningUntil=AWAKENING;save();
     }
     private static Mob proxy(ServerLevel l,Vec3 at,int size){
         var m=EntityTypes.SLIME.create(l,EntitySpawnReason.EVENT);if(m==null)throw new IllegalStateException("Dragon hitbox unavailable");
@@ -145,6 +145,7 @@ public final class ThreeHeadedDragon {
         if(e instanceof AreaEffectCloud cloud&&part(cloud.getOwner()))e.addTag("cb_dragon_attack_"+fight.id);
         if(visual(e)&&(visualIds.get(e.getUUID())!=e||!fight.active))e.discard();
         if(attack(e)&&!fight.active)e.discard();
+        if(part(e)&&fight.active&&e.entityTags().contains("cb_dragon_part_"+fight.id)){e.noPhysics=true;if(e.getCustomName()==null||!e.getCustomName().getString().equals("Three-Headed Dragon")){e.setCustomName(Component.literal("Three-Headed Dragon"));e.setCustomNameVisible(false);}}
         if(part(e)&&(!fight.active||!e.entityTags().contains("cb_dragon_part_"+fight.id)))e.discard();
     }
     public static void loaded(Entity e){tickEntity(e);}
@@ -210,7 +211,7 @@ public final class ThreeHeadedDragon {
         players.forEach(bar::addPlayer);bar.setProgress(Math.max(0,fight.health/fight.max));
         String heads="";for(int i=0;i<3;i++)heads+=(i==0?"":" | ")+(fight.headHealth[i]<=0?"Severed":Math.round(fight.headHealth[i])+" HP");
         boolean enraged=fight.health<fight.max*.25f;
-        bar.setName(Component.literal((fight.age<AWAKENING?"Awakening — ":"")+(enraged?"ENRAGED — ":"")+"Three-Headed Dragon — "+heads+(fight.age<fight.exposed?" — BODY EXPOSED":"")));
+        bar.setName(Component.literal((fight.age<awakeningUntil?"Awakening — ":"")+(enraged?"ENRAGED — ":"")+"Three-Headed Dragon — "+heads+(fight.age<fight.exposed?" — BODY EXPOSED":"")));
         for(int i=0;i<3;i++){
             Entity e=l.getEntity(UUID.fromString(fight.heads[i]));if(e!=null){Vec3 at=head(i);e.snapTo(at.x,at.y,at.z);e.setDeltaMovement(Vec3.ZERO);}
         }
@@ -222,8 +223,8 @@ public final class ThreeHeadedDragon {
                 for(ServerPlayer viewer:net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(e))viewer.connection.send(packet);
             }
         }
-        if(fight.age<AWAKENING)return;
-        int period=enraged?80:160;long phase=(fight.age-AWAKENING)%period;
+        if(fight.age<awakeningUntil)return;
+        int period=enraged?80:160;long phase=(fight.age-awakeningUntil)%period;
         // Center head: a visible breath telegraph, followed by a damaging lane and close bites.
         if(fight.headHealth[0]>0){
             Player target=players.get(0);if(phase==0||breathAim==null)breathAim=target.getEyePosition();
