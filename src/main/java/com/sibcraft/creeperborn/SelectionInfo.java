@@ -17,7 +17,7 @@ public record SelectionInfo(String text,boolean selection) implements CustomPack
     public static void send(Player p,String text){deliver(p,text,true);}
     public static void toast(Player p,String text){deliver(p,text,false);}
     private static void deliver(Player p,String text,boolean help){
-        if(p instanceof ServerPlayer sp&&ServerPlayNetworking.canSend(sp,TYPE))ServerPlayNetworking.send(sp,new SelectionInfo(text,help));
+        if(p instanceof ServerPlayer sp&&sp.connection!=null&&ServerPlayNetworking.canSend(sp,TYPE))ServerPlayNetworking.send(sp,new SelectionInfo(text,help));
         else p.sendOverlayMessage(Component.literal(text));
     }
 }
