@@ -74,11 +74,11 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         ThreeHeadedDragon.damage((LivingEntity)body,l.damageSources().playerAttack(p),100);
         check(l.getEntitiesOfClass(ItemEntity.class,new AABB(-100,0,-100,100,400,100)).stream().filter(v->Relics.kind(v.getItem()).equals("holy_bag")).count()==1,"Repeated death processing cannot duplicate the bag");
         for(String fruit:Dark.FRUITS)FruitClaims.setOwner(fruit,null);
-        Player owner=player(l);check(HolyBag.consume(owner,bags.getFirst().getItem()),"Holy Bag is consumed to permanently unlock collection");bags.getFirst().discard();
+        Player owner=player(l);owner.snapTo(-8,145,24);check(HolyBag.consume(owner,bags.getFirst().getItem()),"Holy Bag is consumed to permanently unlock collection");bags.getFirst().discard();
         check(Rubber.consume(owner,Relics.fruit()),"Bag user can consume first fruit");Rubber.grant(owner,3);
         check(ZoanPowers.consume(owner,Relics.zoanFruit("fox"),"fox"),"Bag user can collect a second non-Dark fruit");
         check(!Rubber.unlocked(owner)&&ZoanPowers.unlocked(owner,"fox"),"Stored fruits cannot stack passive powers");
-        HolyBag.select(owner,"rubber");check(Rubber.selected(owner)&&Rubber.tier(owner)==3&&ZoanPowers.mode(owner)>0&&FormCarry.carries(owner,"fox"),"G changes selected attacks and mastery without canceling Fox form");
+        check(ZoanPowers.mode(owner)>0,"Form carry fixture starts in an actual Fox transformation");HolyBag.select(owner,"rubber");check(Rubber.selected(owner)&&Rubber.tier(owner)==3&&ZoanPowers.mode(owner)>0&&FormCarry.carries(owner,"fox"),"G changes selected attacks and mastery without canceling Fox form");
         for(Element e:Element.values())Progress.consume(owner,Relics.heart(e));
         FruitClaims.releaseOnDeath(owner);check(HolyBag.unlocked(owner)&&Rubber.unlocked(owner)&&Rubber.tier(owner)==3,"Death preserves Holy Bag, active fruit and mastery");
         HolyBag.select(owner,"fox");check(ZoanPowers.unlocked(owner,"fox")&&Progress.all(owner),"Death also preserves stored powers and elemental progress");
