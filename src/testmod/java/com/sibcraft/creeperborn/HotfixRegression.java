@@ -40,6 +40,9 @@ final class HotfixRegression {
         check(Rubber.consume(p,Relics.fruit()),"Form carry fixture collects Rubber");Rubber.grant(p,3);
         check(ZoanPowers.consume(p,Relics.zoanFruit("fox"),"fox"),"Form carry fixture collects Fox");ZoanPowers.grant(p,"fox",3);int mode=ZoanPowers.mode(p);
         HolyBag.select(p,"rubber");check(Rubber.selected(p)&&ZoanPowers.mode(p)==mode&&mode>0&&FormCarry.carries(p,"fox"),"Switching selected powers preserves the current Fox form");
+        check(FruitHelp.describe(p).contains("Z ")&&FruitHelp.describe(p).contains("X ")&&FruitHelp.describe(p).contains("C "),"Holy Bag selection includes the chosen fruit move list");
+        CombatNetwork.press(p,0);check(ZoanPowers.mode(p)==0&&!FormCarry.carries(p,"fox")&&Rubber.selected(p),"Using the selected fruit ends the previously carried form before the attack");
+        LuffyPowers.cancelInput(p);
         Rubber.cast(p,2,0);check(Rubber.gear(p)&&ZoanPowers.mode(p)==0,"Entering Gear 5 replaces the carried Fox form");
         HolyBag.select(p,"fox");check(Rubber.gear(p)&&!Rubber.selected(p),"G can also carry Gear 5 while selecting Fox attacks");
         ZoanPowers.cast(p,"fox",1,20);check(ZoanPowers.mode(p)>0&&!Rubber.gear(p)&&p.getAbilities().flying,"A new Fox cloak replaces Gear 5 and restores its own flight");

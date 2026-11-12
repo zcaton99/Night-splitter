@@ -44,6 +44,8 @@ public final class Creeperborn implements ModInitializer {
     public static Config config() { return config; }
     @Override public void onInitialize() {
         CombatNetwork.init();
+        SelectionInfo.init();
+        net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((p,level,hand,target,hit)->{if(level instanceof ServerLevel&&CombatNetwork.selection(p)>=4)FormCarry.useSelected(p);return InteractionResult.PASS;});
         ServerLifecycleEvents.SERVER_STARTING.register(FruitClaims::load);
         ServerLifecycleEvents.SERVER_STARTING.register(SpawnBudget::load);
         ServerLifecycleEvents.SERVER_STARTING.register(Nations::load);
@@ -194,7 +196,7 @@ public final class Creeperborn implements ModInitializer {
                 String known = Arrays.stream(Element.values()).filter(e -> Progress.unlocked(p, e)).map(e -> e.title).reduce((a,b) -> a + ", " + b).orElse("none");
                 Element selected = Progress.selected(p);
                 String active=TimePowers.selected(p)?"Time-Time":!ZoanPowers.current(p).isEmpty()?ZoanPowers.current(p):CelestialPowers.selected(p,"flame")?"Flame-Flame":CelestialPowers.selected(p,"buddha")?"Golden Buddha":CelestialPowers.selected(p,"glint")?"Glint-Glint":CelestialPowers.selected(p,"straw")?"Straw-Straw":NaturePowers.selected(p,"tree")?"Tree Tree":NaturePowers.selected(p,"petal")?"Petal Petal":Azure.selected(p)?"Azure Dragon":ClimatePowers.selected(p,"ice")?"Ice-Ice":ClimatePowers.selected(p,"magma")?"Magma-Magma":PairPowers.selected(p,"love")?"Love-Love":PairPowers.selected(p,"sand")?"Sand-Sand":Tremor.selected(p)?"Tremor":Paw.selected(p)?"Paw-Paw":StringFruit.selected(p)?"String":Gravity.selected(p)?"Gravity":Op.selected(p)?"Op-Op":Dark.selected(p)?"Dark":Lightning.selected(p)?"Lightning":Phoenix.selected(p)?"Phoenix":DoorFruit.selected(p)?"Door-Door":Rubber.selected(p)?"Rubber":selected==null?"none":selected.title;
-                chat(p,"Creeperborn 0.1.0-alpha.98 | Active: "+active+" | Mode: "+p.gameMode());
+                chat(p,"Creeperborn 0.1.0-alpha.99 | Active: "+active+" | Mode: "+p.gameMode());
                 chat(p,"Elements unlocked: "+known);chat(p,TimePowers.status(p));for(String f:ZoanPowers.FRUITS)chat(p,ZoanPowers.status(p,f));
                 if(selected!=null)chat(p,selected.title+" mastery "+Mastery.tier(p,selected)+"/3 | Uses: "+Mastery.uses(p,selected)
                     +" | Active time: "+Mastery.seconds(p,selected)+"s | Power: "+Math.round(EnvironmentPower.strength(p,selected)*100)+"%");
@@ -431,7 +433,7 @@ public final class Creeperborn implements ModInitializer {
             .min(Comparator.comparingDouble(p::distanceToSqr)).orElse(null);
     }
     private static void chat(Player p,String message){p.sendSystemMessage(Component.literal(message));}
-    public static void say(Player p, String message) { p.sendOverlayMessage(Component.literal(message)); }
+    public static void say(Player p, String message) { SelectionInfo.toast(p,message); }
 }
 
 

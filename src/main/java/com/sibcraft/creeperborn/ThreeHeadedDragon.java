@@ -50,12 +50,14 @@ public final class ThreeHeadedDragon {
     public static final int AWAKENING=100;
     private static final Map<String,Long> hits=new HashMap<>();
     private static ServerBossEvent bar;
-    private static long wait,awakeningUntil=AWAKENING;
+    private static long wait,awakeningUntil=AWAKENING;private static boolean repairFinalHead;
     public static void load(MinecraftServer s){
         path=s.getWorldPath(LevelResource.ROOT).resolve("creeperborn-dragon.json");fight=WorldJson.read(path,Fight.class,new Fight());
         if(fight.active&&(fight.id==null||fight.dimension==null||fight.heads==null||fight.heads.length!=3||fight.headHealth==null||fight.headHealth.length!=3||!Float.isFinite(fight.health)||fight.max<=0))throw new IllegalStateException("Invalid dragon encounter ledger");
+        repairFinalHead=fight.active&&aliveHeads()==0;if(repairFinalHead)fight.headHealth[0]=Math.max(1,fight.headMax*.25f);
         wait=0;awakeningUntil=fight.age+AWAKENING;
     }
+    public static int aliveHeads(){int n=0;for(float hp:fight.headHealth)if(hp>0)n++;return n;}
     public static boolean active(){return fight.active;}
     public static Fight state(){return fight;}
     private static void save(){WorldJson.write(path,fight);}
@@ -75,7 +77,7 @@ public final class ThreeHeadedDragon {
         if(active())throw new IllegalStateException("Dragon already active");
         purgeLoaded(l.getServer());fight=new Fight();fight.id=UUID.randomUUID().toString();fight.dimension=l.dimension().identifier().toString();fight.participants=Math.max(1,Math.min(6,participants));
         fight.max=2700+900*(fight.participants-1);fight.health=fight.max;fight.headMax=180+60*(fight.participants-1);
-        Arrays.fill(fight.headHealth,fight.headMax);fight.x=at.x;fight.y=at.y;fight.z=at.z;fight.active=true;
+        repairFinalHead=false;Arrays.fill(fight.headHealth,fight.headMax);fight.x=at.x;fight.y=at.y;fight.z=at.z;fight.active=true;
         fight.body=proxy(l,at,12).getUUID().toString();for(int i=0;i<3;i++)fight.heads[i]=proxy(l,head(i),6).getUUID().toString();
         build(l);wait=0;awakeningUntil=AWAKENING;save();
     }
@@ -169,9 +171,9 @@ public final class ThreeHeadedDragon {
         float dealt=Math.min(100,amount);
         if(part>=0){
             if(fight.headHealth[part]<=0)return true;
-            fight.headHealth[part]=Math.max(0,fight.headHealth[part]-dealt);fight.health-=dealt*.25f;
+            boolean last=aliveHeads()==1;fight.headHealth[part]=Math.max(last?1:0,fight.headHealth[part]-dealt);fight.health-=dealt*(last?1:.25f);
             if(fight.headHealth[part]==0){target.discard();fight.exposed=fight.age+200;build((ServerLevel)target.level());((ServerLevel)target.level()).sendParticles(ParticleTypes.EXPLOSION,target.getX(),target.getY()+1,target.getZ(),10,1,1,1,0);}
-        }else fight.health-=dealt*((fight.age<fight.exposed||Arrays.stream(new double[]{fight.headHealth[0],fight.headHealth[1],fight.headHealth[2]}).allMatch(v->v<=0))?2:1);
+        }else fight.health-=dealt*((fight.age<fight.exposed||aliveHeads()==1)?2:1);
         if(fight.health<=0)finish((ServerLevel)target.level());else save();return true;
     }
     private static void finish(ServerLevel l){
@@ -204,6 +206,7 @@ public final class ThreeHeadedDragon {
         if(wait>0){wait--;return;}
         var players=players(l);if(players.isEmpty()){if(bar!=null)bar.removeAllPlayers();return;}
         Entity raw=l.getEntity(UUID.fromString(fight.body));if(!(raw instanceof Mob body))return; // Unloaded actors never count as a victory.
+        if(repairFinalHead){fight.heads[0]=proxy(l,head(0),6).getUUID().toString();repairFinalHead=false;build(l);save();}
         if(parts.isEmpty()||parts.stream().anyMatch(p->p.entity.isRemoved()))build(l);fight.age++;
         moveToward(players.get(0).position());
         if(bar==null)bar=new ServerBossEvent(UUID.randomUUID(),Component.literal("Three-Headed Dragon"),BossEvent.BossBarColor.PURPLE,BossEvent.BossBarOverlay.PROGRESS);

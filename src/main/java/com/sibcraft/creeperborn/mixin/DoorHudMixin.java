@@ -14,4 +14,6 @@ public abstract class DoorHudMixin {
         var p=Minecraft.getInstance().player;
         if(p!=null&&(WaterRules.flags(p)&4)!=0)gui.fill(0,0,gui.guiWidth(),gui.guiHeight(),0x3200CFE8);
     }
+    @Inject(method="extractRenderState",at=@At("TAIL"))
+    private void creeperborn$wrappedInfo(GuiGraphicsExtractor gui,DeltaTracker tracker,CallbackInfo ci){com.sibcraft.creeperborn.client.SelectionOverlay.render(gui);}
 }

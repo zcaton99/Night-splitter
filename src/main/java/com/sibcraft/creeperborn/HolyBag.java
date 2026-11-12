@@ -73,7 +73,7 @@ public final class HolyBag {
         for(String f:Dark.FRUITS)if(!f.equals(pin))removeTags(p,f);
         Collection c=collection(p);c.active=fruit;c.fruits.get(fruit).forEach(p::addTag);if(fruit.equals("dark"))Dark.choose(p,"dark");
         p.addTag("cb_mode_fruit");WorldJson.write(path,data);
-        return "Holy Bag: "+fruit+" | G cycles collected fruits | /creeperborn bag";
+        return FruitHelp.describe(p);
     }
     public static String cycle(Player p) {
         snapshot(p);List<String> known=Dark.FRUITS.stream().filter(f->collection(p).fruits.containsKey(f)).toList();

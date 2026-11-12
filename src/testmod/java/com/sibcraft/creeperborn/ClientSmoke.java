@@ -20,6 +20,8 @@ public final class ClientSmoke implements ClientModInitializer{
             if(ticks<60||client.gui.screen()==null||client.gui.overlay()!=null)return;
             done=true;
             try{
+                String longHelp="Holy Bag — G cycles fruits\nRubber tier 3 — Z Red Rocket / hold Kong Gun | X Hammer / hold Octopus | C Balloon / hold Gear 5 | hold attack Gatling | Gear 5 right-click catch + spin throw";
+                for(int width:new int[]{320,426,640})for(var line:com.sibcraft.creeperborn.client.SelectionOverlay.lines(longHelp,width))if(client.font.width(line)>Math.min(520,width-24))throw new AssertionError("Selection HUD clips at GUI width "+width);
                 var modelManager=client.getModelManager();
                 var itemGetter=Arrays.stream(modelManager.getClass().getMethods()).filter(method->method.getName().equals("getItemModel")
                     &&method.getParameterCount()==1&&method.getParameterTypes()[0]==net.minecraft.resources.Identifier.class).findFirst()

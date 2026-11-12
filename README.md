@@ -1,4 +1,4 @@
-# Creeperborn — 0.1.0-alpha.98
+# Creeperborn — 0.1.0-alpha.99
 
 An original Sibcraft mod: hunt rare elemental creepers, consume their hearts, master four elements, and empower villagers to defend your settlements. This is a separate mod from Night Splitters. It does not contain, download, or require an Avatar/One Piece mod, copied abilities, or third-party assets.
 

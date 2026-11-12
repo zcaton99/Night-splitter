@@ -129,6 +129,7 @@ public final class Phoenix {
         p.addTag(prefix+(now(p)+200));p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);credit(p);particles(p,20);
         return "Phoenix Blessing! "+count+" allies heal for 10s, even outside your circle.";
     }
+    static void stopBlessings(Player p){blessings.values().removeIf(b->b.owner==p);}
     public static int blessings(){return blessings.size();}
     public static void tickBlessings(){
         blessings.values().removeIf(b->{

@@ -66,6 +66,8 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         for(int i=0;i<3;i++){Player attacker=player(l);((LivingEntity)head).hurtServer(l,l.damageSources().playerAttack(attacker),100);}
         check(f.headHealth[0]==0&&f.headHealth[1]>0&&f.headHealth[2]>0&&f.exposed>f.age,"A head can be severed independently and exposes the body");
         check(f.health<before,"Head strikes also damage the shared body pool");
+        for(int h=1;h<3;h++){Entity next=l.getEntity(UUID.fromString(f.heads[h]));for(int i=0;i<3;i++)((LivingEntity)next).hurtServer(l,l.damageSources().playerAttack(player(l)),100);}
+        check(ThreeHeadedDragon.aliveHeads()==1&&f.headHealth[2]>=1&&ThreeHeadedDragon.active(),"The final head remains attached while the shared boss health is positive");
         Entity body=l.getEntity(UUID.fromString(f.body));
         for(int i=0;i<40&&ThreeHeadedDragon.active();i++)((LivingEntity)body).hurtServer(l,l.damageSources().playerAttack(player(l)),100);
         check(!ThreeHeadedDragon.active()&&f.rewarded,"Defeating the body completes the encounter exactly once");

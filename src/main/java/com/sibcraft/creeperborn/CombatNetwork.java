@@ -36,6 +36,7 @@ public final class CombatNetwork {
         if(LuffyPowers.rooted(p)||CelestialPowers.rooted(p)||NaturePowers.rooted(p)||StringFruit.controlled(p)||PairPowers.rooted(p)||ClimatePowers.rooted(p))return "You are restrained.";
         if(move>2)return "";
         if(Dark.suppressed(p)&&selection(p)>=4)return "Fruit powers suppressed by darkness.";
+        FormCarry.useSelected(p);
         if(TimePowers.selected(p)){TimePowers.press(p,move);return "";}
         if(!ZoanPowers.current(p).isEmpty()){ZoanPowers.press(p,move);return "";}
         if(!CelestialPowers.current(p).isEmpty()){CelestialPowers.press(p,move);return "";}
@@ -81,7 +82,7 @@ public final class CombatNetwork {
             if(LuffyPowers.rooted(p)||CelestialPowers.rooted(p)||StringFruit.controlled(p)||PairPowers.rooted(p))return;
             if (!payload.validRequest() || !p.isAlive() || p.isSpectator()&&!DoorSpace.active(p)&&!NaturePowers.phased(p) || !(payload.action()==10&&(CelestialPowers.flying(p)||NaturePowers.flying(p))||payload.action()==12&&CelestialPowers.customMelee(p))&&!allow(p)) return;
             if(NaturePowers.phased(p)){if(payload.action()==5&&(payload.value()&3)==2)Creeperborn.say(p,NaturePowers.exitPhase(p,false)?"Reappeared!":"Find an open place to emerge.");return;}
-            if(payload.action()==12){CelestialPowers.basicButtons(p,payload.value());return;}
+            if(payload.action()==12){if(payload.value()>0&&!CelestialPowers.current(p).isEmpty())FormCarry.useSelected(p);CelestialPowers.basicButtons(p,payload.value());return;}
             if(payload.action()==10){ZoanPowers.input(p,payload.value());CelestialPowers.input(p,payload.value());NaturePowers.input(p,payload.value());ClimatePowers.input(p,payload.value());Azure.input(p,payload.value());return;}
             if(ClimatePowers.rooted(p))return;
             if(DoorSpace.active(p)){
@@ -124,6 +125,7 @@ public final class CombatNetwork {
                 else if(DoorFruit.unlocked(p)){p.addTag("cb_mode_fruit");Creeperborn.say(p,"Door-Door — Z: Passage | X: Rescue | C: Shared Passage");}
                 else Creeperborn.say(p,"Consume a Devil Fruit first.");
             }
+            if(payload.action()==4)SelectionInfo.send(p,FruitHelp.describe(p));
             if(payload.action()==5){String result=press(p,payload.value());if(!result.isEmpty())Creeperborn.say(p,result);}
             if(payload.action()==6){if(TimePowers.selected(p))TimePowers.release(p,payload.value());else if(!ZoanPowers.current(p).isEmpty())ZoanPowers.release(p,payload.value());else if(!CelestialPowers.current(p).isEmpty())CelestialPowers.release(p,payload.value());else if(!NaturePowers.current(p).isEmpty())NaturePowers.release(p,payload.value());else if(Azure.selected(p))Azure.release(p,payload.value());else if(!ClimatePowers.current(p).isEmpty())ClimatePowers.release(p,payload.value());else if(!PairPowers.current(p).isEmpty())PairPowers.release(p,payload.value());else if(Tremor.selected(p))Tremor.release(p,payload.value());else if(Paw.selected(p))Paw.release(p,payload.value());else if(StringFruit.selected(p))StringFruit.release(p,payload.value());else if(Gravity.selected(p))Gravity.release(p,payload.value());else if(Op.selected(p))Op.release(p,payload.value());else if(Dark.selected(p))Dark.release(p,payload.value());else if(Lightning.selected(p))Lightning.release(p,payload.value());else if(Phoenix.selected(p))Phoenix.release(p,payload.value());else LuffyPowers.release(p,payload.value());}
             if(payload.action()==7){TimePowers.heartbeat(p);ZoanPowers.heartbeat(p);CelestialPowers.heartbeat(p);NaturePowers.heartbeat(p);LuffyPowers.heartbeat(p);Rubber.heartbeat(p);Phoenix.heartbeat(p);Lightning.heartbeat(p);Dark.heartbeat(p);Op.heartbeat(p);Gravity.heartbeat(p);StringFruit.heartbeat(p);Paw.heartbeat(p);Tremor.heartbeat(p);PairPowers.heartbeat(p);ClimatePowers.heartbeat(p);Azure.heartbeat(p);}
