@@ -42,10 +42,10 @@ public final class FormCarry {
     }
     public static void replacing(Player p,String next){
         String pin=held(p);if(pin.isEmpty()||pin.equals(next))return;
-        HolyBag.snapshot(p);stop(p,pin);held.remove(p.getUUID());
+        HolyBag.snapshot(p);stop(p,pin);HolyBag.snapshot(p);held.remove(p.getUUID());
         if(HolyBag.unlocked(p)&&!pin.equals(HolyBag.active(p)))HolyBag.removeTags(p,pin);
     }
-    public static void cancel(Player p){String pin=held(p);HolyBag.snapshot(p);Dark.stopForms(p);held.remove(p.getUUID());if(HolyBag.unlocked(p)&&!pin.isEmpty()&&!pin.equals(HolyBag.active(p)))HolyBag.removeTags(p,pin);}
+    public static void cancel(Player p){String pin=held(p);HolyBag.snapshot(p);Dark.stopForms(p);HolyBag.snapshot(p);held.remove(p.getUUID());if(HolyBag.unlocked(p)&&!pin.isEmpty()&&!pin.equals(HolyBag.active(p)))HolyBag.removeTags(p,pin);}
     public static void drop(Player p){held.remove(p.getUUID());}
     public static void clear(){held.clear();}
 }
