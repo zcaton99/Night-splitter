@@ -93,7 +93,7 @@ public final class ThreeHeadedDragon {
             var skull=EntityTypes.ITEM_DISPLAY.create(l,EntitySpawnReason.EVENT);if(skull==null)throw new IllegalStateException("Dragon head model unavailable");
             var accessor=(com.sibcraft.creeperborn.mixin.DragonHeadDisplayAccessor)skull;accessor.creeperborn$item(new ItemStack(net.minecraft.world.item.Items.DRAGON_HEAD));accessor.creeperborn$context(net.minecraft.world.item.ItemDisplayContext.FIXED);
             skull.setCustomName(Component.literal("cb_dragon_head|"+fight.id));skull.setCustomNameVisible(false);d=skull;
-        }else{var blockDisplay=EntityTypes.BLOCK_DISPLAY.create(l,EntitySpawnReason.EVENT);if(blockDisplay==null)throw new IllegalStateException("Dragon model unavailable");blockDisplay.setBlockState(block.defaultBlockState());d=blockDisplay;}
+        }else{var blockDisplay=EntityTypes.BLOCK_DISPLAY.create(l,EntitySpawnReason.EVENT);if(blockDisplay==null)throw new IllegalStateException("Dragon model unavailable");blockDisplay.setBlockState(block.defaultBlockState());blockDisplay.setCustomName(Component.literal("cb_dragon_visual|"+fight.id));blockDisplay.setCustomNameVisible(false);d=blockDisplay;}
         d.addTag("cb_dragon_visual_"+fight.id);d.addTag("cb_temporary_rock");
         var access=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)d;access.creeperborn$duration(3);access.creeperborn$positionDuration(3);access.creeperborn$width(64);access.creeperborn$height(64);access.creeperborn$view(2);
         d.snapTo(renderOrigin.x,renderOrigin.y,renderOrigin.z);
@@ -102,7 +102,8 @@ public final class ThreeHeadedDragon {
     }
     private static void transform(Part p){
         double flap=p.wing==0?0:Math.sin(fight.age*.09)*Math.abs(p.offset.x)*.18;
-        Vec3 offset=fight.at().subtract(renderOrigin).add(rotated(p.offset.add(0,flap,0)));
+        p.entity.snapTo(fight.x,fight.y,fight.z);
+        Vec3 offset=rotated(p.offset.add(0,flap,0));
         var a=(com.sibcraft.creeperborn.mixin.PunchDisplayAccessor)p.entity;a.creeperborn$delay(0);
         Quaternionf rotation=new Quaternionf().rotationY((float)Math.toRadians(fight.yaw)+(p.skull?(float)Math.PI:0));
         p.entity.setTransformation(new Transformation(new Vector3f((float)offset.x,(float)offset.y,(float)offset.z),rotation,new Vector3f((float)p.size.x,(float)p.size.y,(float)p.size.z),new Quaternionf()));
@@ -215,7 +216,7 @@ public final class ThreeHeadedDragon {
         body.snapTo(fight.x,fight.y-1,fight.z);body.setDeltaMovement(Vec3.ZERO);
         if(fight.age%3==0){
             for(Part p:parts)transform(p);
-            for(Entity e:loadedEntities(l))if(part(e)){
+            for(Entity e:loadedEntities(l))if(part(e)||visual(e)){
                 var packet=net.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacket.of(e);
                 for(ServerPlayer viewer:net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(e))viewer.connection.send(packet);
             }

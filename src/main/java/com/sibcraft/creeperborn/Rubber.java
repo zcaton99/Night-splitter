@@ -117,7 +117,7 @@ public final class Rubber {
         if(now<s.gearReady)return "Gear 5 recovering: " + ((s.gearReady-now+19)/20) + "s.";
         if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to enter Gear 5.";
         s.guarding=false;guardSize(p,false);
-        s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
+        FormCarry.replacing(p,"rubber");s.gearUntil=now+MAX_GEAR_TICKS;s.level=level;
         if(!p.getAbilities().mayfly){s.grantedFlight=true;p.addTag("cb_rubber_gear_flight");p.getAbilities().mayfly=true;p.onUpdateAbilities();}
         return "Gear 5! Double-tap Space to fly. Food fuels it, up to 10 minutes.";
     }

@@ -98,7 +98,7 @@ public final class Phoenix {
             if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to fly.";
             if(wing(p)||form(p))end(p);
             s.level=(ServerLevel)p.level();
-            if(charged)s.formUntil=Mastery.harmony(p)?Long.MAX_VALUE:now(p)+FORM_TICKS;
+            FormCarry.replacing(p,"phoenix");if(charged)s.formUntil=Mastery.harmony(p)?Long.MAX_VALUE:now(p)+FORM_TICKS;
             else s.wingUntil=now(p)+(Mastery.harmony(p)?900:WING_TICKS);
             grantFlight(p,s);if(charged)refreshMarker(p);s.flareUntil=now(p)+20;particles(p,30);
             return charged?"Phoenix Form! Tap C to heal nearby players and villagers.":"Wing Flight! Tap X again to land.";

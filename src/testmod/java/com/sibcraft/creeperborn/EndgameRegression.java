@@ -78,7 +78,7 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         check(Rubber.consume(owner,Relics.fruit()),"Bag user can consume first fruit");Rubber.grant(owner,3);
         check(ZoanPowers.consume(owner,Relics.zoanFruit("fox"),"fox"),"Bag user can collect a second non-Dark fruit");
         check(!Rubber.unlocked(owner)&&ZoanPowers.unlocked(owner,"fox"),"Stored fruits cannot stack passive powers");
-        HolyBag.select(owner,"rubber");check(Rubber.unlocked(owner)&&Rubber.tier(owner)==3&&!ZoanPowers.unlocked(owner,"fox"),"Switching restores exact mastery and equips only one fruit");
+        HolyBag.select(owner,"rubber");check(Rubber.selected(owner)&&Rubber.tier(owner)==3&&ZoanPowers.mode(owner)>0&&FormCarry.carries(owner,"fox"),"G changes selected attacks and mastery without canceling Fox form");
         for(Element e:Element.values())Progress.consume(owner,Relics.heart(e));
         FruitClaims.releaseOnDeath(owner);check(HolyBag.unlocked(owner)&&Rubber.unlocked(owner)&&Rubber.tier(owner)==3,"Death preserves Holy Bag, active fruit and mastery");
         HolyBag.select(owner,"fox");check(ZoanPowers.unlocked(owner,"fox")&&Progress.all(owner),"Death also preserves stored powers and elemental progress");
@@ -89,7 +89,7 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
             HolyBag.select(owner,fruit);Dark.grantFruit(owner,fruit,3);
         }
         HolyBag.died(owner);HolyBag.load(server);FruitClaims.load(server);
-        for(String fruit:Dark.FRUITS){HolyBag.select(owner,fruit);check(Dark.fruitTier(owner,fruit)==3&&Dark.FRUITS.stream().filter(fruitId->owner.entityTags().contains("cb_fruit_"+fruitId)).count()==1,"All-fruit collection restores only "+fruit+" at its own mastery");}
+        for(String fruit:Dark.FRUITS){HolyBag.select(owner,fruit);check(Dark.fruitTier(owner,fruit)==3&&Dark.FRUITS.stream().filter(fruitId->owner.entityTags().contains("cb_fruit_"+fruitId)).allMatch(fruitId->fruitId.equals(fruit)||FormCarry.carries(owner,fruitId)),"All-fruit collection restores only "+fruit+" at its own mastery");}
         owner.hurtServer(l,l.damageSources().genericKill(),10000);
         check(!owner.isAlive()&&HolyBag.unlocked(owner)&&Dark.FRUITS.stream().allMatch(fruit->owner.getUUID().equals(FruitClaims.owner(fruit))),"Actual player death retains all 24 fruit claims");
         for(String fruit:Dark.FRUITS)FruitClaims.setOwner(fruit,null);

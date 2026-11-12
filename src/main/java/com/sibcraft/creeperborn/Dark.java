@@ -31,8 +31,9 @@ public final class Dark{
     private static State state(Player p){State s=states.computeIfAbsent(p.getUUID(),id->new State());s.owner=p;return s;}
     private static long now(Player p){return p.level().getGameTime();}
     public static boolean unlocked(Player p){return p.entityTags().contains("cb_fruit_dark")&&FruitClaims.ownsDark(p);}
-    public static boolean matches(Player p,String fruit){return !unlocked(p)||choice(p).equals(fruit);}
-    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&choice(p).equals("dark");}
+    public static boolean matches(Player p,String fruit){return HolyBag.unlocked(p)?HolyBag.active(p).equals(fruit):!unlocked(p)||choice(p).equals(fruit);}
+    public static boolean formMatches(Player p,String fruit){return matches(p,fruit)||FormCarry.carries(p,fruit);}
+    public static boolean selected(Player p){return unlocked(p)&&p.entityTags().contains("cb_mode_fruit")&&matches(p,"dark");}
     public static String extra(Player p){for(String f:FRUITS)if(!f.equals("dark")&&p.entityTags().contains("cb_fruit_"+f)&&p.getUUID().equals(FruitClaims.owner(f)))return f;return null;}
     public static String choice(Player p){
         for(String tag:p.entityTags())if(tag.startsWith("cb_dark_choice_")){
@@ -47,7 +48,7 @@ public final class Dark{
     }
     public static String cycle(Player p){
         String current=choice(p),other=extra(p),next=!p.entityTags().contains("cb_mode_fruit")?current:current.equals("dark")&&other!=null?other:"dark";
-        if(!next.equals(current)){stopForms(p);cancelInput(p);}
+        if(!next.equals(current)){FormCarry.prepare(p);cancelInput(p);}
         choose(p,next);return "Creeper Fruit: "+next+" | G switches Dark / second power";
     }
     public static int uses(Player p){return Mastery.get(p,"cb_dark_uses_");}
@@ -168,7 +169,7 @@ public final class Dark{
                 Mastery.set(p,"cb_dark_energy_",0);s.flare=now(p)+20;wave(level,p.position().add(0,1,0),8);
             }else{
                 if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons for Dark Mantle.";
-                p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);s.mantleUntil=now(p)+160;s.level=level;credit(p);
+                p.getFoodData().setFoodLevel(p.getFoodData().getFoodLevel()-1);FormCarry.replacing(p,"dark");s.mantleUntil=now(p)+160;s.level=level;credit(p);
             }
             value(p,"cb_dark_ready_1_"+charged+"_",now(p)+(charged?160:240));return charged?"Liberation!":"Dark Mantle!";
         }

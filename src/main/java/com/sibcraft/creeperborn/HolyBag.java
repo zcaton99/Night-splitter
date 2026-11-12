@@ -35,12 +35,14 @@ public final class HolyBag {
         for(String known:Dark.FRUITS)if(p.entityTags().contains("cb_fruit_"+known)&&p.getUUID().equals(FruitClaims.owner(known)))return known;
         return "";
     }
+    static void removeTags(Player p,String fruit){for(String t:Set.copyOf(p.entityTags()))if(tag(t,fruit))p.removeTag(t);}
     public static void snapshot(Player p) {
         if(!unlocked(p))return;
-        Collection c=collection(p);String f=active(p);if(f.isEmpty())return;
-        c.active=f;Set<String> tags=new HashSet<>();
-        for(String t:p.entityTags())if(tag(t,f))tags.add(t);
-        c.fruits.put(f,tags);
+        Collection c=collection(p);String f=active(p);if(!f.isEmpty())c.active=f;
+        for(String fruit:java.util.List.of(f,FormCarry.held(p)))if(!fruit.isEmpty()){
+            Set<String> tags=new HashSet<>();for(String t:p.entityTags())if(tag(t,fruit))tags.add(t);
+            if(tags.contains("cb_fruit_"+fruit))c.fruits.put(fruit,tags);
+        }
     }
     public static boolean consume(Player p,ItemStack item) {
         if(item.isEmpty()||!Relics.kind(item).equals("holy_bag")||p.isSpectator()||!p.isAlive()||unlocked(p))return false;
@@ -59,15 +61,16 @@ public final class HolyBag {
     /** Called only after a fruit claim has been validated. */
     public static void beforeConsume(Player p) {
         if(!unlocked(p))return;
-        Dark.stopForms(p);snapshot(p);WorldJson.write(path,data);
+        Dark.stopForms(p);snapshot(p);FormCarry.drop(p);WorldJson.write(path,data);
         for(String t:Set.copyOf(p.entityTags()))for(String f:Dark.FRUITS)if(tag(t,f))p.removeTag(t);
         collection(p).active="";
     }
     public static String select(Player p,String fruit) {
         if(!unlocked(p)||!collection(p).fruits.containsKey(fruit)||!p.getUUID().equals(FruitClaims.owner(fruit)))return "That fruit is not in your Holy Bag.";
         if(!p.isAlive()||p.isSpectator()||StringFruit.locked(p))return "You cannot switch fruits right now.";
-        Dark.stopForms(p);snapshot(p);
-        for(String t:Set.copyOf(p.entityTags()))for(String f:Dark.FRUITS)if(tag(t,f))p.removeTag(t);
+        FormCarry.prepare(p);snapshot(p);
+        String pin=FormCarry.held(p);
+        for(String f:Dark.FRUITS)if(!f.equals(pin))removeTags(p,f);
         Collection c=collection(p);c.active=fruit;c.fruits.get(fruit).forEach(p::addTag);if(fruit.equals("dark"))Dark.choose(p,"dark");
         p.addTag("cb_mode_fruit");WorldJson.write(path,data);
         return "Holy Bag: "+fruit+" | G cycles collected fruits | /creeperborn bag";
@@ -78,7 +81,7 @@ public final class HolyBag {
         String f=active(p);int i=known.indexOf(f);
         return select(p,!p.entityTags().contains("cb_mode_fruit")&&i>=0?f:known.get((i+1)%known.size()));
     }
-    public static void died(Player p) { Dark.stopForms(p);snapshot(p);WorldJson.write(path,data); }
+    public static void died(Player p) { Dark.stopForms(p);snapshot(p);FormCarry.drop(p);WorldJson.write(path,data); }
     public static void show(Player p) {
         if(!unlocked(p)){p.sendSystemMessage(Component.literal("Earn the Holy Bag by defeating the Three-Headed Dragon."));return;}
         snapshot(p);p.sendSystemMessage(Component.literal("Holy Bag — permanent collection, retained on death. Active: "+active(p)));
@@ -88,5 +91,5 @@ public final class HolyBag {
         for(var p:server.getPlayerList().getPlayers())snapshot(p);
         WorldJson.write(path,data);
     }
-    public static void clear() { data=new Data();path=null; }
+    public static void clear() { data=new Data();path=null;FormCarry.clear(); }
 }

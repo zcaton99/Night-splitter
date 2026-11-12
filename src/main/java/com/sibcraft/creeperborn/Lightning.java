@@ -109,7 +109,7 @@ public final class Lightning {
             if(now(p)<ready(p,"storm"))return "Storm Form recovering.";
             if(p.isPassenger())return "Dismount before transforming.";
             if(p.getFoodData().getFoodLevel()<=6)return "Eat above three food icons to transform.";
-            s.level=(ServerLevel)p.level();s.stormUntil=now(p)+duration(p);s.flight=true;
+            s.level=(ServerLevel)p.level();FormCarry.replacing(p,"lightning");s.stormUntil=now(p)+duration(p);s.flight=true;
             s.granted=!p.getAbilities().mayfly;s.oldFlying=p.getAbilities().flying;s.oldSpeed=p.getAbilities().getFlyingSpeed();
             p.addTag("cb_lightning_flight_"+s.granted+"_"+s.oldSpeed+"_"+s.oldFlying);
             p.getAbilities().mayfly=true;p.getAbilities().flying=true;p.getAbilities().setFlyingSpeed(.065f);p.onUpdateAbilities();

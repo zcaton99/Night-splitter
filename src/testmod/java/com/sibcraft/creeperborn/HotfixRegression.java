@@ -33,6 +33,15 @@ final class HotfixRegression {
         var late=EntityTypes.BLOCK_DISPLAY.create(l,EntitySpawnReason.COMMAND);l.addFreshEntity(late);late.addTag("cb_dragon_visual_legacy");ThreeHeadedDragon.tickEntity(late);check(late.isRemoved(),"An old pose loaded after cancel is also removed");
         ThreeHeadedDragon.dismiss(server);check(!ThreeHeadedDragon.active(),"Cancel also repairs already-inactive encounters");
         var bag=Relics.holyBag();check(bag.get(net.minecraft.core.component.DataComponents.ITEM_MODEL).getPath().equals("holy_bag")&&Boolean.TRUE.equals(bag.get(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE)),"Holy Bag uses its white model and enchanted glow");
+        p.snapTo(-8,145,24);check(HolyBag.consume(p,Relics.holyBag()),"Form carry fixture unlocks Holy Bag");
+        check(Rubber.consume(p,Relics.fruit()),"Form carry fixture collects Rubber");Rubber.grant(p,3);
+        check(ZoanPowers.consume(p,Relics.zoanFruit("fox"),"fox"),"Form carry fixture collects Fox");ZoanPowers.grant(p,"fox",3);int mode=ZoanPowers.mode(p);
+        HolyBag.select(p,"rubber");check(Rubber.selected(p)&&ZoanPowers.mode(p)==mode&&mode>0&&FormCarry.carries(p,"fox"),"Switching selected powers preserves the current Fox form");
+        Rubber.cast(p,2,0);check(Rubber.gear(p)&&ZoanPowers.mode(p)==0,"Entering Gear 5 replaces the carried Fox form");
+        HolyBag.select(p,"fox");check(Rubber.gear(p)&&!Rubber.selected(p),"G can also carry Gear 5 while selecting Fox attacks");
+        ZoanPowers.cast(p,"fox",1,20);check(ZoanPowers.mode(p)>0&&!Rubber.gear(p)&&p.getAbilities().flying,"A new Fox cloak replaces Gear 5 and restores its own flight");
+        FormCarry.cancel(p);check(ZoanPowers.mode(p)==0&&!Rubber.gear(p),"Explicit form cancellation clears carried transformations");
+        for(String f:Dark.FRUITS)if(p.getUUID().equals(FruitClaims.owner(f)))FruitClaims.setOwner(f,null);
         System.out.println("CREEPERBORN_HOTFIX_REGRESSION_PASSED");
     }
 }
