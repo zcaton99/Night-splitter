@@ -109,10 +109,10 @@ public final class CelestialPowers {
  }
  public static int fireGunShots(int tier){return tier>=3?30:tier==2?12:6;}
  public static int spearLength(int tier){return tier>=3?21:tier==2?15:10;}
- public static boolean spears(Player p){State s=states.get(p.getUUID());return s!=null&&selected(p,s.fruit)&&s.spears&&valid(s);}
+ public static boolean spears(Player p){State s=states.get(p.getUUID());return s!=null&&(!p.entityTags().contains("cb_mode_fruit")||selected(p,s.fruit))&&s.spears&&valid(s);}
  public static long palmRest(Player p){return Math.max(0,saved(p,"cb_buddha_palms_rest_")-now(p));}
  public static int palmsRemaining(Player p){return palmRest(p)>0?0:(int)saved(p,"cb_buddha_palms_used_")>=12?12:12-(int)saved(p,"cb_buddha_palms_used_");}
- public static boolean customMelee(Player p){State s=states.get(p.getUUID());return s!=null&&selected(p,s.fruit)&&valid(s)&&(s.spears||s.form&&s.fruit.equals("buddha"));}
+ public static boolean customMelee(Player p){State s=states.get(p.getUUID());return s!=null&&(!p.entityTags().contains("cb_mode_fruit")||selected(p,s.fruit))&&valid(s)&&(s.spears||s.form&&s.fruit.equals("buddha"));}
  public static double fireBonus(Player p){if(!unlocked(p,"flame")||Dark.suppressed(p)||WaterRules.suppressed(p))return 1;return form(p)?1.8:tier(p,"flame")>=3?1.6:tier(p,"flame")==2?1.4:1.25;}
  private static boolean magmaCounter(DamageSource source){return source.getEntity() instanceof Player p&&ClimatePowers.unlocked(p,"magma")&&ClimatePowers.selected(p,"magma");}
  public static float damage(LivingEntity victim,DamageSource source,float amount){if(!(victim instanceof Player p)||source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))return amount;State s=states.get(p.getUUID());if(s==null||!s.form||!s.fruit.equals("buddha")||!valid(s))return amount;boolean bypass=source.getEntity() instanceof Player a&&(Mastery.harmony(a)||Rubber.gear(a)||Dark.unlocked(a)&&Dark.selected(a));return amount*(bypass?.45f:.15f);}
