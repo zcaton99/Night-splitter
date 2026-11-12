@@ -14,7 +14,7 @@ public final class SelectionOverlay {
     public static String help(){return help;}
     public static List<FormattedCharSequence> lines(String text,int width){return Minecraft.getInstance().font.split(Component.literal(text),Math.max(1,Math.min(520,width-24)));}
     public static void render(GuiGraphicsExtractor gui){
-        var c=Minecraft.getInstance();if(c.player==null||c.options.hideGui||c.gui.screen()!=null)return;long now=System.nanoTime();
+        var c=Minecraft.getInstance();if(c.player==null||c.gui.screen()!=null)return;long now=System.nanoTime();
         if(now<helpUntil&&!help.isEmpty())panel(gui,help,true);
         if(now<toastUntil&&!toast.isEmpty())panel(gui,toast,false);
     }
