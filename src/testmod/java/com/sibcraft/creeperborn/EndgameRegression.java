@@ -28,12 +28,24 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         for(Element e:Element.values()){
             int x=-8+e.ordinal()*256,z=24;l.getChunk(x>>4,z>>4);p.snapTo(x,120,z);
             List<Villager> guards=new ArrayList<>();
-            for(int i=0;i<9;i++){var v=EntityTypes.VILLAGER.create(l,EntitySpawnReason.COMMAND);v.setNoAi(true);v.snapTo(x+i*.3,120,z);l.addFreshEntity(v);check(Creeperborn.GUARDIANS.assign(p,v,e),"Adult villager accepts "+e.key());guards.add(v);all.add(v);}
-            String founded=Nations.found(p,e);check(founded.contains("founded"),"A distinct "+e.key()+" nation can be founded: "+founded);
+            boolean auto=e==Element.AIR;
+            for(int i=0;i<9;i++){var v=EntityTypes.VILLAGER.create(l,EntitySpawnReason.COMMAND);v.setNoAi(true);v.snapTo(x+i*.3,120,z);l.addFreshEntity(v);check(Creeperborn.GUARDIANS.assign(p,v,e),"Adult villager accepts "+e.key());guards.add(v);all.add(v);if(auto){String message=Nations.converted(p,v,e);check(message.contains((i+1)+"/9"),"Trident conversion reports unique Air guardian progress: "+message);if(i<8)check(message.contains((8-i)+" more needed"),"Air progress reports the remaining villagers");}}
+            if(auto)check(Nations.get(e)!=null,"Trident conversion automatically founds the Air Nation");
+            else{String founded=Nations.found(p,e);check(founded.contains("founded"),"A distinct "+e.key()+" nation can be founded: "+founded);}
             Nations.Nation n=Nations.get(e);check(Nations.living(l,n).size()==9,"Nine distinct living guardians count toward the trial");
             check(!Creeperborn.GUARDIANS.assign(p,guards.getFirst(),Element.values()[(e.ordinal()+1)%4]),"An enrolled villager cannot count for another nation");
-            guards.getFirst().setHealth(0);check(Nations.start(p,e).contains("needs 9"),"Dead guardians do not satisfy the starting threshold");guards.getFirst().setHealth(20);
-            check(Nations.start(p,e).contains("activated"),"Nation trial requires deliberate activation");
+            if(auto){
+                check(n.startsIn==200&&!n.raiding&&n.enemies.isEmpty(),"The ninth conversion schedules a ten-second warning without spawning raiders");
+                Nations.converted(p,guards.getFirst(),e);check(n.members.size()==9&&n.startsIn==200,"Repeated trident use cannot double-count or restart the countdown");
+                guards.getFirst().setHealth(0);Nations.advanceTrial(l,n);check(n.startsIn==0&&!n.raiding&&Nations.progress(l,n).contains("1 more needed"),"Losing the ninth living guardian cancels the pending raid");
+                guards.getFirst().setHealth(20);Nations.advanceTrial(l,n);check(n.startsIn==200,"Restoring nine guardians begins a fresh warning");
+                for(int i=0;i<4;i++)Nations.advanceTrial(l,n);Nations.load(server);n=Nations.get(e);check(n.autoTrial&&n.startsIn==120,"Nation progress and remaining countdown survive reload");
+                for(int i=0;i<5;i++)Nations.advanceTrial(l,n);check(!n.raiding&&n.startsIn==20&&n.enemies.isEmpty(),"Raid waits for the entire countdown");
+                Nations.advanceTrial(l,n);check(n.raiding&&n.wave==0&&n.enemies.isEmpty(),"Countdown automatically activates one raid trial");
+            }else{
+                guards.getFirst().setHealth(0);check(Nations.start(p,e).contains("needs 9"),"Dead guardians do not satisfy the starting threshold");guards.getFirst().setHealth(20);
+                check(Nations.start(p,e).contains("activated"),"Manual nation activation remains available");
+            }
             check(!n.passed&&!Nations.trialsPassed(),"Starting a trial never grants completion");
             for(int wave=1;wave<=3;wave++){
                 n.nextWave=0;Nations.advanceTrial(l,n);check(n.wave==wave&&n.enemies.size()==4+wave*2,"Trial spawns the full stronger wave "+wave);

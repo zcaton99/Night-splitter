@@ -24,7 +24,8 @@ public final class Nations {
     public static final class Nation {
         public String dimension,element;
         public int x,y,z,wave;
-        public boolean passed,offered,raiding;
+        public boolean passed,offered,raiding,autoTrial;
+        public int startsIn;
         public long remaining,nextWave;
         public Set<String> enemies=new HashSet<>();
         public Set<String> members=new HashSet<>();
@@ -59,7 +60,7 @@ public final class Nations {
     }
     public static void enroll(ServerLevel level,Nation n){
         for(Villager v:level.getEntitiesOfClass(Villager.class,new AABB(n.center()).inflate(RADIUS))){
-            if(!v.isAlive()||v.isBaby()||Guardians.element(v)!=Element.parse(n.element))continue;
+            if(!v.isAlive()||v.isBaby()||v.position().distanceToSqr(Vec3.atCenterOf(n.center()))>RADIUS*RADIUS||Guardians.element(v)!=Element.parse(n.element))continue;
             boolean other=v.entityTags().stream().anyMatch(t->t.startsWith("cb_nation_")&&!t.equals("cb_nation_"+n.element));
             if(other)continue;
             v.addTag("cb_nation_"+n.element);n.members.add(v.getUUID().toString());
@@ -68,17 +69,42 @@ public final class Nations {
     }
     public static List<Villager> living(ServerLevel level,Nation n){
         return level.getEntitiesOfClass(Villager.class,new AABB(n.center()).inflate(RADIUS)).stream()
-            .filter(v->v.isAlive()&&!v.isBaby()&&n.members.contains(v.getUUID().toString())&&v.entityTags().contains("cb_nation_"+n.element)&&Guardians.element(v)==Element.parse(n.element)).toList();
+            .filter(v->v.isAlive()&&!v.isBaby()&&v.position().distanceToSqr(Vec3.atCenterOf(n.center()))<=RADIUS*RADIUS&&n.members.contains(v.getUUID().toString())&&v.entityTags().contains("cb_nation_"+n.element)&&Guardians.element(v)==Element.parse(n.element)).toList();
     }
     private static boolean nearby(Player p,Nation n){return p.level().dimension().identifier().toString().equals(n.dimension)&&p.position().distanceToSqr(Vec3.atCenterOf(n.center()))<=RADIUS*RADIUS;}
+    public static String progress(ServerLevel level,Nation n){
+        int count=living(level,n).size(),left=Math.max(0,REQUIRED-count);String title=Element.parse(n.element).title+" Nation: "+Math.min(count,REQUIRED)+"/"+REQUIRED+" adult guardians";
+        if(n.offered)return title+" — empowered!";
+        if(n.passed)return title+" — raid trial complete!";
+        if(n.raiding)return title+" — raid wave "+n.wave+"/3";
+        if(left>0)return title+" — "+left+" more needed within "+RADIUS+" blocks.";
+        if(level.getDifficulty()==net.minecraft.world.Difficulty.PEACEFUL)return title+" — ready; leave Peaceful difficulty to begin the raid.";
+        return title+(n.startsIn>0?" — raid starts in "+((n.startsIn+19)/20)+"s!":n.autoTrial?" — ready for the raid!":" — ready! /creeperborn nation start "+n.element);
+    }
+    /** Called after successful trident assignment; old converted villagers are enrolled too. */
+    public static String converted(Player p,Villager v,Element e){
+        if(!(p.level() instanceof ServerLevel level)||!p.isAlive()||p.isSpectator()||!v.isAlive()||v.isBaby()||Guardians.element(v)!=e)return "Villager conversion unavailable.";
+        Nation n=get(e);
+        if(n==null){String result=found(p,e);n=get(e);if(n==null)return e.title+" guardian assigned. "+result;}
+        if(!nearby(p,n)||v.level()!=level||v.position().distanceToSqr(Vec3.atCenterOf(n.center()))>RADIUS*RADIUS)return e.title+" guardian assigned outside its nation. Bring guardians within "+RADIUS+" blocks of "+n.x+", "+n.y+", "+n.z+".";
+        enroll(level,n);
+        if(!n.passed&&!n.raiding){n.autoTrial=true;schedule(level,n);}
+        save();return progress(level,n);
+    }
+    private static void schedule(ServerLevel level,Nation n){
+        if(n.autoTrial&&!n.passed&&!n.raiding&&n.startsIn<=0&&living(level,n).size()>=REQUIRED&&level.getDifficulty()!=net.minecraft.world.Difficulty.PEACEFUL){n.startsIn=200;notice(level,n,Element.parse(n.element).title+" Nation ready — 9/9 guardians! Raid begins in 10 seconds. Defend your villagers.");save();}
+    }
+    private static void activate(Nation n){n.raiding=true;n.startsIn=0;n.autoTrial=false;n.wave=0;n.remaining=20*60*20;n.nextWave=0;n.enemies.clear();save();}
+    private static void notice(ServerLevel level,Nation n,String text){for(var p:level.players())if(nearby(p,n)){p.sendSystemMessage(Component.literal(text));SelectionInfo.toast(p,text);}}
     public static String start(Player p,Element e){
         Nation n=get(e);if(n==null)return "Found that nation first.";
         if(!nearby(p,n)||p.isSpectator()||!p.isAlive())return "Stand inside the nation to activate its trial.";
         if(n.passed)return "This nation's raid trial is already complete.";
         if(n.raiding)return "This trial is already running.";
         ServerLevel level=(ServerLevel)p.level();enroll(level,n);
-        if(living(level,n).size()<REQUIRED)return "This nation needs 9 living adult guardians of its element within 64 blocks.";
-        n.raiding=true;n.wave=0;n.remaining=20*60*20;n.nextWave=0;n.enemies.clear();save();
+        if(living(level,n).size()<REQUIRED)return "This nation needs 9 living adult guardians of its element within 64 blocks. "+progress(level,n);
+        if(level.getDifficulty()==net.minecraft.world.Difficulty.PEACEFUL)return "Nation raids need Easy, Normal or Hard difficulty.";
+        activate(n);
         return e.title+" Nation raid trial activated! Three waves. Defend your guardians.";
     }
     private static void wave(ServerLevel level,Nation n){
@@ -107,7 +133,7 @@ public final class Nations {
     private static void announce(ServerLevel level,Nation n,String text){for(var p:level.players())if(nearby(p,n))p.sendSystemMessage(Component.literal(text));}
     private static void fail(ServerLevel level,Nation n,String message){
         for(String id:n.enemies){Entity mob=level.getEntity(UUID.fromString(id));if(mob!=null)mob.discard();}
-        n.enemies.clear();n.raiding=false;n.wave=0;announce(level,n,message);save();
+        n.enemies.clear();n.raiding=false;n.autoTrial=false;n.startsIn=0;n.wave=0;announce(level,n,message);save();
     }
     public static void died(LivingEntity entity){
         for(Nation n:data.nations.values())if(n.raiding&&n.enemies.remove(entity.getUUID().toString())){n.nextWave=100;save();}
@@ -130,7 +156,16 @@ public final class Nations {
         if(s.getTickCount()%200==0)save();
     }
     static void advanceTrial(ServerLevel level,Nation n){
-            enroll(level,n);if(!n.raiding)return;
+            enroll(level,n);
+            if(!n.raiding){
+                if(!n.autoTrial||n.passed)return;
+                if(living(level,n).size()<REQUIRED||level.getDifficulty()==net.minecraft.world.Difficulty.PEACEFUL){if(n.startsIn>0){n.startsIn=0;notice(level,n,"Raid countdown paused. "+progress(level,n));save();}return;}
+                if(n.startsIn<=0){schedule(level,n);return;}
+                n.startsIn=Math.max(0,n.startsIn-20);save();
+                if(n.startsIn==0){activate(n);notice(level,n,Element.parse(n.element).title+" Nation raid begins! Three waves — defend your guardians.");}
+                else if(n.startsIn==100||n.startsIn<=60)selectionCountdown(level,n);
+                return;
+            }
             n.remaining-=20;
             if(n.remaining<=0||living(level,n).isEmpty()){fail(level,n,"Trial failed. Rebuild to 9 living guardians, then activate a retry.");return;}
             if(n.enemies.isEmpty()){
@@ -145,6 +180,7 @@ public final class Nations {
                 }}
             }
     }
+    private static void selectionCountdown(ServerLevel level,Nation n){String text=Element.parse(n.element).title+" Nation — raid in "+(n.startsIn/20)+"s";for(var p:level.players())if(nearby(p,n))SelectionInfo.toast(p,text);}
     public static String offer(Player p,Element e){
         Nation n=get(e);if(n==null||!nearby(p,n)||p.isSpectator()||!p.isAlive())return "Stand inside that nation to make its offering.";
         if(!trialsPassed())return "Complete the raid trials of all four nations first.";
@@ -169,8 +205,10 @@ public final class Nations {
     public static void show(Player p){
         for(Element e:Element.values()){
             Nation n=get(e);if(n==null){p.sendSystemMessage(Component.literal(e.title+": not founded | /creeperborn nation found "+e.key()));continue;}
+            ServerLevel nationLevel=level(p.level().getServer(),n);
+            String count=nationLevel!=null&&nationLevel.hasChunkAt(n.center())?progress(nationLevel,n):"Visit the nation to count its living guardians.";
             String state=n.offered?"Empowered":n.passed?"Trial passed":n.raiding?"Raid wave "+n.wave+"/3":"Awaiting trial";
-            p.sendSystemMessage(Component.literal(e.title+": "+state+" | "+n.x+", "+n.y+", "+n.z+" | /creeperborn nation start|offer "+e.key()));
+            p.sendSystemMessage(Component.literal(e.title+": "+state+" | "+n.x+", "+n.y+", "+n.z+" | "+count+" | /creeperborn nation start|offer "+e.key()));
         }
     }
     public static void clear(){data=new Data();path=null;}
