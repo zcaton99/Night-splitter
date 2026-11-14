@@ -61,8 +61,7 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         for(Element e:Element.values()){
             var n=Nations.get(e);sibling.snapTo(n.x,n.y,n.z);
             check(Nations.offer(sibling,e).contains("Bring one"),"An offering cannot succeed without all four hearts");
-            for(Element heart:Element.values())sibling.addItem(Relics.heart(heart));
-            check(Nations.offer(sibling,e).contains("empowered"),"A sibling can complete a shared nation offering");
+            NationTradeRegression.run(l,sibling,e);
             check(Nations.living(l,n).stream().allMatch(v->v.entityTags().contains("cb_guard_harmony")),"The offering empowers that nation's guardians");
         }
         check(Nations.unlocked(),"All four offerings unlock the ritual for everyone");

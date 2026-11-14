@@ -29,6 +29,7 @@ public final class Nations {
         public long remaining,nextWave;
         public Set<String> enemies=new HashSet<>();
         public Set<String> members=new HashSet<>();
+        public Set<String> offerings=new HashSet<>();
         public BlockPos center(){return new BlockPos(x,y,z);}
     }
     public static final class Data {public Map<String,Nation> nations=new HashMap<>();}
@@ -40,6 +41,7 @@ public final class Nations {
         if(data.nations==null||data.nations.size()>4)throw new IllegalStateException("Invalid nations ledger");
         for(var entry:data.nations.entrySet()){
             Nation n=entry.getValue();
+            if(n!=null){if(n.offerings==null)n.offerings=new HashSet<>();if(n.offered)for(Element e:Element.values())n.offerings.add(e.key());}
             if(Element.parse(entry.getKey())==null||n==null||n.dimension==null||n.enemies==null||n.members==null)throw new IllegalStateException("Invalid nation");
         }
     }
@@ -71,7 +73,7 @@ public final class Nations {
         return level.getEntitiesOfClass(Villager.class,new AABB(n.center()).inflate(RADIUS)).stream()
             .filter(v->v.isAlive()&&!v.isBaby()&&v.position().distanceToSqr(Vec3.atCenterOf(n.center()))<=RADIUS*RADIUS&&n.members.contains(v.getUUID().toString())&&v.entityTags().contains("cb_nation_"+n.element)&&Guardians.element(v)==Element.parse(n.element)).toList();
     }
-    private static boolean nearby(Player p,Nation n){return p.level().dimension().identifier().toString().equals(n.dimension)&&p.position().distanceToSqr(Vec3.atCenterOf(n.center()))<=RADIUS*RADIUS;}
+    public static boolean nearby(Player p,Nation n){return p.level().dimension().identifier().toString().equals(n.dimension)&&p.position().distanceToSqr(Vec3.atCenterOf(n.center()))<=RADIUS*RADIUS;}
     public static String progress(ServerLevel level,Nation n){
         int count=living(level,n).size(),left=Math.max(0,REQUIRED-count);String title=Element.parse(n.element).title+" Nation: "+Math.min(count,REQUIRED)+"/"+REQUIRED+" adult guardians";
         if(n.offered)return title+" — empowered!";
@@ -146,6 +148,7 @@ public final class Nations {
         if(entity instanceof Villager v)for(Nation n:data.nations.values())if(n.offered&&n.members.contains(v.getUUID().toString()))v.addTag("cb_guard_harmony");
     }
     public static void tick(MinecraftServer s){
+        NationTrades.refresh(s);
         if(s.getTickCount()%20!=0)return;
         for(Nation n:data.nations.values()){
             ServerLevel level=level(s,n);if(level==null)continue;
@@ -187,13 +190,21 @@ public final class Nations {
         if(n.offered)return "This nation already received its four-element offering.";
         Map<Element,Integer> slots=new EnumMap<>(Element.class);
         for(int i=0;i<p.getInventory().getContainerSize();i++){
-            String kind=Relics.kind(p.getInventory().getItem(i));if(kind.startsWith("heart:")){Element heart=Element.parse(kind.substring(6));if(heart!=null)slots.putIfAbsent(heart,i);}
+            String kind=Relics.kind(p.getInventory().getItem(i));if(kind.startsWith("heart:")){Element heart=Element.parse(kind.substring(6));if(heart!=null&&!n.offerings.contains(heart.key()))slots.putIfAbsent(heart,i);}
         }
-        if(slots.size()!=4)return "Bring one Earth, Water, Fire, and Air heart. The offering consumes one of each.";
-        // Commit completion before consuming the four distinct input items.
-        n.offered=true;save();for(int slot:slots.values())p.getInventory().getItem(slot).shrink(1);
-        enroll((ServerLevel)p.level(),n);for(Villager v:living((ServerLevel)p.level(),n))v.addTag("cb_guard_harmony");
-        return unlocked()?"All four nations empowered! Everyone can now craft a Dragon Covenant: /creeperborn ritual":"Nation empowered with all four elements!";
+        if(slots.size()!=4-n.offerings.size())return "Bring one of each missing elemental heart, or offer them individually in a nation villager's trade menu.";
+        for(var entry:slots.entrySet()){p.getInventory().getItem(entry.getValue()).shrink(1);contribute(p,e,entry.getKey());}
+        return "Nation empowered with all four elements!";
+    }
+    /** Called only after vanilla trading successfully consumes a genuine heart. */
+    public static void contribute(Player p,Element nation,Element heart){
+        Nation n=get(nation);if(n==null||!n.offerings.add(heart.key()))return;
+        n.offered=n.offerings.size()==4;save();
+        ServerLevel level=(ServerLevel)p.level();
+        if(n.offered){enroll(level,n);for(Villager v:living(level,n))v.addTag("cb_guard_harmony");}
+        String text=nation.title+" Nation — "+(n.offered?"empowered!":heart.title+" offering accepted ("+n.offerings.size()+"/4)");
+        if(unlocked())text+=" All four nations empowered: Dragon Covenant unlocked!";
+        notice(level,n,text);
     }
     public static String ritual(Player p){
         if(!unlocked()||p.isSpectator()||!p.isAlive())return "Empower all four nations to unlock the Dragon Covenant.";
@@ -207,7 +218,7 @@ public final class Nations {
             Nation n=get(e);if(n==null){p.sendSystemMessage(Component.literal(e.title+": not founded | /creeperborn nation found "+e.key()));continue;}
             ServerLevel nationLevel=level(p.level().getServer(),n);
             String count=nationLevel!=null&&nationLevel.hasChunkAt(n.center())?progress(nationLevel,n):"Visit the nation to count its living guardians.";
-            String state=n.offered?"Empowered":n.passed?"Trial passed":n.raiding?"Raid wave "+n.wave+"/3":"Awaiting trial";
+            String state=n.offered?"Empowered":n.passed?"Trial passed | offerings "+n.offerings.size()+"/4":n.raiding?"Raid wave "+n.wave+"/3":"Awaiting trial";
             p.sendSystemMessage(Component.literal(e.title+": "+state+" | "+n.x+", "+n.y+", "+n.z+" | "+count+" | /creeperborn nation start|offer "+e.key()));
         }
     }
