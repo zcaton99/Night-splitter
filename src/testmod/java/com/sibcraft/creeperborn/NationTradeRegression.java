@@ -19,6 +19,8 @@ public final class NationTradeRegression {
         var menu=new MerchantMenu(20,player.getInventory(),v);var stale=new MerchantMenu(21,player.getInventory(),other);
         for(Element heart:Element.values()){
             var row=offers.stream().filter(o->{var pair=NationTrades.offering(o);return pair!=null&&pair[1]==heart;}).findFirst().orElseThrow();int index=offers.indexOf(row);
+            var cost=row.getItemCostA();var wireCost=new ItemCost(cost.item(),cost.count(),cost.components());
+            check(wireCost.itemStack().getHoverName().getString().contains(heart.title)&&wireCost.itemStack().get(net.minecraft.core.component.DataComponents.ITEM_MODEL)!=null,"Trade cost reconstructs its element name and icon for client menus and saved offers");
             menu.setSelectionHint(index);menu.getSlot(0).set(new ItemStack(Items.HEART_OF_THE_SEA));menu.slotsChanged(menu.getSlot(0).container);
             check(menu.getSlot(2).getItem().isEmpty(),"Vanilla hearts cannot substitute for "+heart.key()+" hearts");
             stale.setSelectionHint(index);stale.getSlot(0).set(Relics.heart(heart));stale.slotsChanged(stale.getSlot(0).container);

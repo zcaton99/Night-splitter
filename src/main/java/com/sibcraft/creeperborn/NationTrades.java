@@ -37,7 +37,7 @@ public final class NationTrades {
                 CompoundTag tag=new CompoundTag();tag.putString("creeperborn","nation_offering:"+element.key()+":"+heart.key());
                 reward.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));
                 reward.set(DataComponents.CUSTOM_NAME,Component.literal(element.title+" Nation — "+heart.title+" offering"));
-                ItemCost cost=new ItemCost(Items.HEART_OF_THE_SEA.builtInRegistryHolder(),1,DataComponentExactPredicate.expect(DataComponents.CUSTOM_DATA,input.get(DataComponents.CUSTOM_DATA)),input);
+                ItemCost cost=new ItemCost(Items.HEART_OF_THE_SEA.builtInRegistryHolder(),1,DataComponentExactPredicate.builder().expect(DataComponents.CUSTOM_DATA,input.get(DataComponents.CUSTOM_DATA)).expect(DataComponents.ITEM_MODEL,input.get(DataComponents.ITEM_MODEL)).expect(DataComponents.CUSTOM_NAME,input.get(DataComponents.CUSTOM_NAME)).build(),input);
                 row=new MerchantOffer(cost,reward,1,1,0f);offers.add(row);
             }
             if(n.offered||n.offerings.contains(heart.key()))row.setToOutOfStock();
