@@ -25,7 +25,7 @@ public final class NationTradeRegression {
             check(stale.getSlot(2).hasItem(),"Second villager has the unclaimed offering ready");
             menu.getSlot(0).set(Relics.heart(heart));menu.slotsChanged(menu.getSlot(0).container);
             check(menu.getSlot(2).mayPickup(player),"Genuine heart enables native result pickup");
-            menu.clicked(2,0,ClickType.PICKUP,player);
+            menu.clicked(2,0,ContainerInput.PICKUP,player);
             check(menu.getCarried().is(Items.EMERALD)&&menu.getSlot(0).getItem().isEmpty(),"Native pickup consumes exactly one heart and delivers its emerald");menu.setCarried(ItemStack.EMPTY);
             check(n.offerings.contains(heart.key())&&v.getVillagerXp()>0,"Accepted trade persists contribution and locks the profession with XP");
             check(!stale.getSlot(2).mayPickup(player)&&stale.quickMoveStack(player,2).isEmpty(),"An already-open second menu cannot repeat the shared offering, even with shift-click");
