@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ECW",
+    "CSC",
+    "FCA"
+  ],
+  "key": {
+    "E": "creeperborn:earth_nation_token",
+    "W": "creeperborn:water_nation_token",
+    "F": "creeperborn:fire_nation_token",
+    "A": "creeperborn:air_nation_token",
+    "C": "minecraft:end_crystal",
+    "S": "minecraft:nether_star"
+  },
+  "result": {
+    "id": "minecraft:dragon_breath",
+    "components": {
+      "minecraft:custom_data": {
+        "creeperborn": "dragon_covenant"
+      },
+      "minecraft:custom_name": {
+        "text": "Dragon Covenant \u2014 use at the End exit portal"
+      },
+      "minecraft:enchantment_glint_override": true
+    }
+  }
+}

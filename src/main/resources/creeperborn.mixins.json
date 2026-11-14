@@ -29,7 +29,8 @@
     "StringEntityDimensionMixin",
     "NationMerchantMixin",
     "NationTradePickupMixin",
-    "NationTradeQuickMoveMixin"
+    "NationTradeQuickMoveMixin",
+    "CovenantRecipeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

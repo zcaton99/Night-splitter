@@ -41,7 +41,7 @@ public final class Nations {
         if(data.nations==null||data.nations.size()>4)throw new IllegalStateException("Invalid nations ledger");
         for(var entry:data.nations.entrySet()){
             Nation n=entry.getValue();
-            if(n!=null){if(n.offerings==null)n.offerings=new HashSet<>();if(n.offered)for(Element e:Element.values())n.offerings.add(e.key());}
+            if(n!=null){if(n.offerings==null)n.offerings=new HashSet<>();if(n.offerings.contains(n.element))n.offered=true;}
             if(Element.parse(entry.getKey())==null||n==null||n.dimension==null||n.enemies==null||n.members==null)throw new IllegalStateException("Invalid nation");
         }
     }
@@ -150,6 +150,7 @@ public final class Nations {
     public static void tick(MinecraftServer s){
         NationTrades.refresh(s);
         if(s.getTickCount()%20!=0)return;
+        if(unlocked())for(var p:s.getPlayerList().getPlayers())p.awardRecipesByKey(java.util.List.of(NationItems.COVENANT_RECIPE));
         for(Nation n:data.nations.values()){
             ServerLevel level=level(s,n);if(level==null)continue;
             boolean present=level.players().stream().anyMatch(p->!p.isSpectator()&&p.isAlive()&&nearby(p,n));
@@ -185,41 +186,29 @@ public final class Nations {
     }
     private static void selectionCountdown(ServerLevel level,Nation n){String text=Element.parse(n.element).title+" Nation — raid in "+(n.startsIn/20)+"s";for(var p:level.players())if(nearby(p,n))SelectionInfo.toast(p,text);}
     public static String offer(Player p,Element e){
-        Nation n=get(e);if(n==null||!nearby(p,n)||p.isSpectator()||!p.isAlive())return "Stand inside that nation to make its offering.";
-        if(!trialsPassed())return "Complete the raid trials of all four nations first.";
-        if(n.offered)return "This nation already received its four-element offering.";
-        Map<Element,Integer> slots=new EnumMap<>(Element.class);
-        for(int i=0;i<p.getInventory().getContainerSize();i++){
-            String kind=Relics.kind(p.getInventory().getItem(i));if(kind.startsWith("heart:")){Element heart=Element.parse(kind.substring(6));if(heart!=null&&!n.offerings.contains(heart.key()))slots.putIfAbsent(heart,i);}
-        }
-        if(slots.size()!=4-n.offerings.size())return "Bring one of each missing elemental heart, or offer them individually in a nation villager's trade menu.";
-        for(var entry:slots.entrySet()){p.getInventory().getItem(entry.getValue()).shrink(1);contribute(p,e,entry.getKey());}
-        return "Nation empowered with all four elements!";
+        return "Offer a matching heart in that nation's villager trade menu to receive its Nation Token.";
     }
     /** Called only after vanilla trading successfully consumes a genuine heart. */
     public static void contribute(Player p,Element nation,Element heart){
-        Nation n=get(nation);if(n==null||!n.offerings.add(heart.key()))return;
-        n.offered=n.offerings.size()==4;save();
+        Nation n=get(nation);if(n==null||nation!=heart||n.offered)return;
+        n.offerings.add(heart.key());
+        n.offered=true;save();
         ServerLevel level=(ServerLevel)p.level();
         if(n.offered){enroll(level,n);for(Villager v:living(level,n))v.addTag("cb_guard_harmony");}
-        String text=nation.title+" Nation — "+(n.offered?"empowered!":heart.title+" offering accepted ("+n.offerings.size()+"/4)");
-        if(unlocked())text+=" All four nations empowered: Dragon Covenant unlocked!";
+        String text=nation.title+" Nation — "+(n.offered?"empowered!":heart.title+" offering accepted");
+        if(unlocked())text+=" All four nations empowered! Craft the Dragon Covenant with four Nation Tokens, four End Crystals and a Nether Star.";
         notice(level,n,text);
     }
     public static String ritual(Player p){
-        if(!unlocked()||p.isSpectator()||!p.isAlive())return "Empower all four nations to unlock the Dragon Covenant.";
-        Map<net.minecraft.world.item.Item,Integer> costs=Map.of(net.minecraft.world.item.Items.END_CRYSTAL,4,net.minecraft.world.item.Items.NETHER_STAR,1);
-        for(var entry:costs.entrySet()){int count=0;for(int i=0;i<p.getInventory().getContainerSize();i++){var item=p.getInventory().getItem(i);if(item.is(entry.getKey())&&Relics.kind(item).isEmpty())count+=item.getCount();}if(count<entry.getValue())return "A Dragon Covenant costs 4 End Crystals and 1 Nether Star per summon.";}
-        for(var entry:costs.entrySet()){int left=entry.getValue();for(int i=0;i<p.getInventory().getContainerSize()&&left>0;i++){var item=p.getInventory().getItem(i);if(item.is(entry.getKey())&&Relics.kind(item).isEmpty()){int take=Math.min(left,item.getCount());item.shrink(take);left-=take;}}}
-        Progress.give(p,Relics.covenant());return "Dragon Covenant crafted. Use it at the End exit portal after defeating the normal dragon.";
+        return "Craft the Dragon Covenant at a crafting table: four Nation Tokens in the corners, four End Crystals on the edges, and a Nether Star in the center.";
     }
     public static void show(Player p){
         for(Element e:Element.values()){
             Nation n=get(e);if(n==null){p.sendSystemMessage(Component.literal(e.title+": not founded | /creeperborn nation found "+e.key()));continue;}
             ServerLevel nationLevel=level(p.level().getServer(),n);
             String count=nationLevel!=null&&nationLevel.hasChunkAt(n.center())?progress(nationLevel,n):"Visit the nation to count its living guardians.";
-            String state=n.offered?"Empowered":n.passed?"Trial passed | offerings "+n.offerings.size()+"/4":n.raiding?"Raid wave "+n.wave+"/3":"Awaiting trial";
-            p.sendSystemMessage(Component.literal(e.title+": "+state+" | "+n.x+", "+n.y+", "+n.z+" | "+count+" | /creeperborn nation start|offer "+e.key()));
+            String state=n.offered?"Empowered":n.passed?"Trial passed | matching heart offering needed":n.raiding?"Raid wave "+n.wave+"/3":"Awaiting trial";
+            p.sendSystemMessage(Component.literal(e.title+": "+state+" | "+n.x+", "+n.y+", "+n.z+" | "+count+" | Trade its matching heart with a nation villager for a Nation Token."));
         }
     }
     public static void clear(){data=new Data();path=null;}

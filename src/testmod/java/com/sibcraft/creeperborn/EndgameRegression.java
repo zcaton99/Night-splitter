@@ -60,15 +60,14 @@ public final class EndgameRegression implements net.fabricmc.api.ModInitializer 
         Player sibling=player(l);
         for(Element e:Element.values()){
             var n=Nations.get(e);sibling.snapTo(n.x,n.y,n.z);
-            check(Nations.offer(sibling,e).contains("Bring one"),"An offering cannot succeed without all four hearts");
+            check(Nations.offer(sibling,e).contains("trade menu"),"Offering command directs players to visual trading");
             NationTradeRegression.run(l,sibling,e);
             check(Nations.living(l,n).stream().allMatch(v->v.entityTags().contains("cb_guard_harmony")),"The offering empowers that nation's guardians");
         }
         check(Nations.unlocked(),"All four offerings unlock the ritual for everyone");
         Nations.load(server);check(Nations.unlocked(),"Completed nations and offerings survive world-ledger reload");
-        check(Nations.ritual(sibling).contains("costs"),"Repeat summons require fresh ingredients");
-        sibling.addItem(new ItemStack(Items.END_CRYSTAL,4));sibling.addItem(new ItemStack(Items.NETHER_STAR));
-        check(Nations.ritual(sibling).contains("crafted"),"Shared progress enables a sibling to craft the summoning item");
+        check(Nations.ritual(sibling).contains("crafting table"),"Ritual command directs players to the actual crafting recipe");
+        CovenantRegression.run(l,sibling);
         check(ThreeHeadedDragon.summon(sibling,Relics.covenant()).contains("End exit portal"),"Summoning is rejected outside the End");
         // Combat and rewards use production damage interception, with independent simulated attackers.
         ThreeHeadedDragon.begin(l,new Vec3(-8,130,24),2);var f=ThreeHeadedDragon.state();

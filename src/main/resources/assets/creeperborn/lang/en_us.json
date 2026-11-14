@@ -5,5 +5,9 @@
   "key.creeperborn.move1": "Move 1 (Rubber: hold to charge punch)",
   "key.creeperborn.move2": "Move 2 (Rubber: tap dodge / hold grab; Air: hold step)",
   "key.creeperborn.move3": "Move 3 (Rubber: tap Gear 5 / hold guard)",
-  "key.creeperborn.fruit": "Select / cycle fruit powers"
+  "key.creeperborn.fruit": "Select / cycle fruit powers",
+  "item.creeperborn.earth_nation_token": "Earth Nation Token",
+  "item.creeperborn.water_nation_token": "Water Nation Token",
+  "item.creeperborn.fire_nation_token": "Fire Nation Token",
+  "item.creeperborn.air_nation_token": "Air Nation Token"
 }

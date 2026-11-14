@@ -24,10 +24,10 @@ public final class Relics {
     }
     /** Refresh old saves, including held items, cursor stacks and currently open containers. */
     public static void refreshFruitModels(net.minecraft.world.entity.player.Player player){
-        for(int i=0;i<player.getInventory().getContainerSize();i++)updateFruitModel(player.getInventory().getItem(i));
-        updateFruitModel(player.getOffhandItem());
-        updateFruitModel(player.containerMenu.getCarried());
-        for(var slot:player.containerMenu.slots)updateFruitModel(slot.getItem());
+        for(int i=0;i<player.getInventory().getContainerSize();i++){var old=player.getInventory().getItem(i);var migrated=NationItems.migrate(old);if(migrated!=old)player.getInventory().setItem(i,migrated);updateFruitModel(migrated);}
+        var off=player.getOffhandItem();var migratedOff=NationItems.migrate(off);if(migratedOff!=off)player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,migratedOff);updateFruitModel(migratedOff);
+        player.containerMenu.setCarried(NationItems.migrate(player.containerMenu.getCarried()));updateFruitModel(player.containerMenu.getCarried());
+        for(var slot:player.containerMenu.slots){var old=slot.getItem();var migrated=NationItems.migrate(old);if(migrated!=old)slot.set(migrated);updateFruitModel(migrated);}
     }
     public static ItemStack heart(Element element) {
         ItemStack item = new ItemStack(Items.HEART_OF_THE_SEA);

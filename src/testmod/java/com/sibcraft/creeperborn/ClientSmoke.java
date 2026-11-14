@@ -34,6 +34,7 @@ public final class ClientSmoke implements ClientModInitializer{
                     if(model==null||model.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Fruit item model did not bake: "+fruit);
                 }
                 for(var e:com.sibcraft.creeperborn.Element.values()){Object model=itemGetter.invoke(modelManager,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","element_"+e.key()));if(model==null||model.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Element symbol did not bake: "+e);}
+                for(var e:Element.values()){Object tokenModel=itemGetter.invoke(modelManager,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn",e.key()+"_nation_token"));if(tokenModel==null||tokenModel.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Nation Token model did not bake: "+e);}
                 Object bagModel=itemGetter.invoke(modelManager,net.minecraft.resources.Identifier.fromNamespaceAndPath("creeperborn","holy_bag"));if(bagModel==null||bagModel.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("missing"))throw new AssertionError("Holy Bag model did not bake");
                 com.sibcraft.creeperborn.client.BoltRenderer.validate();
                 com.sibcraft.creeperborn.client.DarkGroundRenderer.validate();
