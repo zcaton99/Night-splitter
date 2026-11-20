@@ -1,0 +1,66 @@
+name: Build RDT Connected Freedom
+on:
+  push:
+    branches: ['rdt/**']
+    paths: ['rdt-dog-training/**', '.github/workflows/rdt.yml', 'gradle/**', 'gradlew']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rdt-dog-training
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build standalone RDT mod
+        run: bash ../gradlew -p . build --stacktrace
+      - name: Run walking and learning regressions
+        timeout-minutes: 5
+        run: |
+          mkdir -p build/regression-run
+          echo 'eula=true' > build/regression-run/eula.txt
+          printf 'online-mode=false\nview-distance=2\nsimulation-distance=2\n' > build/regression-run/server.properties
+          set -o pipefail
+          bash ../gradlew -p . runRegression --stacktrace 2>&1 | tee build/rdt-regression.log
+          grep -q RDT_REGRESSION_PASSED build/rdt-regression.log
+      - name: Install client test dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libopenal1
+      - name: Run native journal UI checks
+        timeout-minutes: 4
+        run: |
+          set -o pipefail
+          LIBGL_ALWAYS_SOFTWARE=true LP_NUM_THREADS=2 xvfb-run -a bash ../gradlew -p . runClientSmoke --stacktrace 2>&1 | tee build/rdt-client.log
+          grep -q RDT_CLIENT_SMOKE_PASSED build/rdt-client.log
+      - name: Prepare two-client multiplayer tests
+        run: bash ../gradlew -p . prepareMultiplayer --no-configuration-cache --stacktrace
+      - name: Test two native players with network delay
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          sudo tc qdisc add dev lo root netem delay 60ms 10ms
+          trap 'sudo tc qdisc del dev lo root || true' EXIT
+          python3 scripts/multiplayer_ci.py | tee build/multiplayer/summary.log
+      - name: Upload RDT test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdt-test-evidence
+          path: |
+            rdt-dog-training/build/*.log
+            rdt-dog-training/build/client-smoke/screenshots/*.png
+            rdt-dog-training/build/multiplayer/*.log
+            rdt-dog-training/build/multiplayer/server/multiplayer-report.json
+            rdt-dog-training/build/multiplayer/*/screenshots/*.png
+      - name: Upload RDT alpha JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: RDT-Connected-Freedom-Alpha
+          path: |
+            rdt-dog-training/build/libs/*.jar
+            !rdt-dog-training/build/libs/*-sources.jar
+          if-no-files-found: error

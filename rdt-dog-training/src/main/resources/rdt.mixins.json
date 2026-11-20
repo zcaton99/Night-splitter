@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.rdt.connectedfreedom.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MobGoalsAccessor",
+    "TrainingLeadMixin"
+  ],
+  "client": [
+    "CoachHudMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

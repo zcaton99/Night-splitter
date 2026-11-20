@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "rdt",
+  "version": "${version}",
+  "name": "RDT: Connected Freedom",
+  "description": "Chapter 1: a shared walk, name recognition, line awareness and the first curiosity about play.",
+  "authors": [
+    "Zach Caton"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.rdt.connectedfreedom.DogTraining"
+    ],
+    "client": [
+      "com.rdt.connectedfreedom.client.RdtClient"
+    ]
+  },
+  "mixins": [
+    "rdt.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": ">=0.161.0"
+  }
+}

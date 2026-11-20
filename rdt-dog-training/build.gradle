@@ -1,0 +1,119 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+repositories {
+	// Add repositories to retrieve artifacts from in here.
+	// You should only use this when depending on other mods because
+	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
+	// for more information about repositories.
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}
+
+sourceSets {
+    testmod {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
+loom {
+    mods {
+        rdt { sourceSet sourceSets.main }
+        rdt_tests { sourceSet sourceSets.testmod }
+    }
+    runs {
+        clientSmoke {
+            client()
+            name "RDT client model smoke"
+            source sourceSets.testmod
+            runDir "build/client-smoke"
+            vmArg "-Drdt.visualSmoke=true"
+        }
+        regression {
+            server()
+            name "RDT regression"
+            source sourceSets.testmod
+            runDir "build/regression-run"
+            programArg "nogui"
+        }
+    }
+}
+
+
+// Generate three independent native Java launches so Gradle project locks do not serialize the clients behind the server.
+loom.runs {
+    multiplayerServer {
+        server(); source sourceSets.testmod; runDir "build/multiplayer/server"
+        vmArg "-Drdt.multiplayer=true"; vmArg "-Xmx768M"; programArg "nogui"
+    }
+    multiplayerAlpha {
+        client(); source sourceSets.testmod; runDir "build/multiplayer/alpha"
+        vmArg "-Drdt.multiplayer=true"; vmArg "-Xmx1024M"
+        programArgs "--username", "LanAlpha", "--width", "640", "--height", "480"
+    }
+    multiplayerBeta {
+        client(); source sourceSets.testmod; runDir "build/multiplayer/beta"
+        vmArg "-Drdt.multiplayer=true"; vmArg "-Xmx1024M"
+        programArgs "--username", "LanBeta", "--width", "640", "--height", "480"
+    }
+}
+tasks.register('prepareMultiplayer') {
+    def launches = ['runMultiplayerServer','runMultiplayerAlpha','runMultiplayerBeta']
+    dependsOn { launches.collectMany { name -> def t=tasks.named(name).get(); t.taskDependencies.getDependencies(t).toList() } }
+    doLast {
+        def result=[]
+        launches.each { name ->
+            def t=tasks.named(name).get()
+            def command=[System.getProperty('java.home')+'/bin/java']
+            command.addAll((t.allJvmArgs+t.jvmArgumentProviders.collectMany { it.asArguments().toList() }).findAll { !it.startsWith('@') }.unique())
+            command.addAll(['-cp',t.classpath.asPath,t.mainClass.get()])
+            command.addAll(t.args);command.addAll(t.argumentProviders.collectMany { it.asArguments().toList() })
+            def folder=file('build/multiplayer/'+(name.endsWith('Server')?'server':name.endsWith('Alpha')?'alpha':'beta'));folder.mkdirs()
+            result.add([name:name,command:command,directory:folder.absolutePath])
+        }
+        file('build/multiplayer/launch.json').text=groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result))
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "rdt_tests",
+  "version": "1.0.0",
+  "name": "RDT Tests",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.rdt.connectedfreedom.Regression",
+      "com.rdt.connectedfreedom.MultiplayerServer"
+    ],
+    "client": [
+      "com.rdt.connectedfreedom.ClientSmoke",
+      "com.rdt.connectedfreedom.MultiplayerClient"
+    ]
+  },
+  "depends": {
+    "rdt": "*"
+  }
+}
