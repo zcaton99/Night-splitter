@@ -15,7 +15,7 @@ Press **J** to open your field guide, or craft a book and bone together to make 
 3. Once the pup reconnects and loosens the line, continue. Build three successful check-ins.
 4. After a success, choose **Celebrate**, then walk or jog in a small clear loop with your pup for a few seconds. Both partners must actually move together. Practice twice.
 5. Explore around a tree or solid post. When the line crosses a block, stop and retrace your route. **Help** encourages the pup along a clear path. Resolving one actual crossed line records the lesson.
-6. Once these experiences and at least 20 blocks of shared walking are recorded, choose **Ready**, then **Yes**. The pup needs to actually approach before curiosity is recorded.
+6. Once these experiences and at least 20 blocks of shared walking are recorded, hold your RDT Play Toy and choose **Ready**, then **Yes**. The pup needs to actually approach before curiosity is recorded.
 7. Choose **Done**, then share a quiet pause to complete the prototype chapter.
 
 The current chapter uses visible learning milestones to help test the sequence. Those counts and comfort/engagement values are game estimates, not measurements of a real dog's feelings. The pup's actual movement and response determine progress; button presses alone do not complete the lessons.

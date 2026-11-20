@@ -9,7 +9,7 @@ import net.minecraft.world.phys.*;
 
 /** Native pathfinding, collision, gravity and wolf animations; no scripted teleport learning. */
 public final class WalkingGoal extends Goal {
-    private final Wolf dog;private final PupState s;private int ticks;
+    private final Wolf dog;private final PupState s;private int ticks,settling;
     public WalkingGoal(Wolf dog,PupState state){this.dog=dog;s=state;setFlags(EnumSet.of(Flag.MOVE,Flag.LOOK,Flag.JUMP));}
     private ServerPlayer owner(){return dog.level().getServer().getPlayerList().getPlayer(java.util.UUID.fromString(s.owner));}
     public boolean canUse(){var p=owner();return p!=null&&p.isAlive()&&p.level()==dog.level();}
@@ -21,7 +21,7 @@ public final class WalkingGoal extends Goal {
         var p=owner();if(p==null)return;ticks++;Learning l=s.learning;
         dog.setTarget(null);dog.setOrderedToSit(false);
         if(dog.getY()<dog.level().getMinY()+8){dog.teleportTo(p.getX(),p.getY(),p.getZ());l.notice="Your pup was brought back from an unsafe drop. Choose a clear walking area.";return;}
-        if(l.mode.equals("settle")){dog.getNavigation().stop();dog.setIsInterested(false);dog.setInSittingPose(ticks%120>25);return;}dog.setInSittingPose(false);
+        if(l.mode.equals("settle")){dog.getNavigation().stop();dog.setIsInterested(false);dog.setInSittingPose(++settling>25);return;}settling=0;dog.setInSittingPose(false);
         double distance=dog.distanceTo(p);boolean blocked=distance>1.5&&crossed(dog,p);
         if(blocked){s.clearTicks=0;s.blockedTicks++;if(!s.tangled&&s.blockedTicks>=15){s.tangled=true;l.notice="The line crosses a block. Pause the walk, retrace your route, and use Help if needed.";DogTraining.send(p,false);}if(s.helping)walk(p.position(),1.05);else dog.getNavigation().stop();return;}
         s.blockedTicks=0;
