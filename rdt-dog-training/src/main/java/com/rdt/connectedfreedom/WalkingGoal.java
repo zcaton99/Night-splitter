@@ -39,7 +39,7 @@ public final class WalkingGoal extends Goal {
         if(l.mode.equals("celebrate")){if(distance>1.4)walk(p.position(),1.25);else dog.getNavigation().stop();return;}
         if(l.mode.equals("investigate")||l.mode.equals("curious")){
             dog.setIsInterested(true);
-            if(distance>1.6)walk(p.position(),.85);
+            if(distance>2.25)walk(p.position(),.85);
             else {dog.getNavigation().stop();if(!l.curious){l.curious=true;l.mode="curious";l.notice="Your pup approached and investigated the toy. First curiosity! Celebrate this small moment, then Done and settle.";DogTraining.send(p,false);}}
             return;
         }

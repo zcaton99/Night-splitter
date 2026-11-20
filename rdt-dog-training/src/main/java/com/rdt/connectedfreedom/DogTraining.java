@@ -95,7 +95,13 @@ public final class DogTraining implements ModInitializer {
             }
             case "help"->{if(s.tangled){s.helping=true;l.notice="Walk back toward the same side of the obstacle and encourage your pup. Help means finding a clear path, not dragging.";w.getNavigation().moveTo(p,1.0);}else if(s.pendingName&&now-s.nameAt>=15){s.helping=true;s.returning=true;l.notice="Help the pup turn and come closer. Your name cue is still being learned.";}else l.notice="Give the pup a moment after your cue. At a tangle, pause and help them find the route back.";}
             case "celebrate"->{if(s.celebrateAt>=0){l.notice="Celebrate together for a short lap; let your pup move with you.";break;}if(l.connections+l.obstacles<=l.celebrations){l.notice="Build a successful check-in or solve a line problem first. Then share a moving celebration.";break;}s.celebrateAt=now;s.celebrateTicks=0;s.celebrateLast=p.position();l.mode="celebrate";l.notice="Celebrate! Move in a small, clear loop together. Match this pup's pace and give them room.";}
-            case "ready"->{if(!p.getMainHandItem().is(TOY)&&!p.getOffhandItem().is(TOY)){l.notice="Hold your RDT Play Toy before Ready, then Yes. Let the pup investigate it in their own time.";break;}if(l.invite())w.setOrderedToSit(false);s.exploreTarget=null;}
+            case "ready"->{
+                if(!p.getMainHandItem().is(TOY)&&!p.getOffhandItem().is(TOY)&&p.getOffhandItem().isEmpty()){
+                    for(int slot=0;slot<p.getInventory().getContainerSize();slot++)if(p.getInventory().getItem(slot).is(TOY)){p.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,p.getInventory().removeItem(slot,1));break;}
+                }
+                if(!p.getMainHandItem().is(TOY)&&!p.getOffhandItem().is(TOY)){l.notice="Hold your RDT Play Toy before Ready, then Yes. Let the pup investigate it in their own time.";break;}
+                if(l.invite())w.setOrderedToSit(false);s.exploreTarget=null;
+            }
             case "done"->{l.done();s.pendingName=false;s.helping=false;s.returning=false;s.celebrateAt=-1;w.getNavigation().stop();w.setIsInterested(false);}
             case "line"->{s.line=s.line<4?5:s.line<6?7:3;s.exploreTarget=null;l.notice="Line length: "+(int)s.line+" blocks. Give room where it is suitable; shorten it before tight spaces.";}
             case "good"->l.notice="Good reassures the pup to continue. It is different from Yes, which releases them.";
