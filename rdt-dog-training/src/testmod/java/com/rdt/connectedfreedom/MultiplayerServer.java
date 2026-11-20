@@ -25,6 +25,7 @@ public final class MultiplayerServer implements ModInitializer {
     private Wolf dog(ServerPlayer p){var s=DogTraining.state(p);return (Wolf)server.overworld().getEntity(UUID.fromString(s.dog));}
     private void place(ServerPlayer p,double x,double z){p.teleportTo(server.overworld(),x,121,z,Set.of(),0,0,false);p.setGameMode(GameType.SURVIVAL);p.setPermanentlyInvulnerable(true);p.setDeltaMovement(Vec3.ZERO);}
     private void run(){total++;age++;if(total>3000)throw new AssertionError("RDT multiplayer timeout at stage "+stage);
+        if(stage==9&&done.size()==2&&age>15){var stop=server;server=null;stop.halt(false);return;}
         var a=find("LanAlpha");var b=find("LanBeta");if(a==null||b==null)return;
         for(var p:List.of(a,b))p.getFoodData().setFoodLevel(20);
         if(stage==0){if(!ServerPlayNetworking.canSend(a,Probe.TYPE)||!ServerPlayNetworking.canSend(b,Probe.TYPE))return;
@@ -57,7 +58,6 @@ public final class MultiplayerServer implements ModInitializer {
         if(stage==6&&sa.learning.curious&&sb.learning.curious){check(dog(a).distanceTo(a)<2.6&&dog(b).distanceTo(b)<2.6,"Ready then Yes produces an actual pup approach before curiosity is credited");check(!sa.learning.complete&&!sb.learning.complete,"Curiosity does not skip the closing settling lesson");next(7,a,b);return;}
         if(stage==7&&sa.learning.complete&&sb.learning.complete&&age>45){DogTraining.save();DogTraining.load(server);check(DogTraining.state(a).learning.complete&&DogTraining.state(b).learning.complete,"Both named pups retain completed learning after progress reload");check(!DogTraining.state(a).pendingName&&!DogTraining.state(b).pendingName,"Reload clears temporary cue movement");next(8,a,b);return;}
         if(stage==8&&age>90&&seen.size()==2){check(true,"Both native clients open and render their own field-guide journal");report(true,"");next(9,a,b);return;}
-        if(stage==9&&done.size()==2&&age>15){var stop=server;server=null;stop.halt(false);}
     }
     private void report(boolean success,String failure){try{Files.writeString(Path.of("multiplayer-report.json"),new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(Map.of("passed",success,"checks",passed,"failure",failure,"native_clients",2)));if(success)System.out.println("RDT_NATIVE_MULTIPLAYER_PASSED");}catch(Exception e){throw new RuntimeException(e);}}
 }
