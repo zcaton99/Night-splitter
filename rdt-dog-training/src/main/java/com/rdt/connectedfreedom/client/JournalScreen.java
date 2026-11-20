@@ -15,6 +15,7 @@ public final class JournalScreen extends Screen {
         "FIRST CURIOSITY\nAfter shared walking, check-ins, celebrations and a line problem, try Ready, then Yes. Watch the pup investigate. A sniff or approach is enough. Full tug and fetch arrive in later chapters.",
         "DONE + THE FOUR WINDOWS\nWork gives a taught job; Enough is settling after Done; Play begins with Ready, then Yes; Free is exploration released with Yes. In this prototype, Done starts a quiet pause. Settling is learned, not an instant emotional switch.",
         "UNDERSTANDING LEARNING\nAcquisition builds the behavior and cue. Fluency makes it smoother. Generalization adds places and situations. Discrimination clarifies the exact cue. Relationship meters here are game estimates, not a way to measure a real dog's feelings.",
+        "TWO RECALL PICTURES\nLet's go reconnects for moving together. Here returns to a front sit held until Yes. Say the cue once, give a short opportunity, then help. The first 3 completed returns build familiarity here. Familiar practice is only a start: new places and distractions need their own teaching.",
         "REAL DOGS\nPractice with a trusted adult and a suitable dog. Give unfamiliar dogs space. Look at the whole body and situation; one wag does not tell the whole story. A game cannot tell you that any real dog is safe to approach."
     };
     public JournalScreen(){super(Component.literal("RDT - Connected Freedom"));}
@@ -29,9 +30,11 @@ public final class JournalScreen extends Screen {
             button("Meet my pup",left,128,w,()->RdtClient.send("adopt",name.getValue()));
             button("Close",left,height-26,w,this::onClose);return;
         }
-        button("Walk",left,32,(w-8)/3,()->{page=0;rebuildWidgets();});button("Learn",left+(w-8)/3+4,32,(w-8)/3,()->{page=1;rebuildWidgets();});button("Progress",left+2*((w-8)/3+4),32,(w-8)/3,()->{page=2;rebuildWidgets();});
+        String[] tabs={"Walk","Learn","Progress","Recalls"};int tab=(w-9)/4;
+        for(int i=0;i<tabs.length;i++){final int target=i;button(tabs[i],left+i*(tab+3),32,tab,()->{page=target;rebuildWidgets();});}
         if(page==0){String[] labels={"Yes - release",v.name()+" - connect","Help","Celebrate","Ready - invite play","Done - settle","Change line length","Good - continue"};String[] actions={"yes","name","help","celebrate","ready","done","line","good"};for(int i=0;i<labels.length;i++){final String action=actions[i];button(labels[i],left+(i%2)*(half+6),116+(i/2)*23,half,()->cue(action));}}
         if(page==1){button("Previous lesson",left,height-52,half,()->{lesson=Math.floorMod(lesson-1,LESSONS.length);});button("Next lesson",left+half+6,height-52,half,()->{lesson=(lesson+1)%LESSONS.length;});}
+        if(page==3){button("Let's go - move together",left,137,w,()->cue("letsgo"));button("Here - return + front sit",left,160,w,()->cue("here"));button("Yes - release",left,183,half,()->cue("yes"));button("Help",left+half+6,183,half,()->cue("help"));}
         button("Back to my pup",left,height-26,w,this::onClose);
     }
     public void extractRenderState(GuiGraphicsExtractor g,int mouseX,int mouseY,float partial){
@@ -45,6 +48,8 @@ public final class JournalScreen extends Screen {
             var lines=font.split(Component.literal(v.notice()),w);int y=74;for(int i=0;i<Math.min(4,lines.size());i++){g.text(font,lines.get(i),left,y,0xFFF0F2DF);y+=9;}
         }else if(page==1){
             g.textWithWordWrap(font,Component.literal(LESSONS[lesson]),left,65,w,0xFFF0F2DF);
+        }else if(page==3){
+            g.textWithWordWrap(font,Component.literal("RECALLS: A NEW WORD NEEDS HELP\nFirst build 3 name check-ins. Say Yes and allow space. Cue once, then Help if needed. Here holds until Yes. Good continues the job. Practice in a quiet, familiar place first."),left,62,w,0xFFF0F2DF);
         }else{
             String text="CHAPTER 1 - "+(v.complete()?"COMPLETE":"IN PROGRESS")+"\n\nComfort: "+v.comfort()+" / 100\nEngagement: "+v.engagement()+" / 100\nName check-ins: "+v.connections()+" / 3\nMoving celebrations: "+v.celebrations()+" / 2\nLine problems solved: "+v.obstacles()+" / 1\nShared walking: "+v.distance()+" blocks\nNeutral dog experiences: "+v.socialization()+"\n\nNext: "+v.next();
             g.textWithWordWrap(font,Component.literal(text),left,62,w,0xFFF0F2DF);

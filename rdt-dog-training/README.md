@@ -52,3 +52,8 @@ This project lives in `rdt-dog-training/` on the `rdt/prototype` branch of the e
 The dedicated workflow builds the JAR, checks learning/persistence and the native crafting recipe, renders journal screens, and runs two real clients against a dedicated server with network delay. Native multiplayer checks cover individual pup ownership, actual pathfinding and line connections, a real post obstruction, moving celebrations, the toy approach, persistence reload and both journals.
 
 Progress is saved in each world's `rdt-progress.json`. The first alpha supports one Overworld walking pup per player. If you leave the area or dimension, the pup waits; the journal reports the last recorded location. This is not yet a cross-dimension companion system.
+
+## Alpha 2: first recalls
+Open J → Recalls after 3 name check-ins. Release with Yes, allow at least 3 blocks of space, then cue once. Familiar help begins shortly after a new cue; H can offer it after the brief opportunity. Three actual completed returns build familiarity with each cue; this does not establish generalization.
+
+Let's go reconnects for moving together without a front sit. Here returns to a front sit held until Yes. Good keeps the job going. Release before choosing another activity. Progress saves separately for each pup.

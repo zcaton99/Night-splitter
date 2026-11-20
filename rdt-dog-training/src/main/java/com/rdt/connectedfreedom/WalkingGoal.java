@@ -22,7 +22,30 @@ public final class WalkingGoal extends Goal {
         dog.setTarget(null);dog.setOrderedToSit(false);
         if(dog.getY()<dog.level().getMinY()+8){dog.teleportTo(p.getX(),p.getY(),p.getZ());l.notice="Your pup was brought back from an unsafe drop. Choose a clear walking area.";return;}
         if(l.mode.equals("settle")){dog.getNavigation().stop();dog.setIsInterested(false);dog.setInSittingPose(++settling>25);return;}settling=0;dog.setInSittingPose(false);
-        double distance=dog.distanceTo(p);boolean blocked=distance>1.5&&crossed(dog,p);
+        double distance=dog.distanceTo(p);
+        if(s.holding){dog.getNavigation().stop();dog.setInSittingPose(true);dog.getLookControl().setLookAt(p,30,30);return;}
+        if(s.recall!=null){
+            int age=p.level().getServer().getTickCount()-s.recallAt;
+            boolean familiar=s.recalls.familiar(s.recall);
+            dog.getLookControl().setLookAt(p,30,30);
+            if(!familiar&&!s.recallHelp&&age>=30){s.recallHelp=true;l.notice="Now help: encourage the familiar return. We are connecting this new word to the behavior.";DogTraining.send(p,false);}
+            if(age<(familiar?12:15)||!familiar&&!s.recallHelp){dog.getNavigation().stop();return;}
+            if(crossed(dog,p)){dog.getNavigation().stop();l.notice="The route is blocked. Move to a clear path and help your pup; do not repeat the cue.";return;}
+            boolean here=s.recall.equals("here");
+            Vec3 target=here?p.position().add(p.getLookAngle().horizontal().normalize().scale(1.6)):p.position();
+            walk(target,1.05);
+            boolean arrived=here?dog.position().distanceTo(target)<1.2:distance<2.1;
+            if(arrived){
+                if(++s.recallArrival<6)return;
+                s.recalls.completed(s.recall);s.recall=null;s.atLimit=false;s.helping=false;dog.getNavigation().stop();
+                if(here){s.holding=true;s.holdAt=dog.position();dog.setInSittingPose(true);l.mode="here_hold";l.notice="Here: your pup returned to a front sit. Good means keep holding. Say Yes to release, then celebrate.";}
+                else{l.mode="together";l.notice="Let's go: you reconnected. Move together, then Yes releases exploration. No front sit is required.";}
+                l.notice+=" Completed returns: Let's go "+s.recalls.letsGo+", Here "+s.recalls.here+". These are familiar-place repetitions.";DogTraining.save();DogTraining.send(p,false);
+            }else s.recallArrival=0;
+            return;
+        }
+        if(l.mode.equals("together")){if(distance>1.8)walk(p.position(),1.05);else dog.getNavigation().stop();return;}
+        boolean blocked=distance>1.5&&crossed(dog,p);
         if(blocked){s.clearTicks=0;s.blockedTicks++;if(!s.tangled&&s.blockedTicks>=15){s.tangled=true;l.notice="The line crosses a block. Pause the walk, retrace your route, and use Help if needed.";DogTraining.send(p,false);}if(s.helping)walk(p.position(),1.05);else dog.getNavigation().stop();return;}
         s.blockedTicks=0;
         if(s.tangled){s.clearTicks++;if(s.clearTicks>=20&&distance<s.line){s.tangled=false;s.helping=false;l.obstacle();s.exploreTarget=null;DogTraining.send(p,false);}else {walk(p.position(),.9);return;}}

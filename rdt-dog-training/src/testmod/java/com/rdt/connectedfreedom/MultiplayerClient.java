@@ -22,6 +22,9 @@ public final class MultiplayerClient implements ClientModInitializer {
             if(stage==5){if(ticks==20||ticks==210||ticks==400)RdtClient.send("celebrate","");if(ticks>25){c.player.setYRot((ticks-25)*4);c.player.setXRot(0);c.options.keyUp.setDown(true);}}
             if(stage==6&&ticks==8)for(int i=0;i<9;i++)if(c.player.getInventory().getItem(i).is(DogTraining.TOY)){c.player.getInventory().setSelectedSlot(i);c.getConnection().send(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(i));break;}
             if(stage==6&&ticks==20)RdtClient.send("ready","");if(stage==6&&ticks==45)RdtClient.send("yes","");
+            if(stage==10&&ticks==10)RdtClient.send("letsgo","");
+            if(stage==11&&ticks==10)RdtClient.send("here","");
+            if(stage==13&&ticks==10)RdtClient.send("yes","");
             if(stage==7&&ticks==15)RdtClient.send("done","");
             if(stage==8&&ticks==10)RdtClient.send("open","");if(stage==8&&ticks==55){if(!(c.gui.screen() instanceof JournalScreen)||RdtClient.view==null||!RdtClient.view.complete())throw new AssertionError("Completed journal did not synchronize");net.minecraft.client.Screenshot.grab(c.gameDirectory,"rdt-native-journal.png",c.gameRenderer.mainRenderTarget(),1,m->{});ClientPlayNetworking.send(new Probe(8,1));}
         }catch(Throwable e){e.printStackTrace();System.exit(1);}});

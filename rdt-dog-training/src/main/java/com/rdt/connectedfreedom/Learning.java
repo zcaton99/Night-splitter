@@ -16,7 +16,7 @@ public final class Learning {
         case 3->"Walk around a tree or post. If the line crosses it, pause and help your pup find a clear path.";
         case 4->"Explore together a little more. Notice the pup's responses.";
         case 5->"Try Ready, then Yes with the toy. Look for curiosity, rather than demanding a tug.";
-        default->"First curiosity! Celebrate, then Done and a quiet pause. More play lessons will follow.";
+        default->"First curiosity! Celebrate, then Done and a quiet pause. Open Recalls to build Let's go and Here from your name check-ins.";
     };}
     public void walked(double distance){if(!released||mode.equals("settle")||distance<.05||distance>2)return;comfort=Math.min(100,comfort+(float)distance*.1f);}
     public void connection(){connections++;comfort=Math.min(100,comfort+5);engagement=Math.min(100,engagement+4);notice="You reconnected and the line is loose. Continue walking together.";}

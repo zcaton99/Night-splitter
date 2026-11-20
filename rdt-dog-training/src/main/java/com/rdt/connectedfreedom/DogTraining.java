@@ -59,7 +59,7 @@ public final class DogTraining implements ModInitializer {
         UseEntityCallback.EVENT.register((p,l,hand,e,hit)->{if(!managed(e))return InteractionResult.PASS;if(p instanceof ServerPlayer sp){var s=state(sp);if(s!=null&&e.getUUID().toString().equals(s.dog))send(sp,true);else sp.sendSystemMessage(Component.literal("This pup already has a walking partner. Open your own RDT field guide to meet yours."));}return InteractionResult.SUCCESS;});
         CommandRegistrationCallback.EVENT.register((dispatcher,access,env)->dispatcher.register(Commands.literal("rdt").executes(ctx->{send(ctx.getSource().getPlayerOrException(),true);return 1;})));
     }
-    public static void load(MinecraftServer server){path=server.getWorldPath(LevelResource.ROOT).resolve("rdt-progress.json");data=WorldStore.read(path,Data.class,new Data());if(data.pups==null)throw new IllegalStateException("Invalid RDT progress");for(var entry:data.pups.entrySet()){var s=entry.getValue();if(s==null||s.learning==null||s.dog==null||!entry.getKey().equals(s.owner))throw new IllegalStateException("Invalid RDT pup record");UUID.fromString(s.dog);s.runtime();s.installed=false;s.pendingName=false;s.exploreTarget=null;}}
+    public static void load(MinecraftServer server){path=server.getWorldPath(LevelResource.ROOT).resolve("rdt-progress.json");data=WorldStore.read(path,Data.class,new Data());if(data.pups==null)throw new IllegalStateException("Invalid RDT progress");for(var entry:data.pups.entrySet()){var s=entry.getValue();if(s==null||s.learning==null||s.dog==null||!entry.getKey().equals(s.owner))throw new IllegalStateException("Invalid RDT pup record");UUID.fromString(s.dog);s.runtime();s.installed=false;s.pendingName=false;s.exploreTarget=null;if(Set.of("work","here_hold","together").contains(s.learning.mode))s.learning.mode="settle";}}
     public static void save(){if(path!=null)WorldStore.write(path,data);}
     public static String cleanName(String text){String name=text.strip().replaceAll("[^\\p{L}\\p{N} '\\-]","");return name.isBlank()?"Pup":name.substring(0,Math.min(24,name.length()));}
     public static PupState adopt(ServerPlayer p,String name){
@@ -86,14 +86,24 @@ public final class DogTraining implements ModInitializer {
         PupState s=state(p);if(s==null){send(p,true);return;}Wolf w=dog(p.level().getServer(),s);
         if(w==null||w.level()!=p.level()||w.distanceToSqr(p)>32*32){s.learning.notice="Your pup is waiting near "+(int)s.x+", "+(int)s.y+", "+(int)s.z+" in "+s.dimension+". Return to continue together.";send(p,false);return;}
         int now=p.level().getServer().getTickCount();Learning l=s.learning;
+        if((s.holding||s.recall!=null)&&!Set.of("yes","good","help","line").contains(action)){
+            l.notice="Finish this job with Yes before changing activities. Good means keep going.";send(p,false);return;
+        }
         switch(action){
-            case "yes"->{l.yes();s.exploreTarget=null;s.pendingName=false;w.setOrderedToSit(false);}
+            case "yes"->{s.recall=null;s.holding=false;s.holdAt=null;s.recallHelp=false;s.atLimit=false;s.helping=false;s.returning=false;l.yes();s.exploreTarget=null;s.pendingName=false;w.setOrderedToSit(false);}
+            case "letsgo","here"->{
+                if(l.connections<3){l.notice="Start with 3 name check-ins on your walk. That familiar return will help us teach a recall.";break;}
+                if(now-s.lastRecall<80){l.notice="Take a short pause and release with Yes between repetitions. One clear cue is enough.";break;}
+                if(w.distanceTo(p)<2.8){l.notice="Say Yes, give your pup a little space on the line, then try the recall. We need a real return to practice.";break;}
+                s.lastRecall=now;s.recallAt=now;s.recall=action;s.recallHelp=false;s.recallArrival=0;s.pendingName=false;s.returning=false;s.helping=false;s.atLimit=false;s.celebrateAt=-1;s.exploreTarget=null;
+                l.ready=false;l.mode="work";l.notice=s.recalls.familiar(action)?"Say the cue once. Give your pup an opportunity to respond before help.":"A new cue! Say it once. Familiar help follows shortly; the word does not have meaning yet.";
+            }
             case "name"->{
                 if(now-s.lastCue<40){l.notice="Say the name once, then give your pup time. Help them succeed instead of repeating it.";break;}
                 s.lastCue=now;s.nameAt=now;s.pendingName=true;w.setIsInterested(true);
                 l.notice=s.atLimit?"Pause. Say "+s.name+" once. A turn toward you is a connection, not a front-sit recall. Help follows if needed.":"Say "+s.name+" once. Notice their response. Practice the line lesson when the pup reaches its limit.";
             }
-            case "help"->{if(s.tangled){s.helping=true;l.notice="Walk back toward the same side of the obstacle and encourage your pup. Help means finding a clear path, not dragging.";w.getNavigation().moveTo(p,1.0);}else if(s.pendingName&&now-s.nameAt>=15){s.helping=true;s.returning=true;l.notice="Help the pup turn and come closer. Your name cue is still being learned.";}else l.notice="Give the pup a moment after your cue. At a tangle, pause and help them find the route back.";}
+            case "help"->{if(s.recall!=null){if(now-s.recallAt>=15){s.recallHelp=true;l.notice="Help begins after the cue: encourage the familiar return. Here finishes in a front sit; Let's go reconnects for movement.";}else l.notice="Give the cue a brief moment, then help.";}else if(s.tangled){s.helping=true;l.notice="Walk back toward the same side of the obstacle and encourage your pup. Help means finding a clear path, not dragging.";w.getNavigation().moveTo(p,1.0);}else if(s.pendingName&&now-s.nameAt>=15){s.helping=true;s.returning=true;l.notice="Help the pup turn and come closer. Your name cue is still being learned.";}else l.notice="Give the pup a moment after your cue. At a tangle, pause and help them find the route back.";}
             case "celebrate"->{if(s.celebrateAt>=0){l.notice="Celebrate together for a short lap; let your pup move with you.";break;}if(l.connections+l.obstacles<=l.celebrations){l.notice="Build a successful check-in or solve a line problem first. Then share a moving celebration.";break;}s.celebrateAt=now;s.celebrateTicks=0;s.celebrateLast=p.position();l.mode="celebrate";l.notice="Celebrate! Move in a small, clear loop together. Match this pup's pace and give them room.";}
             case "ready"->{
                 if(!p.getMainHandItem().is(TOY)&&!p.getOffhandItem().is(TOY)&&p.getOffhandItem().isEmpty()){
