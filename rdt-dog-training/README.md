@@ -18,6 +18,8 @@ Press **J** to open your field guide, or craft a book and bone together to make 
 6. Once these experiences and at least 20 blocks of shared walking are recorded, hold your RDT Play Toy and choose **Ready**, then **Yes**. The pup needs to actually approach before curiosity is recorded.
 7. Choose **Done**, then share a quiet pause to complete the prototype chapter.
 
+Nearby dogs can also build separate neutral socialization practice when the pup and player keep moving comfortably with space and connection. Each different dog counts as a new experience; standing beside another dog or repeating the same encounter does not repeatedly award points. Greetings are not required, and this optional progress never blocks the chapter.
+
 The current chapter uses visible learning milestones to help test the sequence. Those counts and comfort/engagement values are game estimates, not measurements of a real dog's feelings. The pup's actual movement and response determine progress; button presses alone do not complete the lessons.
 
 ## Default keys

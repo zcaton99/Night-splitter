@@ -9,6 +9,7 @@ public final class PupState {
     public transient boolean installed,atLimit,tangled,helping,pendingName,returning;
     public transient int stillTicks,nameAt,lastCue=-1000,celebrateTicks,celebrateAt=-1,blockedTicks,clearTicks;
     public transient long lastPacket;
+    public transient int neutralTicks;public transient String neutralPartner;
     public transient double travelRemainder;
     public transient Vec3 playerLast,dogLast,celebrateLast,exploreTarget;
     public transient java.util.ArrayDeque<Vec3> route=new java.util.ArrayDeque<>();

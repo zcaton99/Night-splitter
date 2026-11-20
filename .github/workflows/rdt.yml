@@ -29,12 +29,12 @@ jobs:
           bash ../gradlew -p . runRegression --stacktrace 2>&1 | tee build/rdt-regression.log
           grep -q RDT_REGRESSION_PASSED build/rdt-regression.log
       - name: Install client test dependencies
-        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0 libopenal1
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libvulkan1 mesa-vulkan-drivers libxkbcommon0 libpulse0 libxcursor1 libxi6 libopenal1
       - name: Run native journal UI checks
         timeout-minutes: 4
         run: |
           set -o pipefail
-          LIBGL_ALWAYS_SOFTWARE=true LP_NUM_THREADS=2 xvfb-run -a bash ../gradlew -p . runClientSmoke --stacktrace 2>&1 | tee build/rdt-client.log
+          LIBGL_ALWAYS_SOFTWARE=true SDL_AUDIODRIVER=dummy LP_NUM_THREADS=2 xvfb-run -a -s "-screen 0 1280x720x24" timeout 180s bash ../gradlew -p . runClientSmoke --stacktrace 2>&1 | tee build/rdt-client.log
           grep -q RDT_CLIENT_SMOKE_PASSED build/rdt-client.log
       - name: Prepare two-client multiplayer tests
         run: bash ../gradlew -p . prepareMultiplayer --no-configuration-cache --stacktrace

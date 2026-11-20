@@ -10,6 +10,7 @@ public final class JournalScreen extends Screen {
         "NAME + END OF THE LINE\nWhen the pup reaches the line's limit, pause the walk. Say the name once. Give a brief opportunity to connect, then use familiar help. Once the line is loose, walk on. The name asks for connection; it does not mean Here or Sit.",
         "OUR CYCLE OF HELP\nA cue comes before help. In this first lesson, Help encourages a return along a clear path. The pup gradually gets an opportunity to respond before help begins. Repeating the word louder does not teach its meaning.",
         "CELEBRATE TOGETHER\nAfter a connection, choose Celebrate and move together in a small loop. Keep it comfortable for this pup. Movement and shared enjoyment can make the next interaction worthwhile. You do not need maximum excitement.",
+        "NEUTRAL SOCIALIZATION\nA walk near another dog can be useful practice when your pup has space and can keep moving and connecting with you. A greeting is not required. Simply being near a dog does not prove comfort. This game records separate practice with different dogs; it does not declare every dog safe.",
         "LINE PROBLEMS\nWalk around a tree or post while the pup explores. If the line crosses it, pause. Retrace your path, then use Help to encourage a clear route. Be the pup's cheat sheet. Do not drag or leave them stuck to guess.",
         "FIRST CURIOSITY\nAfter shared walking, check-ins, celebrations and a line problem, try Ready, then Yes. Watch the pup investigate. A sniff or approach is enough. Full tug and fetch arrive in later chapters.",
         "DONE + THE FOUR WINDOWS\nWork gives a taught job; Enough is settling after Done; Play begins with Ready, then Yes; Free is exploration released with Yes. In this prototype, Done starts a quiet pause. Settling is learned, not an instant emotional switch.",
@@ -45,7 +46,7 @@ public final class JournalScreen extends Screen {
         }else if(page==1){
             g.textWithWordWrap(font,Component.literal(LESSONS[lesson]),left,65,w,0xFFF0F2DF);
         }else{
-            String text="CHAPTER 1 - "+(v.complete()?"COMPLETE":"IN PROGRESS")+"\n\nComfort: "+v.comfort()+" / 100\nEngagement: "+v.engagement()+" / 100\nName check-ins: "+v.connections()+" / 3\nMoving celebrations: "+v.celebrations()+" / 2\nLine problems solved: "+v.obstacles()+" / 1\nShared walking: "+v.distance()+" blocks\n\nNext: "+v.next();
+            String text="CHAPTER 1 - "+(v.complete()?"COMPLETE":"IN PROGRESS")+"\n\nComfort: "+v.comfort()+" / 100\nEngagement: "+v.engagement()+" / 100\nName check-ins: "+v.connections()+" / 3\nMoving celebrations: "+v.celebrations()+" / 2\nLine problems solved: "+v.obstacles()+" / 1\nShared walking: "+v.distance()+" blocks\nNeutral dog experiences: "+v.socialization()+"\n\nNext: "+v.next();
             g.textWithWordWrap(font,Component.literal(text),left,62,w,0xFFF0F2DF);
         }
         super.extractRenderState(g,mouseX,mouseY,partial);

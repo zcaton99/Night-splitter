@@ -103,7 +103,7 @@ public final class DogTraining implements ModInitializer {
         }
         save();send(p,false);
     }
-    public static CoachPayload.View view(ServerPlayer p){PupState s=state(p);if(s==null)return new CoachPayload.View("",-1,0,0,0,0,0,20,10,5,false,false,"welcome","Meet a hesitant, curious pup. They do not know your words yet.","Choose a name. We will begin with a shared walk, not a demand to play.");Wolf w=dog(p.level().getServer(),s);var l=s.learning;return new CoachPayload.View(s.name,w==null?-1:w.getId(),l.chapterStep(),l.connections,l.celebrations,l.obstacles,l.walkBlocks,(int)l.comfort,(int)l.engagement,s.line,s.leashed,l.complete,l.mode,l.notice,l.next());}
+    public static CoachPayload.View view(ServerPlayer p){PupState s=state(p);if(s==null)return new CoachPayload.View("",-1,0,0,0,0,0,0,20,10,5,false,false,"welcome","Meet a hesitant, curious pup. They do not know your words yet.","Choose a name. We will begin with a shared walk, not a demand to play.");Wolf w=dog(p.level().getServer(),s);var l=s.learning;return new CoachPayload.View(s.name,w==null?-1:w.getId(),l.chapterStep(),l.connections,l.celebrations,l.obstacles,l.walkBlocks,l.socialDogs.size(),(int)l.comfort,(int)l.engagement,s.line,s.leashed,l.complete,l.mode,l.notice,l.next());}
     public static void send(ServerPlayer p,boolean open){if(ServerPlayNetworking.canSend(p,CoachPayload.TYPE))ServerPlayNetworking.send(p,new CoachPayload(WorldStore.JSON.toJson(view(p)),open));}
     public static void tick(MinecraftServer server){
         for(var p:server.getPlayerList().getPlayers()){
@@ -113,6 +113,9 @@ public final class DogTraining implements ModInitializer {
             double moved=s.playerLast==null?0:p.position().distanceTo(s.playerLast);s.playerLast=p.position();s.stillTicks=moved<.03?s.stillTicks+1:0;
             if(dogMoved>.01&&moved<2&&s.learning.released&&w.distanceToSqr(p)<s.line*s.line&&w.position().distanceTo(p.position())<12){s.learning.walked(moved);s.travelRemainder+=moved;if(s.travelRemainder>=1){int blocks=(int)s.travelRemainder;s.learning.walkBlocks+=blocks;s.travelRemainder-=blocks;}}
             if(s.celebrateAt>=0){if(dogMoved>.01&&moved>.08&&moved<1.5&&w.distanceToSqr(p)<16)s.celebrateTicks++;if(s.celebrateTicks>=45){s.learning.celebrate();s.learning.mode="explore";s.celebrateAt=-1;s.exploreTarget=null;send(p,false);}else if(server.getTickCount()-s.celebrateAt>240){s.celebrateAt=-1;s.learning.mode="explore";s.learning.notice="Try a smaller celebration together when you have room. There is no hurry.";}}
+            boolean neutral=moved>.025&&moved<1.5&&dogMoved>.01&&s.learning.comfort>=30&&!s.atLimit&&!s.tangled&&!s.pendingName&&(s.learning.mode.equals("explore")||s.learning.mode.equals("celebrate"));
+            Wolf other=neutral?p.level().getEntitiesOfClass(Wolf.class,w.getBoundingBox().inflate(18),q->q!=w&&q.isAlive()&&q.getTarget()==null&&q.distanceToSqr(w)>=36&&w.hasLineOfSight(q)&&!s.learning.socialDogs.contains(q.getUUID().toString())).stream().min(java.util.Comparator.comparingDouble(w::distanceToSqr)).orElse(null):null;
+            if(other!=null){String partner=other.getUUID().toString();if(!partner.equals(s.neutralPartner)){s.neutralPartner=partner;s.neutralTicks=0;}if(++s.neutralTicks>=40){s.learning.socialDogs.add(partner);s.neutralTicks=0;s.learning.notice="You kept walking together near another dog, with space and connection. Neutral practice counts - no greeting needed.";send(p,false);}}else{s.neutralPartner=null;s.neutralTicks=0;}
             if(server.getTickCount()%20==0)send(p,false);
         }
         if(server.getTickCount()%100==0)save();

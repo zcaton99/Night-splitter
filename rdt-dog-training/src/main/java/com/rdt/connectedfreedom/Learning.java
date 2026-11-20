@@ -3,6 +3,7 @@ package com.rdt.connectedfreedom;
 /** Observable learning progress for the first walking chapter; never an obedience timer. */
 public final class Learning {
     public int connections,celebrations,obstacles,walkBlocks;
+    public java.util.Set<String> socialDogs=new java.util.HashSet<>();
     public float comfort=20,engagement=10;
     public boolean released,ready,curious,complete;
     public String mode="settle",notice="Meet your pup. We will learn together, one small step at a time.";
