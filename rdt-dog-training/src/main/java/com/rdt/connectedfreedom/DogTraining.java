@@ -111,11 +111,19 @@ public final class DogTraining implements ModInitializer {
             s.x=w.getX();s.y=w.getY();s.z=w.getZ();s.dimension=w.level().dimension().identifier().toString();
             double dogMoved=s.dogLast==null?0:w.position().distanceTo(s.dogLast);s.dogLast=w.position();
             double moved=s.playerLast==null?0:p.position().distanceTo(s.playerLast);s.playerLast=p.position();s.stillTicks=moved<.03?s.stillTicks+1:0;
+            if(s.learning.comfort>=30&&s.learning.released&&!s.atLimit&&!s.tangled
+                &&(s.learning.mode.equals("explore")||s.learning.mode.equals("celebrate"))){
+                var peers=w.level().getEntitiesOfClass(Wolf.class,w.getBoundingBox().inflate(18),other->other!=w&&other.isAlive()&&other.getTarget()==null&&other.getPersistentAngerEndTime()<=w.level().getGameTime()&&other.distanceToSqr(w)>=36&&other.distanceToSqr(w)<=324&&w.hasLineOfSight(other));
+                Wolf other=peers.stream().min(java.util.Comparator.comparingDouble(w::distanceToSqr)).orElse(null);
+                if(other==null){s.neutralTicks=0;s.neutralPartner=null;}
+                else if(!s.learning.socialDogs.contains(other.getUUID().toString())){
+                    String partner=other.getUUID().toString();if(!partner.equals(s.neutralPartner)){s.neutralPartner=partner;s.neutralTicks=0;}
+                    if(moved>.03&&moved<1.5&&dogMoved>.01&&dogMoved<1)s.neutralTicks++;
+                    if(s.neutralTicks>=30){s.learning.socialDogs.add(partner);s.neutralTicks=0;s.learning.notice="You kept moving together near another dog, with room and connection. That is neutral socialization practice. No greeting needed.";send(p,false);}
+                }
+            }else {s.neutralTicks=0;s.neutralPartner=null;}
             if(dogMoved>.01&&moved<2&&s.learning.released&&w.distanceToSqr(p)<s.line*s.line&&w.position().distanceTo(p.position())<12){s.learning.walked(moved);s.travelRemainder+=moved;if(s.travelRemainder>=1){int blocks=(int)s.travelRemainder;s.learning.walkBlocks+=blocks;s.travelRemainder-=blocks;}}
             if(s.celebrateAt>=0){if(dogMoved>.01&&moved>.08&&moved<1.5&&w.distanceToSqr(p)<16)s.celebrateTicks++;if(s.celebrateTicks>=45){s.learning.celebrate();s.learning.mode="explore";s.celebrateAt=-1;s.exploreTarget=null;send(p,false);}else if(server.getTickCount()-s.celebrateAt>240){s.celebrateAt=-1;s.learning.mode="explore";s.learning.notice="Try a smaller celebration together when you have room. There is no hurry.";}}
-            boolean neutral=moved>.025&&moved<1.5&&dogMoved>.01&&s.learning.comfort>=30&&!s.atLimit&&!s.tangled&&!s.pendingName&&(s.learning.mode.equals("explore")||s.learning.mode.equals("celebrate"));
-            Wolf other=neutral?p.level().getEntitiesOfClass(Wolf.class,w.getBoundingBox().inflate(18),q->q!=w&&q.isAlive()&&q.getTarget()==null&&q.distanceToSqr(w)>=36&&w.hasLineOfSight(q)&&!s.learning.socialDogs.contains(q.getUUID().toString())).stream().min(java.util.Comparator.comparingDouble(w::distanceToSqr)).orElse(null):null;
-            if(other!=null){String partner=other.getUUID().toString();if(!partner.equals(s.neutralPartner)){s.neutralPartner=partner;s.neutralTicks=0;}if(++s.neutralTicks>=40){s.learning.socialDogs.add(partner);s.neutralTicks=0;s.learning.notice="You kept walking together near another dog, with space and connection. Neutral practice counts - no greeting needed.";send(p,false);}}else{s.neutralPartner=null;s.neutralTicks=0;}
             if(server.getTickCount()%20==0)send(p,false);
         }
         if(server.getTickCount()%100==0)save();
