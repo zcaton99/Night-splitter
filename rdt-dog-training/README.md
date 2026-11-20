@@ -1,6 +1,6 @@
 # RDT: Connected Freedom — Chapter 1 alpha
 
-A separate Fabric mod by Zach Caton, built around the RDT progression discussed for a hesitant, curious first pup. This first prototype ends with curiosity about a toy. Full tug, fetch, obedience, other pup profiles, and a polished custom dog model are future chapters.
+A separate Fabric mod by Zach Caton, built around the RDT progression discussed for a hesitant, curious first pup. This first prototype ends with curiosity about a toy. Full tug, fetch, additional obedience, other pup profiles, and a polished custom dog model are future chapters.
 
 ## Install
 
@@ -38,10 +38,10 @@ All controls can be rebound under Controls → RDT Training. The field guide als
 
 ## Teaching decisions
 
-- Name recognition asks for connection and is distinct from the future Let's go and Here recalls.
+- Name recognition asks for connection and is distinct from the Let's go and Here recalls.
 - The cycle of help follows the cue. Familiar help should support understanding rather than repeated commands.
 - Yes releases into the selected context. Ready is not permission to grab; Done starts a settling period.
-- The four windows apply throughout daily life and walks. The guide explains Work, Enough, Play and Free; full work-cue mechanics are outside this first alpha.
+- The four windows apply throughout daily life and walks. The guide explains Work, Enough, Play and Free; Let's go and Here begin the work window in alpha 2.
 - Original coaching text summarizes the supplied RDT direction. Uploaded course notes and their personal information are not distributed with this mod.
 - Practice around real dogs belongs with an appropriate adult and suitable supervision. The game teaches observation and does not declare unfamiliar dogs safe to approach.
 
