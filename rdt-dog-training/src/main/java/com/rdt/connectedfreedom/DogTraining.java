@@ -69,15 +69,15 @@ public final class DogTraining implements ModInitializer {
         Vec3 at=p.position().add(p.getLookAngle().horizontal().normalize().scale(2));dog.snapTo(at.x,p.getY(),at.z);
         if(!level.noCollision(dog)){dog.snapTo(p.getX(),p.getY(),p.getZ());if(!level.noCollision(dog))return null;}
         PupState s=new PupState();s.owner=p.getUUID().toString();s.dog=dog.getUUID().toString();s.name=cleanName(name);s.dimension=level.dimension().identifier().toString();s.x=dog.getX();s.y=dog.getY();s.z=dog.getZ();
-        dog.addTag("rdt_pup");dog.setTame(true,false);dog.setOwner(p);dog.setCustomName(Component.literal(s.name));dog.setCustomNameVisible(true);dog.setPersistenceRequired();dog.setInvulnerable(true);
+        dog.addTag("rdt_pup");dog.setTame(true,false);dog.setOwner(p);dog.setCustomName(Component.literal(s.name));dog.setCustomNameVisible(true);dog.setPersistenceRequired();dog.setPermanentlyInvulnerable(true);
         data.pups.put(s.owner,s);
         if(!level.addFreshEntity(dog)){data.pups.remove(s.owner);return null;}
         install(dog);dog.setLeashedTo(p,true);give(p,JOURNAL);give(p,TOY);save();return s;
     }
-    private static void give(ServerPlayer p,Item item){if(!p.getInventory().contains(new ItemStack(item)))if(!p.addItem(new ItemStack(item)))p.drop(new ItemStack(item),false);}
+    private static void give(ServerPlayer p,Item item){if(!p.getInventory().contains(new ItemStack(item)))if(!p.addItem(new ItemStack(item)))p.spawnAtLocation((ServerLevel)p.level(),new ItemStack(item));}
     public static void install(Wolf dog){PupState s=state(dog);if(s==null)return;s.runtime();if(s.installed)return;
         MobGoalsAccessor goals=(MobGoalsAccessor)dog;goals.rdt$goals().removeAllGoals(g->true);goals.rdt$targets().removeAllGoals(g->true);goals.rdt$goals().addGoal(0,new WalkingGoal(dog,s));
-        dog.setTarget(null);dog.setOrderedToSit(false);dog.setPersistenceRequired();dog.setInvulnerable(true);s.installed=true;
+        dog.setTarget(null);dog.setOrderedToSit(false);dog.setPersistenceRequired();dog.setPermanentlyInvulnerable(true);s.installed=true;
     }
     public static void action(ServerPlayer p,String action,String value){
         if(action.equals("open")){send(p,true);return;}

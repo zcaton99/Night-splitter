@@ -23,7 +23,7 @@ public final class MultiplayerServer implements ModInitializer {
     private ServerPlayer find(String name){return server.getPlayerList().getPlayers().stream().filter(p->p.getGameProfile().name().equals(name)).findFirst().orElse(null);}
     private void next(int n,ServerPlayer a,ServerPlayer b){stage=n;age=0;seen.clear();for(var p:List.of(a,b))ServerPlayNetworking.send(p,new Probe(n,0));}
     private Wolf dog(ServerPlayer p){var s=DogTraining.state(p);return (Wolf)server.overworld().getEntity(UUID.fromString(s.dog));}
-    private void place(ServerPlayer p,double x,double z){p.teleportTo(server.overworld(),x,121,z,Set.of(),0,0,false);p.setGameMode(GameType.SURVIVAL);p.setInvulnerable(true);p.setDeltaMovement(Vec3.ZERO);}
+    private void place(ServerPlayer p,double x,double z){p.teleportTo(server.overworld(),x,121,z,Set.of(),0,0,false);p.setGameMode(GameType.SURVIVAL);p.setPermanentlyInvulnerable(true);p.setDeltaMovement(Vec3.ZERO);}
     private void run(){total++;age++;if(total>3000)throw new AssertionError("RDT multiplayer timeout at stage "+stage);
         var a=find("LanAlpha");var b=find("LanBeta");if(a==null||b==null)return;
         for(var p:List.of(a,b))p.getFoodData().setFoodLevel(20);
