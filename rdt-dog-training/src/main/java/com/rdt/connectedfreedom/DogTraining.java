@@ -108,6 +108,7 @@ public final class DogTraining implements ModInitializer {
     public static void tick(MinecraftServer server){
         for(var p:server.getPlayerList().getPlayers()){
             var s=state(p);if(s==null)continue;Wolf w=dog(server,s);if(w==null||w.level()!=p.level()||!p.isAlive()){s.playerLast=null;continue;}if(!s.installed)install(w);
+            if(s.leashed&&w.getLeashHolder()!=p)w.setLeashedTo(p,true);
             s.x=w.getX();s.y=w.getY();s.z=w.getZ();s.dimension=w.level().dimension().identifier().toString();
             double dogMoved=s.dogLast==null?0:w.position().distanceTo(s.dogLast);s.dogLast=w.position();
             double moved=s.playerLast==null?0:p.position().distanceTo(s.playerLast);s.playerLast=p.position();s.stillTicks=moved<.03?s.stillTicks+1:0;
